@@ -58,6 +58,15 @@ test('opening AI settings does not download a local model', async ({ page }) => 
   expect(remoteModelRequests).toEqual([]);
 });
 
+test('deployed Vercel Function runtime responds', async ({ request }) => {
+  test.skip(!process.env.PLAYWRIGHT_BASE_URL, 'Remote API smoke runs only against a deployed preview.');
+
+  const response = await request.get('/api/health');
+  const raw = await response.text();
+  expect(response.ok(), `GET /api/health -> ${response.status()} ${raw}`).toBe(true);
+  expect(JSON.parse(raw)).toMatchObject({ ok: true, service: 'hotel-nocturne-api' });
+});
+
 test('deployed Vercel rules API evaluates the same reveal policy', async ({ request }) => {
   test.skip(!process.env.PLAYWRIGHT_BASE_URL, 'Remote API smoke runs only against a deployed preview.');
 
@@ -71,8 +80,9 @@ test('deployed Vercel rules API evaluates the same reveal policy', async ({ requ
     },
   });
 
-  expect(response.ok()).toBe(true);
-  const payload = await response.json() as {
+  const raw = await response.text();
+  expect(response.ok(), `POST /api/npc -> ${response.status()} ${raw}`).toBe(true);
+  const payload = JSON.parse(raw) as {
     answer?: string;
     resistanceDelta?: number;
     contradictionDelta?: number;
