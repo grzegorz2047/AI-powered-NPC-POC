@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "api/npc.ts": {
-      "includeFiles": "src/domain/npcPolicy.ts",
+      "includeFiles": "src/domain/*.ts",
       "maxDuration": 30
     }
   }

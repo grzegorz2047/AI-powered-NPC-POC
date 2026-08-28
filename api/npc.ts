@@ -1,4 +1,5 @@
 import { buildAllowedNpcPrompt, evaluateNpcPolicy, type InterviewPressure, type NpcPolicyRequest, type NpcPolicyResult } from '../src/domain/npcPolicy.js';
+import { enforceNpcReplyFirewall } from '../src/domain/npcReplyFirewall.js';
 
 type LlmConfig = {
   baseUrl?: string;
@@ -18,7 +19,9 @@ const DEFAULT_ALLOWED_BYOK_HOSTS = new Set([
 
 async function naturalize(body: ApiRequest, result: NpcPolicyResult) {
   const config = resolveLlmConfig(body.llm);
-  if (!config) return { answer: result.answer, model: null };
+  if (!config) {
+    return { answer: result.answer, model: null, firewallRejected: false, firewallRule: null as string | null };
+  }
   const prompt = buildAllowedNpcPrompt(body, result);
 
   const response = await fetch(`${config.baseUrl.replace(/\/$/, '')}/chat/completions`, {
@@ -50,9 +53,13 @@ async function naturalize(body: ApiRequest, result: NpcPolicyResult) {
   });
   if (!response.ok) throw new Error(`LLM provider returned ${response.status}.`);
   const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+  const candidate = data.choices?.[0]?.message?.content?.trim() || result.answer;
+  const filtered = enforceNpcReplyFirewall(candidate, prompt);
   return {
-    answer: data.choices?.[0]?.message?.content?.trim() || result.answer,
-    model: config.model,
+    answer: filtered.answer,
+    model: filtered.rejected ? null : config.model,
+    firewallRejected: filtered.rejected,
+    firewallRule: filtered.ruleId,
   };
 }
 
@@ -110,8 +117,10 @@ export default {
         resistanceDelta: result.resistanceDelta,
         contradictionDelta: result.contradictionDelta,
         contradictionId: result.contradictionId ?? null,
-        mode: naturalized.model ? 'llm' : 'rules',
+        mode: naturalized.firewallRejected ? 'rules-firewall' : naturalized.model ? 'llm' : 'rules',
         model: naturalized.model,
+        firewallRejected: naturalized.firewallRejected,
+        firewallRule: naturalized.firewallRule,
       });
     } catch (error) {
       return Response.json({ error: error instanceof Error ? error.message : String(error) }, { status: 400 });

@@ -1,4 +1,5 @@
 import { buildAllowedNpcPrompt, evaluateNpcPolicy, type NpcPolicyRequest } from '../domain/npcPolicy';
+import { enforceNpcReplyFirewall } from '../domain/npcReplyFirewall';
 import { useAiSettingsStore } from '../state/aiSettingsStore';
 import { BrowserQwenProvider } from './browserQwenProvider';
 import { ChromeBuiltinProvider } from './chromeBuiltinProvider';
@@ -111,6 +112,9 @@ export async function testAndSelectByok() {
       contradictions: 0,
       pressure: 'neutral',
     });
+    if (reply.backend !== 'remote') {
+      throw new Error('The provider answered, but its test reply was rejected by the case-fact firewall.');
+    }
     useAiSettingsStore.getState().setRuntime({
       state: 'ready',
       requestedBackend: 'remote',
@@ -118,7 +122,7 @@ export async function testAndSelectByok() {
       activeModel: reply.model,
       fallbackUsed: false,
       progress: 100,
-      message: 'BYOK connection works.',
+      message: 'BYOK connection works and passed the case-fact firewall.',
       lastError: null,
     });
     return reply;
@@ -147,6 +151,20 @@ export async function askNpc(request: NpcPolicyRequest): Promise<RuntimeNpcAnswe
       reply = await askByok(request);
     } else {
       reply = { answer: policy.answer, backend: 'rules', model: null };
+    }
+
+    if (reply.backend !== 'rules') {
+      const filtered = enforceNpcReplyFirewall(reply.answer, prompt);
+      if (filtered.rejected) {
+        useAiSettingsStore.getState().setRuntime({
+          state: 'fallback',
+          activeBackend: 'rules',
+          fallbackUsed: true,
+          message: 'AI reply was filtered by the case-fact firewall; deterministic dialogue was used.',
+          lastError: `case-fact-firewall:${filtered.ruleId ?? 'unknown'}`,
+        });
+        reply = { answer: filtered.answer, backend: 'rules', model: null };
+      }
     }
 
     return {
@@ -190,9 +208,30 @@ async function askByok(request: NpcPolicyRequest): Promise<NpcReply> {
       },
     }),
   });
-  const payload = await response.json() as { answer?: string; error?: string; model?: string };
+  const payload = await response.json() as {
+    answer?: string;
+    error?: string;
+    model?: string | null;
+    mode?: 'llm' | 'rules' | 'rules-firewall';
+    firewallRejected?: boolean;
+    firewallRule?: string | null;
+  };
   if (!response.ok) throw new Error(payload.error || `BYOK request failed with ${response.status}.`);
-  return { answer: payload.answer || evaluateNpcPolicy(request).answer, backend: 'remote', model: payload.model || state.byokModel };
+  if (payload.firewallRejected || payload.mode === 'rules-firewall') {
+    useAiSettingsStore.getState().setRuntime({
+      state: 'fallback',
+      activeBackend: 'rules',
+      fallbackUsed: true,
+      message: 'Remote AI reply was filtered by the case-fact firewall; deterministic dialogue was used.',
+      lastError: `case-fact-firewall:${payload.firewallRule ?? 'unknown'}`,
+    });
+    return { answer: payload.answer || evaluateNpcPolicy(request).answer, backend: 'rules', model: null };
+  }
+  return {
+    answer: payload.answer || evaluateNpcPolicy(request).answer,
+    backend: payload.mode === 'llm' ? 'remote' : 'rules',
+    model: payload.mode === 'llm' ? payload.model || state.byokModel : null,
+  };
 }
 
 export async function disposeAiProviders() {
