@@ -52,7 +52,7 @@ export function AccessibleScenePanel() {
                     type="button"
                     key={clue.id}
                     className={`access-item ${found ? 'access-item-found' : ''}`}
-                    aria-pressed={found}
+                    aria-label={`${found ? 'Review logged evidence' : 'Inspect clue'}: ${clue.title}. ${clue.tooltip}`}
                     onClick={() => discoverClue(clue.id)}
                   >
                     <span className="access-status">{found ? 'Logged evidence' : 'Inspect hotspot'}</span>
@@ -82,7 +82,7 @@ export function AccessibleScenePanel() {
                 >
                   <span className="access-status">Interview</span>
                   <strong>{witness.name}</strong>
-                  <small>{witness.role} · {witness.profile}</small>
+                  <small>{witness.role}</small>
                 </button>
               ))}
             </div>
