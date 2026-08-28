@@ -4,16 +4,21 @@ export const ROOSEVELT_VISUAL_TARGET = {
     'world should fill most of the investigation viewport at initial load',
     'visible room floor is broader than the navigation-only Walkable mask',
     'walls should read as full-height cutaway architecture rather than low borders',
-    'internal room partitions should remain legible without turning the map into a closed maze',
+    'internal room partitions should remain legible without turning public/service spaces into a maze',
     'Room 307, elevators, reception, CCTV and laundry should be visually recognizable without labels',
     'characters and props must stay legible at the default camera zoom',
     'camera supports free pan/zoom and F to follow the detective',
   ],
-  initialZoom: 0.86,
+  initialZoom: 0.84,
+  zoomByMap: {
+    'roosevelt-lobby': 0.86,
+    'roosevelt-floor-3': 0.8,
+    'roosevelt-basement': 0.84,
+  },
   cameraPadding: { x: 150, y: 120 },
   cameraBiasByMap: {
     'roosevelt-lobby': { x: 0, y: 8 },
-    'roosevelt-floor-3': { x: 0, y: 46 },
+    'roosevelt-floor-3': { x: 0, y: 54 },
     'roosevelt-basement': { x: 0, y: 22 },
   },
   wallDisplay: { width: 128, height: 176 },
@@ -56,7 +61,10 @@ export const ROOSEVELT_VISUAL_AREAS = {
 } as const satisfies Record<string, readonly RooseveltVisualArea[]>;
 
 export const ROOSEVELT_PARTITION_AREA_IDS = {
-  'roosevelt-lobby': ['lounge-wing', 'main-office', 'main-kitchen', 'main-dining'],
+  // Public spaces stay open; only staff/office boundaries get cutaway walls.
+  'roosevelt-lobby': ['main-office', 'main-kitchen'],
+  // Guest-room level is intentionally the most compartmentalized map.
   'roosevelt-floor-3': ['west-guest-rooms', 'central-service-core', 'east-guest-rooms', 'west-lower-rooms', 'room-307-suite'],
-  'roosevelt-basement': ['service-west', 'incinerator', 'fan-room', 'utility-core', 'laundry'],
+  // Basement should read as a service floor, not a maze: only the utility/laundry core is enclosed.
+  'roosevelt-basement': ['utility-core', 'laundry'],
 } as const satisfies Record<string, readonly string[]>;
