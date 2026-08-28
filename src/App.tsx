@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState } from 'react';
+import { AccessibleScenePanel } from './components/AccessibleScenePanel';
 import { AccusationPanel } from './components/AccusationPanel';
 import { AiSettingsPanel } from './components/AiSettingsPanel';
 import { DetectiveThought } from './components/DetectiveThought';
@@ -60,6 +61,7 @@ export default function App() {
           <button type="button" className="ghost-button ai-menu-button" onClick={() => setAiOpen(true)}>
             AI: {activeBackend ?? provider}
           </button>
+          <AccessibleScenePanel />
           <AccusationPanel />
           <button type="button" className="ghost-button" onClick={resetCase}>Reset case</button>
         </div>

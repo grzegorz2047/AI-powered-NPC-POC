@@ -54,6 +54,23 @@ button:disabled { cursor: not-allowed; opacity: 0.42; }
 .ghost-button, .close-button, .accuse-button { border: 1px solid #414854; border-radius: 6px; padding: 9px 12px; color: #c9d0db; background: #11161e; }
 .accuse-button { color: #f0d394; border-color: #6c5831; background: #1b160d; }
 
+.scene-access-drawer { position: fixed; z-index: 45; left: 22px; top: 88px; width: min(410px, calc(100vw - 44px)); max-height: calc(100vh - 110px); overflow: auto; border: 1px solid #3d434d; border-radius: 9px; background: #0b0f16f7; box-shadow: 0 24px 80px #000c; }
+.access-intro { margin: 12px 14px 4px; color: #929daa; font-size: 12px; line-height: 1.5; }
+.access-section { padding: 12px 14px 4px; }
+.access-section + .access-section { border-top: 1px solid #282e37; margin-top: 8px; }
+.access-section-title { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.access-section-title h3 { margin: 0; font: 600 16px Georgia, serif; color: #e6d7b5; }
+.access-section-title span { color: #7e8997; font-size: 11px; }
+.access-item-list { display: grid; gap: 7px; padding-bottom: 10px; }
+.access-item { width: 100%; display: grid; gap: 3px; text-align: left; border: 1px solid #303741; border-radius: 6px; padding: 9px 10px; color: #cfd5dc; background: #10151c; }
+.access-item:hover, .access-item:focus-visible { outline: none; border-color: #9b8150; box-shadow: 0 0 0 3px #9b81501f; }
+.access-item strong { color: #e6dcc7; font-size: 13px; }
+.access-item small { color: #8995a3; font-size: 11px; line-height: 1.35; }
+.access-status { color: #bd9e63; font-size: 9px; text-transform: uppercase; letter-spacing: .12em; }
+.access-item-found { border-color: #42514b; background: #101915; }
+.access-item-found .access-status { color: #8eab95; }
+.access-witness .access-status { color: #8ba8b5; }
+
 .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 26px; background: #020407c9; backdrop-filter: blur(7px); }
 .interview-panel { width: min(880px, 96vw); max-height: 88vh; border-radius: 11px; display: grid; grid-template-rows: auto minmax(160px, 1fr) auto auto; overflow: hidden; }
 .interview-header { display: flex; justify-content: space-between; gap: 24px; padding: 18px 20px; border-bottom: 1px solid #2d333d; }
@@ -84,6 +101,7 @@ button:disabled { cursor: not-allowed; opacity: 0.42; }
   .evidence-list { max-height: 240px; }
   .detective-thought { grid-template-columns: 1fr auto; }
   .thought-kicker { grid-column: 1/-1; }
+  .scene-access-drawer { top: 76px; max-height: calc(100vh - 90px); }
 }
 
 @media (max-width: 620px) {
@@ -96,4 +114,5 @@ button:disabled { cursor: not-allowed; opacity: 0.42; }
   .detective-thought { grid-template-columns: 1fr; }
   .interview-panel { max-height: 94vh; }
   .line { grid-template-columns: 1fr; gap: 2px; }
+  .scene-access-drawer { left: 10px; width: calc(100vw - 20px); top: 68px; }
 }
