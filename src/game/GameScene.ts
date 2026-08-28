@@ -8,7 +8,6 @@ import { CLUE_TEXTURE_BY_ID, SCENE_SVG_ASSETS, WITNESS_TEXTURE_BY_ID } from './s
 const FLOOR_OFFSET_X = 510;
 const FLOOR_OFFSET_Y = 95;
 const INTERACTION_DISTANCE = 82;
-const WALK_BOUNDS = new Phaser.Geom.Rectangle(225, 150, 585, 350);
 
 type SceneFloorLayer = Phaser.Tilemaps.TilemapLayer | Phaser.Tilemaps.TilemapGPULayer;
 
@@ -42,12 +41,16 @@ export class GameScene extends Phaser.Scene {
     if (!floor) throw new Error('Tiled map is missing required Floor layer.');
     floor.setAlpha(0.98).setDepth(-2);
 
+    const walkable = map.createLayer('Walkable', tileset!, FLOOR_OFFSET_X, FLOOR_OFFSET_Y);
+    if (!walkable) throw new Error('Tiled map is missing required Walkable layer.');
+    walkable.setVisible(false);
+
     const anchors = readEntityAnchors(map.getObjectLayer('Entities')?.objects);
 
     this.addHotelShell();
     this.addEnvironmentProps();
     this.addRoomLabels();
-    this.addWalkZone();
+    this.addWalkZones(floor, walkable);
 
     const playerAnchor = requireEntityAnchor(anchors, 'player', 'detective');
     this.createPlayer(floor, playerAnchor.tileX, playerAnchor.tileY);
@@ -148,11 +151,15 @@ export class GameScene extends Phaser.Scene {
     this.add.image(720, 174, 'prop-window').setDisplaySize(112, 64).setDepth(-1);
   }
 
-  private addWalkZone() {
-    const zone = this.add.rectangle(WALK_BOUNDS.centerX, WALK_BOUNDS.centerY, WALK_BOUNDS.width, WALK_BOUNDS.height, 0x000000, 0.001)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(-1);
-    zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.walkTo(pointer.worldX, pointer.worldY));
+  private addWalkZones(floor: SceneFloorLayer, walkable: SceneFloorLayer) {
+    walkable.forEachTile((tile) => {
+      if (tile.index < 0) return;
+      const point = floor.tileToWorldXY(tile.x, tile.y);
+      const zone = this.add.zone(point.x, point.y + 32, 112, 54)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(-1);
+      zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.walkTo(pointer.worldX, pointer.worldY));
+    });
   }
 
   private createPlayer(floor: SceneFloorLayer, tileX: number, tileY: number) {
@@ -163,10 +170,8 @@ export class GameScene extends Phaser.Scene {
     this.player = this.add.container(start.x, start.y + 52, [shadow, body]).setDepth(start.y + 130);
   }
 
-  private walkTo(rawX: number, rawY: number, onArrive?: () => void) {
+  private walkTo(x: number, y: number, onArrive?: () => void) {
     if (!this.player) return;
-    const x = Phaser.Math.Clamp(rawX, WALK_BOUNDS.left + 12, WALK_BOUNDS.right - 12);
-    const y = Phaser.Math.Clamp(rawY, WALK_BOUNDS.top + 12, WALK_BOUNDS.bottom - 12);
     const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, x, y);
     if (distance < 5) {
       onArrive?.();
