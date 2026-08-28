@@ -60,6 +60,12 @@ describe('NPC case-fact firewall', () => {
     if (!decision.safe) expect(decision.ruleId).toMatch(/^invented-evidence:/);
   });
 
+  it('does not mistake normal words containing an evidence substring for evidence', () => {
+    const prompt = promptFor({ witnessId: 'kamil', question: 'When did the argument start?', resistance: 25, pressure: 'neutral' });
+    const decision = validateNpcReply('The argument had begun before I went back to the bar.', prompt);
+    expect(decision).toEqual({ safe: true });
+  });
+
   it('rejects a protected timestamp that is not allowed on the current turn', () => {
     const prompt = promptFor({ witnessId: 'irena', question: 'What time was it?', resistance: 70, pressure: 'empathy' });
     const decision = validateNpcReply('It happened at exactly 22:23.', prompt);

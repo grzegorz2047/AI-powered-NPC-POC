@@ -116,6 +116,14 @@ function allowedSurface(prompt: AllowedNpcPrompt) {
   return normalized([...prompt.allowedFacts, prompt.fallbackAnswer].join(' '));
 }
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function containsWholeTerm(text: string, term: string) {
+  return new RegExp(`\\b${escapeRegExp(term).replace(/\\ /g, '\\s+')}\\b`, 'i').test(text);
+}
+
 export function validateNpcReply(answer: string, prompt: AllowedNpcPrompt): NpcReplyFirewallDecision {
   const text = normalized(answer);
   const allowed = allowedSurface(prompt);
@@ -141,7 +149,7 @@ export function validateNpcReply(answer: string, prompt: AllowedNpcPrompt): NpcR
   }
 
   for (const term of INVENTED_EVIDENCE_TERMS) {
-    if (text.includes(term) && !allowed.includes(term)) {
+    if (containsWholeTerm(text, term) && !containsWholeTerm(allowed, term)) {
       return {
         safe: false,
         ruleId: `invented-evidence:${term}`,
