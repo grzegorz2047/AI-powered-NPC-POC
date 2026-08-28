@@ -112,9 +112,14 @@ export class BrowserQwenProvider implements NpcModelProvider {
         { role: 'user', content: prompt.question },
       ],
       {
+        // The official Qwen3 Transformers.js example passes enable_thinking to
+        // apply_chat_template. Pipeline forwards tokenizer_encode_kwargs there.
+        // NPC dialogue should answer immediately instead of spending tokens on reasoning.
+        tokenizer_encode_kwargs: { enable_thinking: false },
         max_new_tokens: 96,
         do_sample: true,
-        temperature: 0.65,
+        temperature: 0.7,
+        top_k: 20,
         top_p: 0.9,
         repetition_penalty: 1.05,
       },
