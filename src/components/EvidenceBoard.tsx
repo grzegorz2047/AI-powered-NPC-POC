@@ -1,11 +1,15 @@
 import { clueById, witnessById } from '../data/caseData';
 import { questionsUnlockedByClue } from '../domain/progression';
+import { WORLD_MAPS } from '../game/worldManifest';
 import { useInvestigationStore } from '../state/investigationStore';
+import { useWorldStore } from '../state/worldStore';
 import './evidenceLeads.css';
 
 export function EvidenceBoard() {
   const clueIds = useInvestigationStore((state) => state.discoveredClueIds);
   const selectWitness = useInvestigationStore((state) => state.selectWitness);
+  const currentMapId = useWorldStore((state) => state.currentMapId);
+  const localWitnessIds = WORLD_MAPS[currentMapId].witnessIds as readonly string[];
   const latestClueId = clueIds.at(-1);
 
   return (
@@ -32,14 +36,18 @@ export function EvidenceBoard() {
                   </span>
                   {leads.map((lead) => {
                     const witness = witnessById[lead.witnessId];
+                    const witnessIsHere = localWitnessIds.includes(lead.witnessId);
                     return (
                       <button
                         type="button"
                         key={lead.id}
                         className="evidence-lead-button"
-                        onClick={() => selectWitness(lead.witnessId)}
+                        disabled={!witnessIsHere}
+                        title={witnessIsHere ? undefined : 'Find this witness on another hotel level.'}
+                        onClick={() => witnessIsHere && selectWitness(lead.witnessId)}
                       >
                         {witness?.name ?? lead.witnessId}: {lead.text}
+                        {!witnessIsHere && <small> · witness is elsewhere in the hotel</small>}
                       </button>
                     );
                   })}
