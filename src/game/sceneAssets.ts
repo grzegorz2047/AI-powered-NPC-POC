@@ -31,14 +31,16 @@ export const ROOSEVELT_GENERATED_SHEETS = {
   characters: {
     key: 'generated-roosevelt-characters',
     url: '/assets/generated/hotel-characters-atlas.webp',
-    frameWidth: 128,
-    frameHeight: 192,
+    frameWidth: 120,
+    frameHeight: 310,
+    endFrame: 4,
   },
   props: {
     key: 'generated-roosevelt-props',
     url: '/assets/generated/hotel-props-atlas.webp',
-    frameWidth: 192,
-    frameHeight: 192,
+    frameWidth: 300,
+    frameHeight: 300,
+    endFrame: 5,
   },
 } as const;
 
@@ -57,8 +59,6 @@ export const ROOSEVELT_PROP_FRAME = {
   stairs: 3,
   cctvDesk: 4,
   laundry: 5,
-  cleaningCart: 6,
-  luggageCart: 7,
 } as const;
 
 export const ROOSEVELT_FLOOR_TEXTURE_BY_MAP: Record<Exclude<WorldMapId, 'prototype-room-307'>, string> = {
