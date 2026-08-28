@@ -16,11 +16,16 @@ import {
   SCENE_SVG_ASSETS,
 } from './sceneAssets';
 import { createWalkabilityMatrix, findTilePath, type TilePoint } from './tilePathfinding';
-import { ROOSEVELT_VISUAL_AREAS, ROOSEVELT_VISUAL_TARGET } from './visualTarget';
+import {
+  ROOSEVELT_PARTITION_AREA_IDS,
+  ROOSEVELT_VISUAL_AREAS,
+  ROOSEVELT_VISUAL_TARGET,
+} from './visualTarget';
 import { WORLD_MAPS, type WorldMapId } from './worldManifest';
 
 type WorldBounds = { minX: number; minY: number; maxX: number; maxY: number };
 type CameraKeys = Record<'W' | 'A' | 'S' | 'D' | 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', Phaser.Input.Keyboard.Key>;
+type WallTextures = { nw: string; ne: string };
 
 export class RooseveltScene extends Phaser.Scene {
   private tilemap?: Phaser.Tilemaps.Tilemap;
@@ -213,6 +218,74 @@ export class RooseveltScene extends Phaser.Scene {
       .setAlpha(alpha);
   }
 
+  private areaPoint(areaId: string, offsetX: number, offsetY: number) {
+    const area = ROOSEVELT_VISUAL_AREAS[this.worldMapId].find((candidate) => candidate.id === areaId);
+    if (!area) return undefined;
+    return this.tileToWorld(area.x + offsetX, area.y + offsetY);
+  }
+
+  private addInternalPartitions(wallTextures: WallTextures, isVisible: (x: number, y: number) => boolean) {
+    const partitionAreaIds = new Set<string>(ROOSEVELT_PARTITION_AREA_IDS[this.worldMapId]);
+    const { width, height } = ROOSEVELT_VISUAL_TARGET.internalWallDisplay;
+
+    for (const area of ROOSEVELT_VISUAL_AREAS[this.worldMapId]) {
+      if (!partitionAreaIds.has(area.id)) continue;
+
+      const topOpeningX = area.x + Math.floor(area.width / 2);
+      for (let x = area.x; x < area.x + area.width; x += 1) {
+        if (x === topOpeningX || !isVisible(x, area.y - 1)) continue;
+        const point = this.tileToWorld(x, area.y);
+        this.add.image(point.x, point.y + 32, wallTextures.ne)
+          .setOrigin(0.5, 0.72)
+          .setDisplaySize(width, height)
+          .setDepth(point.y + 25.2);
+      }
+
+      const leftOpeningY = area.y + Math.floor(area.height / 2);
+      for (let y = area.y; y < area.y + area.height; y += 1) {
+        if (y === leftOpeningY || !isVisible(area.x - 1, y)) continue;
+        const point = this.tileToWorld(area.x, y);
+        this.add.image(point.x, point.y + 32, wallTextures.nw)
+          .setOrigin(0.5, 0.72)
+          .setDisplaySize(width, height)
+          .setDepth(point.y + 25.1);
+      }
+    }
+  }
+
+  private addAmbientProps() {
+    if (this.worldMapId === 'roosevelt-lobby') {
+      const dining = this.areaPoint('main-dining', 4, 1);
+      if (dining) this.propArt('prop-window', dining.x + 28, dining.y + 28, 82, 72, dining.y + 60, 0.88);
+      const palm = this.areaPoint('palm-room', 4, 1);
+      if (palm) this.propArt('prop-window', palm.x + 24, palm.y + 24, 82, 72, palm.y + 58, 0.88);
+      const lounge = this.areaPoint('lounge-wing', 2, 4);
+      if (lounge) this.propArt('prop-cart', lounge.x - 24, lounge.y + 84, 86, 80, lounge.y + 108, 0.9);
+      const office = this.areaPoint('main-office', 2, 2);
+      if (office) this.propArt('prop-cctv', office.x + 18, office.y + 70, 96, 76, office.y + 100, 0.82);
+    }
+
+    if (this.worldMapId === 'roosevelt-floor-3') {
+      const west = this.areaPoint('west-guest-rooms', 4, 1);
+      if (west) this.propArt('prop-window', west.x - 12, west.y + 24, 78, 68, west.y + 54, 0.84);
+      const east = this.areaPoint('east-guest-rooms', 1, 1);
+      if (east) this.propArt('prop-window', east.x + 22, east.y + 24, 78, 68, east.y + 54, 0.84);
+      const westLower = this.areaPoint('west-lower-rooms', 4, 3);
+      if (westLower) this.propArt('prop-cart', westLower.x - 28, westLower.y + 82, 84, 78, westLower.y + 106, 0.88);
+    }
+
+    if (this.worldMapId === 'roosevelt-basement') {
+      const laundryA = this.areaPoint('laundry', 2, 2);
+      if (laundryA) this.propArt('prop-laundry', laundryA.x - 26, laundryA.y + 76, 78, 70, laundryA.y + 102, 0.9);
+      const laundryB = this.areaPoint('laundry', 5, 2);
+      if (laundryB) this.propArt('prop-laundry', laundryB.x + 18, laundryB.y + 78, 82, 72, laundryB.y + 104, 0.9);
+      const utility = this.areaPoint('utility-core', 3, 3);
+      if (utility) this.propArt('prop-cart', utility.x - 20, utility.y + 82, 86, 80, utility.y + 108, 0.9);
+      const service = this.areaPoint('service-west', 3, 5);
+      if (service) this.propArt('prop-laundry', service.x + 18, service.y + 74, 76, 68, service.y + 100, 0.84);
+    }
+  }
+
   private addArchitecture(visibleFloorTiles: Set<string>, objects: Parameters<typeof readMapZones>[0]) {
     const wallTextures = ROOSEVELT_WALL_TEXTURES_BY_MAP[this.worldMapId];
     const isVisible = (x: number, y: number) => visibleFloorTiles.has(`${x}:${y}`);
@@ -234,6 +307,8 @@ export class RooseveltScene extends Phaser.Scene {
           .setDepth(wallDepth + 0.1);
       }
     }
+
+    this.addInternalPartitions(wallTextures, isVisible);
 
     for (const zone of readMapZones(objects)) {
       const point = this.tileToWorld(zone.tileX, zone.tileY);
@@ -270,11 +345,14 @@ export class RooseveltScene extends Phaser.Scene {
         this.propArt('prop-window', point.x + 40, point.y + 18, 82, 72, point.y + 54, 0.86);
       }
     }
+
+    this.addAmbientProps();
   }
 
   private configureCamera(bounds: WorldBounds) {
     if (!this.player || !Number.isFinite(bounds.minX)) return;
     const { x: paddingX, y: paddingY } = ROOSEVELT_VISUAL_TARGET.cameraPadding;
+    const bias = ROOSEVELT_VISUAL_TARGET.cameraBiasByMap[this.worldMapId];
     const camera = this.cameras.main;
     camera.setBounds(
       bounds.minX - paddingX,
@@ -284,7 +362,7 @@ export class RooseveltScene extends Phaser.Scene {
     );
     camera.setZoom(ROOSEVELT_VISUAL_TARGET.initialZoom);
     camera.setRoundPixels(true);
-    camera.centerOn((bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2);
+    camera.centerOn((bounds.minX + bounds.maxX) / 2 + bias.x, (bounds.minY + bounds.maxY) / 2 + bias.y);
     camera.stopFollow();
     this.cameraDetached = true;
   }
