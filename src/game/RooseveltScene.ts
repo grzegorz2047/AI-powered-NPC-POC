@@ -8,11 +8,12 @@ import { readMapTransitions, type MapTransition } from './mapTransitions';
 import { readMapZones } from './mapZones';
 import {
   CLUE_TEXTURE_BY_ID,
+  ROOSEVELT_CHARACTER_FRAME,
   ROOSEVELT_FLOOR_TEXTURE_BY_MAP,
-  ROOSEVELT_IMAGE_ASSETS,
-  ROOSEVELT_PLAYER_TEXTURE,
+  ROOSEVELT_GENERATED_SHEETS,
+  ROOSEVELT_PROP_FRAME,
   ROOSEVELT_WALL_TEXTURES_BY_MAP,
-  ROOSEVELT_WITNESS_TEXTURE_BY_ID,
+  ROOSEVELT_WITNESS_FRAME_BY_ID,
   SCENE_SVG_ASSETS,
 } from './sceneAssets';
 import { createWalkabilityMatrix, findTilePath, type TilePoint } from './tilePathfinding';
@@ -52,7 +53,9 @@ export class RooseveltScene extends Phaser.Scene {
     this.load.tilemapTiledJSON('roosevelt-map', WORLD_MAPS[this.worldMapId].mapUrl);
     this.load.image('roosevelt-floor', ROOSEVELT_FLOOR_TEXTURE_BY_MAP[this.worldMapId]);
     for (const [key, url] of SCENE_SVG_ASSETS) this.load.svg(key, url);
-    for (const [key, url] of ROOSEVELT_IMAGE_ASSETS) this.load.image(key, url);
+    for (const sheet of Object.values(ROOSEVELT_GENERATED_SHEETS)) {
+      this.load.spritesheet(sheet.key, sheet.url, { frameWidth: sheet.frameWidth, frameHeight: sheet.frameHeight });
+    }
     for (const asset of Object.values(GAME_AUDIO)) this.load.audio(asset.key, asset.url);
   }
 
@@ -91,8 +94,6 @@ export class RooseveltScene extends Phaser.Scene {
     this.createPlayer(playerAnchor.tileX, playerAnchor.tileY);
     this.configureCamera(worldBounds);
     this.setupCameraControls();
-
-    this.addZoneLabels(map.getObjectLayer('Zones')?.objects);
     this.addWalkZones(walkableTiles);
 
     for (const clueId of WORLD_MAPS[this.worldMapId].clueIds) {
@@ -207,6 +208,13 @@ export class RooseveltScene extends Phaser.Scene {
     if (this.walkabilityGrid[tileY]?.[tileX] !== 1) throw new Error(`${this.worldMapId} ${label} is not on Walkable`);
   }
 
+  private generatedProp(frame: number, x: number, y: number, width: number, height: number, depth: number) {
+    return this.add.image(x, y, ROOSEVELT_GENERATED_SHEETS.props.key, frame)
+      .setOrigin(0.5, 1)
+      .setDisplaySize(width, height)
+      .setDepth(depth);
+  }
+
   private addArchitecture(visibleFloorTiles: Set<string>, objects: Parameters<typeof readMapZones>[0]) {
     const wallTextures = ROOSEVELT_WALL_TEXTURES_BY_MAP[this.worldMapId];
     const isVisible = (x: number, y: number) => visibleFloorTiles.has(`${x}:${y}`);
@@ -232,43 +240,32 @@ export class RooseveltScene extends Phaser.Scene {
     for (const zone of readMapZones(objects)) {
       const point = this.tileToWorld(zone.tileX, zone.tileY);
       if (zone.id === 'room-307') {
-        this.add.image(point.x + 46, point.y + 54, 'mockup-door307')
-          .setOrigin(0.5, 1)
-          .setDisplaySize(102, 184)
-          .setDepth(point.y + 120);
+        this.generatedProp(ROOSEVELT_PROP_FRAME.room307, point.x + 34, point.y + 72, 276, 276, point.y + 126);
       }
       if (zone.id === 'main-lobby') {
-        this.add.image(point.x - 92, point.y + 118, 'mockup-reception')
-          .setOrigin(0.5, 1)
-          .setDisplaySize(310, 200)
-          .setDepth(point.y + 142);
+        this.generatedProp(ROOSEVELT_PROP_FRAME.reception, point.x - 92, point.y + 120, 300, 300, point.y + 142);
+      }
+      if (zone.id === 'lounge' && this.worldMapId === 'roosevelt-lobby') {
+        this.generatedProp(ROOSEVELT_PROP_FRAME.luggageCart, point.x - 54, point.y + 102, 156, 156, point.y + 116);
       }
       if (zone.id === 'laundry') {
-        this.add.image(point.x + 96, point.y + 126, 'mockup-laundry')
-          .setOrigin(0.5, 1)
-          .setDisplaySize(260, 242)
-          .setDepth(point.y + 148);
+        this.generatedProp(ROOSEVELT_PROP_FRAME.laundry, point.x + 72, point.y + 126, 264, 264, point.y + 148);
+        this.generatedProp(ROOSEVELT_PROP_FRAME.cleaningCart, point.x - 82, point.y + 106, 150, 150, point.y + 138);
       }
-      if (zone.id === 'service-hall' || zone.id === 'service-corridor') {
-        this.add.image(point.x - 44, point.y + 76, 'prop-cart')
-          .setOrigin(0.5, 1)
-          .setDisplaySize(88, 82)
-          .setDepth(point.y + 104)
-          .setAlpha(0.9);
+      if (zone.id === 'service-hall' && this.worldMapId === 'roosevelt-floor-3') {
+        this.generatedProp(ROOSEVELT_PROP_FRAME.cctvDesk, point.x + 58, point.y + 112, 238, 238, point.y + 138);
+      }
+      if (zone.id === 'service-hall' && this.worldMapId !== 'roosevelt-floor-3') {
+        this.generatedProp(ROOSEVELT_PROP_FRAME.cleaningCart, point.x - 38, point.y + 90, 142, 142, point.y + 112).setAlpha(0.9);
+      }
+      if (zone.id === 'service-corridor' && this.worldMapId === 'roosevelt-basement') {
+        this.generatedProp(ROOSEVELT_PROP_FRAME.cleaningCart, point.x - 44, point.y + 90, 150, 150, point.y + 112);
       }
       if (zone.id === 'guest-corridor-west' && this.worldMapId === 'roosevelt-floor-3') {
-        this.add.image(point.x - 82, point.y + 124, 'mockup-stairs')
-          .setOrigin(0.5, 1)
-          .setDisplaySize(208, 236)
-          .setDepth(point.y + 144)
-          .setAlpha(0.96);
+        this.generatedProp(ROOSEVELT_PROP_FRAME.stairs, point.x - 72, point.y + 126, 244, 244, point.y + 146);
       }
-      if (zone.id === 'guest-corridor-east' || zone.id === 'palm-room') {
-        this.add.image(point.x + 40, point.y + 18, 'prop-window')
-          .setOrigin(0.5, 1)
-          .setDisplaySize(82, 72)
-          .setDepth(point.y + 54)
-          .setAlpha(0.86);
+      if (zone.id === 'guest-corridor-east' && this.worldMapId === 'roosevelt-floor-3') {
+        this.generatedProp(ROOSEVELT_PROP_FRAME.luggageCart, point.x + 44, point.y + 100, 154, 154, point.y + 118).setAlpha(0.94);
       }
     }
   }
@@ -350,19 +347,6 @@ export class RooseveltScene extends Phaser.Scene {
     this.cameraModeText?.setText('CAMERA FOLLOW · RMB/MMB DRAG · WHEEL ZOOM · WASD/ARROWS PAN');
   }
 
-  private addZoneLabels(objects: Parameters<typeof readMapZones>[0]) {
-    for (const zone of readMapZones(objects)) {
-      const point = this.tileToWorld(zone.tileX, zone.tileY);
-      this.add.text(point.x, point.y + 28, zone.label, {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '10px',
-        color: '#c7b790',
-        backgroundColor: '#11100ddc',
-        padding: { x: 5, y: 3 },
-      }).setOrigin(0.5).setDepth(point.y + 150).setAlpha(0.82);
-    }
-  }
-
   private addWalkZones(walkableTiles: Set<string>) {
     for (const tileKey of walkableTiles) {
       const [tileX, tileY] = tileKey.split(':').map(Number);
@@ -377,7 +361,8 @@ export class RooseveltScene extends Phaser.Scene {
   private createPlayer(tileX: number, tileY: number) {
     const start = this.tileToWorld(tileX, tileY);
     const shadow = this.add.ellipse(0, 0, 48, 17, 0x000000, 0.54);
-    const body = this.add.image(0, -66, ROOSEVELT_PLAYER_TEXTURE).setDisplaySize(78, 130);
+    const body = this.add.image(0, -70, ROOSEVELT_GENERATED_SHEETS.characters.key, ROOSEVELT_CHARACTER_FRAME.detective)
+      .setDisplaySize(86, 130);
     this.playerBody = body;
     this.playerTile = { x: tileX, y: tileY };
     this.player = this.add.container(start.x, start.y + 56, [shadow, body]).setDepth(start.y + 150).setName('detective');
@@ -404,7 +389,7 @@ export class RooseveltScene extends Phaser.Scene {
   private followPath(path: TilePoint[], index: number, generation: number, onArrive?: () => void) {
     if (!this.player || generation !== this.movementGeneration) return;
     if (index >= path.length) {
-      this.playerBody?.setY(-66);
+      this.playerBody?.setY(-70);
       onArrive?.();
       return;
     }
@@ -416,7 +401,7 @@ export class RooseveltScene extends Phaser.Scene {
     const duration = Phaser.Math.Clamp(Phaser.Math.Distance.Between(this.player.x, this.player.y, x, y) * 2.5, 90, 260);
     if (this.playerBody) {
       this.playerBody.setFlipX(x < this.player.x);
-      this.tweens.add({ targets: this.playerBody, y: -70, duration: Math.max(55, duration / 2), yoyo: true });
+      this.tweens.add({ targets: this.playerBody, y: -74, duration: Math.max(55, duration / 2), yoyo: true });
     }
     this.tweens.add({
       targets: this.player,
@@ -464,12 +449,15 @@ export class RooseveltScene extends Phaser.Scene {
 
   private addWitness(id: string, name: string, role: string, tileX: number, tileY: number, x: number, y: number) {
     const shadow = this.add.ellipse(x, y, 48, 17, 0x000000, 0.54).setDepth(y + 88);
-    const texture = ROOSEVELT_WITNESS_TEXTURE_BY_ID[id] ?? 'npc-nina';
-    const body = this.add.image(x, y, texture).setOrigin(0.5, 1).setDisplaySize(76, 128).setDepth(y + 96);
+    const frame = ROOSEVELT_WITNESS_FRAME_BY_ID[id] ?? ROOSEVELT_CHARACTER_FRAME.nina;
+    const body = this.add.image(x, y, ROOSEVELT_GENERATED_SHEETS.characters.key, frame)
+      .setOrigin(0.5, 1)
+      .setDisplaySize(82, 130)
+      .setDepth(y + 96);
     const label = this.add.text(x, y + 8, name.split(' ')[0], {
       fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#e7ddca', backgroundColor: '#0c0d0be8', padding: { x: 5, y: 3 },
     }).setOrigin(0.5).setDepth(y + 108);
-    const hit = this.add.zone(x, y - 58, 78, 128).setInteractive({ useHandCursor: true }).setDepth(y + 110);
+    const hit = this.add.zone(x, y - 58, 82, 130).setInteractive({ useHandCursor: true }).setDepth(y + 110);
     hit.on('pointerover', (pointer: Phaser.Input.Pointer) => {
       body.setScale(1.05); shadow.setScale(1.08); label.setColor('#f2d899');
       this.showTooltip(`${name} · ${role}`, pointer.worldX, pointer.worldY - 70);
@@ -482,11 +470,7 @@ export class RooseveltScene extends Phaser.Scene {
 
   private addTransition(transition: MapTransition) {
     const point = this.tileToWorld(transition.tileX, transition.tileY);
-    const elevator = this.add.image(point.x, point.y + 54, 'mockup-elevator')
-      .setOrigin(0.5, 1)
-      .setDisplaySize(124, 240)
-      .setDepth(point.y + 104)
-      .setAlpha(0.98);
+    const elevator = this.generatedProp(ROOSEVELT_PROP_FRAME.elevator, point.x, point.y + 56, 238, 238, point.y + 108).setAlpha(0.98);
     const marker = this.add.text(point.x, point.y + 16, '⇅', {
       fontFamily: 'Arial, sans-serif', fontSize: '15px', color: '#e0c47d', backgroundColor: '#10100ce8', padding: { x: 6, y: 3 },
     }).setOrigin(0.5).setDepth(point.y + 132);
@@ -505,8 +489,8 @@ export class RooseveltScene extends Phaser.Scene {
     this.add.text(26, 24, `HOTEL NOCTURNE / ${map.title.toUpperCase()}`, {
       fontFamily: 'Georgia, serif', fontSize: '20px', color: '#e1c98d', backgroundColor: '#090a07e3', padding: { x: 8, y: 5 },
     }).setScrollFactor(0).setDepth(30000);
-    this.add.text(26, 58, 'ROOSEVELT HOTEL 1925 · MOCKUP-GUIDED ISOMETRIC RECONSTRUCTION', {
-      fontFamily: 'Arial, sans-serif', fontSize: '9px', color: '#93917c', letterSpacing: 1,
+    this.add.text(26, 58, 'Drag to pan · Scroll to zoom · Click an object to inspect', {
+      fontFamily: 'Arial, sans-serif', fontSize: '10px', color: '#a4a495',
     }).setScrollFactor(0).setDepth(30000);
     this.objectiveText = this.add.text(996, 26, '', {
       fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#d0b36f', align: 'right', backgroundColor: '#090a07e3', padding: { x: 7, y: 5 },
