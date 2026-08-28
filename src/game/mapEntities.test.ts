@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mapAnchorKey, readEntityAnchors } from './mapEntities';
+import { mapAnchorKey, readEntityAnchors, requireEntityAnchor } from './mapEntities';
 
 describe('Tiled entity anchors', () => {
   it('reads clue, witness and player positions from object properties', () => {
@@ -32,5 +32,9 @@ describe('Tiled entity anchors', () => {
       { type: 'clue', properties: [{ name: 'entityId', value: 'missing-position' }] },
     ]);
     expect(anchors.size).toBe(0);
+  });
+
+  it('fails closed when the map omits a required gameplay anchor', () => {
+    expect(() => requireEntityAnchor(new Map(), 'witness', 'marek')).toThrow(/missing required witness anchor: marek/i);
   });
 });
