@@ -11,6 +11,7 @@ export function AccessibleScenePanel() {
   const discoverClue = useInvestigationStore((state) => state.discoverClue);
   const selectWitness = useInvestigationStore((state) => state.selectWitness);
   const currentMapId = useWorldStore((state) => state.currentMapId);
+  const navigate = useWorldStore((state) => state.navigate);
   const currentMap = WORLD_MAPS[currentMapId];
   const localClues = clues.filter((clue) => (currentMap.clueIds as readonly string[]).includes(clue.id));
   const localWitnesses = witnesses.filter((witness) => (currentMap.witnessIds as readonly string[]).includes(witness.id));
@@ -47,6 +48,32 @@ export function AccessibleScenePanel() {
           <p className="access-intro">
             {currentMap.title}. Keyboard alternative to the canvas. Only people and hotspots physically present on this hotel level are listed here.
           </p>
+
+          {currentMap.navigation.length > 0 && (
+            <section className="access-section" aria-labelledby="access-navigation-heading">
+              <div className="access-section-title">
+                <h3 id="access-navigation-heading">Hotel levels</h3>
+                <span>{currentMap.navigation.length} exits</span>
+              </div>
+              <div className="access-item-list">
+                {currentMap.navigation.map((item) => (
+                  <button
+                    type="button"
+                    key={`${item.targetMap}:${item.targetSpawn}`}
+                    className="access-item access-witness"
+                    onClick={() => {
+                      navigate(item.targetMap, item.targetSpawn);
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="access-status">Move to level</span>
+                    <strong>{item.label}</strong>
+                    <small>{WORLD_MAPS[item.targetMap].title}</small>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="access-section" aria-labelledby="access-clues-heading">
             <div className="access-section-title">
