@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { chooseNarrationVoice, resolveNarrationLocale } from '../audio/narration';
 import { useInvestigationStore } from '../state/investigationStore';
 
 export function DetectiveThought() {
@@ -7,13 +8,24 @@ export function DetectiveThought() {
   const toggleMute = useInvestigationStore((state) => state.toggleMute);
 
   useEffect(() => {
-    if (muted || !thought || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
+    if (muted || !thought || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
+
+    const synthesis = window.speechSynthesis;
+    synthesis.cancel();
+
+    const locale = resolveNarrationLocale(document.documentElement.lang, navigator.language);
     const utterance = new SpeechSynthesisUtterance(thought);
-    utterance.lang = 'en-GB';
+    utterance.lang = locale;
     utterance.rate = 0.94;
-    window.speechSynthesis.speak(utterance);
-    return () => window.speechSynthesis.cancel();
+
+    const voice = chooseNarrationVoice(synthesis.getVoices(), locale);
+    if (voice) {
+      utterance.voice = synthesis.getVoices().find((item) => item.name === voice.name && item.lang === voice.lang) ?? null;
+      utterance.lang = voice.lang;
+    }
+
+    synthesis.speak(utterance);
+    return () => synthesis.cancel();
   }, [thought, muted]);
 
   return (
