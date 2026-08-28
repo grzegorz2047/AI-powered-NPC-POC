@@ -1,16 +1,25 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { clues, witnesses } from '../data/caseData';
+import type { InterviewPressure } from '../domain/npcPolicy';
+import { addUnique, applyWitnessEffects, type WitnessProgressSnapshot } from '../domain/progression';
 import { getNarrativeLine } from '../narrative/runtime';
-import { addUnique } from '../domain/progression';
 
 type InterviewLine = {
   id: string;
   speaker: 'detective' | 'witness';
   text: string;
+  pressure?: InterviewPressure;
 };
 
-type WitnessProgress = Record<string, { resistance: number; contradictions: number }>;
+type WitnessProgress = Record<string, Required<WitnessProgressSnapshot>>;
+
+type ExchangeEffects = {
+  resistanceDelta?: number;
+  contradictionDelta?: number;
+  contradictionId?: string;
+  pressure?: InterviewPressure;
+};
 
 type InvestigationState = {
   discoveredClueIds: string[];
@@ -22,12 +31,12 @@ type InvestigationState = {
   discoverClue: (clueId: string) => void;
   selectWitness: (witnessId: string | null) => void;
   toggleMute: () => void;
-  addInterviewExchange: (witnessId: string, question: string, answer: string, resistanceDelta?: number, contradictionDelta?: number) => void;
+  addInterviewExchange: (witnessId: string, question: string, answer: string, effects?: ExchangeEffects) => void;
   resetCase: () => void;
 };
 
 const initialProgress: WitnessProgress = Object.fromEntries(
-  witnesses.map((witness) => [witness.id, { resistance: witness.resistance, contradictions: 0 }]),
+  witnesses.map((witness) => [witness.id, { resistance: witness.resistance, contradictions: 0, contradictionIds: [] }]),
 );
 
 export const useInvestigationStore = create<InvestigationState>()(
@@ -49,26 +58,23 @@ export const useInvestigationStore = create<InvestigationState>()(
       },
       selectWitness: (selectedWitnessId) => set({ selectedWitnessId }),
       toggleMute: () => set((state) => ({ muted: !state.muted })),
-      addInterviewExchange: (witnessId, question, answer, resistanceDelta = 0, contradictionDelta = 0) =>
+      addInterviewExchange: (witnessId, question, answer, effects = {}) =>
         set((state) => {
-          const current = state.witnessProgress[witnessId] ?? { resistance: 50, contradictions: 0 };
-          const nextResistance = Math.max(0, Math.min(100, current.resistance + resistanceDelta));
+          const current = state.witnessProgress[witnessId] ?? { resistance: 50, contradictions: 0, contradictionIds: [] };
+          const nextProgress = applyWitnessEffects(current, effects);
           const oldTranscript = state.transcripts[witnessId] ?? [];
           return {
             transcripts: {
               ...state.transcripts,
               [witnessId]: [
                 ...oldTranscript,
-                { id: crypto.randomUUID(), speaker: 'detective', text: question },
+                { id: crypto.randomUUID(), speaker: 'detective', text: question, pressure: effects.pressure ?? 'neutral' },
                 { id: crypto.randomUUID(), speaker: 'witness', text: answer },
               ],
             },
             witnessProgress: {
               ...state.witnessProgress,
-              [witnessId]: {
-                resistance: nextResistance,
-                contradictions: current.contradictions + contradictionDelta,
-              },
+              [witnessId]: nextProgress,
             },
           };
         }),
@@ -92,4 +98,3 @@ export const useInvestigationStore = create<InvestigationState>()(
     },
   ),
 );
-

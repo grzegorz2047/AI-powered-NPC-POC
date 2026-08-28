@@ -1,5 +1,11 @@
 import { suggestedQuestions } from '../data/caseData';
 
+export type WitnessProgressSnapshot = {
+  resistance: number;
+  contradictions: number;
+  contradictionIds?: string[];
+};
+
 export function availableQuestions(witnessId: string, clueIds: string[]) {
   return suggestedQuestions.filter((question) => {
     if (question.witnessId !== witnessId) return false;
@@ -22,6 +28,24 @@ export function questionsUnlockedByClue(clueId: string, clueIds: string[]) {
     });
     return trigger === clueId;
   });
+}
+
+export function applyWitnessEffects(
+  current: WitnessProgressSnapshot,
+  effects: { resistanceDelta?: number; contradictionDelta?: number; contradictionId?: string },
+): Required<WitnessProgressSnapshot> {
+  const contradictionIds = [...(current.contradictionIds ?? [])];
+  const contradictionDelta = effects.contradictionDelta ?? 0;
+  const contradictionId = effects.contradictionId;
+  const isNewContradiction = contradictionDelta > 0 && (!contradictionId || !contradictionIds.includes(contradictionId));
+
+  if (isNewContradiction && contradictionId) contradictionIds.push(contradictionId);
+
+  return {
+    resistance: Math.max(0, Math.min(100, current.resistance + (effects.resistanceDelta ?? 0))),
+    contradictions: current.contradictions + (isNewContradiction ? contradictionDelta : 0),
+    contradictionIds,
+  };
 }
 
 export function addUnique<T>(items: T[], item: T): T[] {

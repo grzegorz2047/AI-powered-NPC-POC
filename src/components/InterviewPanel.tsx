@@ -1,10 +1,12 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { askNpc } from '../ai/npcRuntime';
 import { witnessById } from '../data/caseData';
+import type { InterviewPressure } from '../domain/npcPolicy';
 import { availableQuestions, questionsUnlockedByClue } from '../domain/progression';
 import { useGameInputBlocker } from '../game/useGameInputBlocker';
 import { useAiSettingsStore } from '../state/aiSettingsStore';
 import { useInvestigationStore } from '../state/investigationStore';
+import './interviewStrategy.css';
 
 function resistanceLabel(value: number) {
   if (value <= 30) return 'open';
@@ -12,6 +14,12 @@ function resistanceLabel(value: number) {
   if (value <= 75) return 'closed';
   return 'very difficult';
 }
+
+const PRESSURES: Array<{ id: InterviewPressure; label: string }> = [
+  { id: 'empathy', label: 'Empathy' },
+  { id: 'neutral', label: 'Neutral' },
+  { id: 'confront', label: 'Confront' },
+];
 
 export function InterviewPanel() {
   const witnessId = useInvestigationStore((state) => state.selectedWitnessId);
@@ -23,6 +31,7 @@ export function InterviewPanel() {
   const activeBackend = useAiSettingsStore((state) => state.runtime.activeBackend);
   const provider = useAiSettingsStore((state) => state.provider);
   const [question, setQuestion] = useState('');
+  const [pressure, setPressure] = useState<InterviewPressure>('neutral');
   const [busy, setBusy] = useState(false);
   useGameInputBlocker('interview', Boolean(witnessId));
 
@@ -37,9 +46,9 @@ export function InterviewPanel() {
 
   const activeWitnessId = witnessId;
   const transcript = transcripts[activeWitnessId] ?? [];
-  const witnessProgress = progress[activeWitnessId] ?? { resistance: witness.resistance, contradictions: 0 };
+  const witnessProgress = progress[activeWitnessId] ?? { resistance: witness.resistance, contradictions: 0, contradictionIds: [] };
 
-  async function ask(text: string) {
+  async function ask(text: string, selectedPressure: InterviewPressure = pressure) {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
     setBusy(true);
@@ -50,17 +59,17 @@ export function InterviewPanel() {
         evidenceIds: clueIds,
         resistance: witnessProgress.resistance,
         contradictions: witnessProgress.contradictions,
+        pressure: selectedPressure,
       });
-      addExchange(
-        activeWitnessId,
-        trimmed,
-        payload.answer,
-        payload.resistanceDelta,
-        payload.contradictionDelta,
-      );
+      addExchange(activeWitnessId, trimmed, payload.answer, {
+        resistanceDelta: payload.resistanceDelta,
+        contradictionDelta: payload.contradictionDelta,
+        contradictionId: payload.contradictionId,
+        pressure: selectedPressure,
+      });
       setQuestion('');
     } catch {
-      addExchange(activeWitnessId, trimmed, 'The witness stares at you and says nothing.');
+      addExchange(activeWitnessId, trimmed, 'The witness stares at you and says nothing.', { pressure: selectedPressure });
     } finally {
       setBusy(false);
     }
@@ -68,7 +77,7 @@ export function InterviewPanel() {
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    void ask(question);
+    void ask(question, pressure);
   }
 
   return (
@@ -79,15 +88,22 @@ export function InterviewPanel() {
             <span className="eyebrow">WITNESS / {resistanceLabel(witnessProgress.resistance)} · AI {activeBackend ?? provider}</span>
             <h2>{witness.name}</h2>
             <p>{witness.role}</p>
+            <div className="resistance-meter" aria-label={`Witness resistance ${witnessProgress.resistance} out of 100`}>
+              <small>Resistance</small><strong>{witnessProgress.resistance}/100</strong>
+              <div className="resistance-meter-track"><span style={{ width: `${witnessProgress.resistance}%` }} /></div>
+            </div>
           </div>
           <button type="button" className="close-button" onClick={() => selectWitness(null)}>Close</button>
         </header>
 
         <div className="transcript">
-          {transcript.length === 0 && <p className="empty-copy">Ask a suggested question or type your own.</p>}
+          {transcript.length === 0 && <p className="empty-copy">Ask a suggested question or type your own. Your approach changes how quickly this witness opens up.</p>}
           {transcript.map((line) => (
             <div key={line.id} className={`line line-${line.speaker}`}>
-              <b>{line.speaker === 'detective' ? 'You' : witness.name.split(' ')[0]}</b>
+              <div className="line-speaker">
+                <b>{line.speaker === 'detective' ? 'You' : witness.name.split(' ')[0]}</b>
+                {line.speaker === 'detective' && line.pressure && <small className="line-tone">{line.pressure}</small>}
+              </div>
               <span>{line.text}</span>
             </div>
           ))}
@@ -102,14 +118,30 @@ export function InterviewPanel() {
                 key={item.id}
                 type="button"
                 className={isNewLead ? 'suggested-lead' : undefined}
-                onClick={() => void ask(item.text)}
+                onClick={() => void ask(item.text, item.pressure)}
                 disabled={busy}
+                title={`Suggested approach: ${item.pressure}`}
               >
                 {isNewLead && <span className="lead-badge">NEW LEAD</span>}
                 <span>{item.text}</span>
               </button>
             );
           })}
+        </div>
+
+        <div className="interview-strategy" aria-label="Interview approach">
+          <span className="interview-strategy-label">Approach</span>
+          {PRESSURES.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              aria-pressed={pressure === item.id}
+              onClick={() => setPressure(item.id)}
+              disabled={busy}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
 
         <form className="ask-form" onSubmit={submit}>

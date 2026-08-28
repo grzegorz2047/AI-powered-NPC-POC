@@ -7,6 +7,7 @@ import type { NpcReply, RuntimeDiagnostics } from './types';
 export type RuntimeNpcAnswer = NpcReply & {
   resistanceDelta: number;
   contradictionDelta: number;
+  contradictionId?: string;
 };
 
 let browserProvider: BrowserQwenProvider | null = null;
@@ -108,6 +109,7 @@ export async function testAndSelectByok() {
       evidenceIds: [],
       resistance: 25,
       contradictions: 0,
+      pressure: 'neutral',
     });
     useAiSettingsStore.getState().setRuntime({
       state: 'ready',
@@ -147,7 +149,12 @@ export async function askNpc(request: NpcPolicyRequest): Promise<RuntimeNpcAnswe
       reply = { answer: policy.answer, backend: 'rules', model: null };
     }
 
-    return { ...reply, resistanceDelta: policy.resistanceDelta, contradictionDelta: policy.contradictionDelta };
+    return {
+      ...reply,
+      resistanceDelta: policy.resistanceDelta,
+      contradictionDelta: policy.contradictionDelta,
+      contradictionId: policy.contradictionId,
+    };
   } catch (error) {
     const message = errorMessage(error);
     useAiSettingsStore.getState().setRuntime({
@@ -163,6 +170,7 @@ export async function askNpc(request: NpcPolicyRequest): Promise<RuntimeNpcAnswe
       model: null,
       resistanceDelta: policy.resistanceDelta,
       contradictionDelta: policy.contradictionDelta,
+      contradictionId: policy.contradictionId,
     };
   }
 }

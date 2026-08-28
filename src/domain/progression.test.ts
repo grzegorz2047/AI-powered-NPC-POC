@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { availableQuestions, questionsUnlockedByClue } from './progression';
+import { applyWitnessEffects, availableQuestions, questionsUnlockedByClue } from './progression';
 
 describe('investigation question progression', () => {
   it('unlocks evidence-gated questions only after the required clue exists', () => {
@@ -19,5 +19,29 @@ describe('investigation question progression', () => {
       'nina-card',
       'nina-return',
     ]);
+  });
+});
+
+describe('witness contradiction progress', () => {
+  it('counts a contradiction key only once while still applying resistance pressure', () => {
+    const first = applyWitnessEffects(
+      { resistance: 90, contradictions: 0, contradictionIds: [] },
+      { resistanceDelta: -10, contradictionDelta: 1, contradictionId: 'marek-keycard' },
+    );
+    const repeated = applyWitnessEffects(first, { resistanceDelta: -10, contradictionDelta: 1, contradictionId: 'marek-keycard' });
+
+    expect(first.contradictions).toBe(1);
+    expect(repeated.contradictions).toBe(1);
+    expect(repeated.resistance).toBe(70);
+    expect(repeated.contradictionIds).toEqual(['marek-keycard']);
+  });
+
+  it('counts three distinct contradictions independently', () => {
+    let progress = { resistance: 90, contradictions: 0, contradictionIds: [] as string[] };
+    for (const id of ['marek-keycard', 'marek-corrected-cctv', 'marek-ledger']) {
+      progress = applyWitnessEffects(progress, { resistanceDelta: -10, contradictionDelta: 1, contradictionId: id });
+    }
+    expect(progress.contradictions).toBe(3);
+    expect(progress.contradictionIds).toHaveLength(3);
   });
 });

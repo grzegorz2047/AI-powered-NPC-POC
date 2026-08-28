@@ -1,4 +1,4 @@
-import { buildAllowedNpcPrompt, evaluateNpcPolicy, type NpcPolicyRequest, type NpcPolicyResult } from '../src/domain/npcPolicy.js';
+import { buildAllowedNpcPrompt, evaluateNpcPolicy, type InterviewPressure, type NpcPolicyRequest, type NpcPolicyResult } from '../src/domain/npcPolicy.js';
 
 type LlmConfig = {
   baseUrl?: string;
@@ -36,6 +36,7 @@ async function naturalize(body: ApiRequest, result: NpcPolicyResult) {
           role: 'system',
           content: [
             `You are ${prompt.witnessName}, a ${prompt.persona}.`,
+            `Current resistance: ${Math.round(prompt.resistance)}/100. Detective approach: ${prompt.pressure}.`,
             'You are a witness in a detective game. Stay in character.',
             'Use only the facts listed below. Never add new case facts, names, times, motives or evidence.',
             `Allowed facts: ${prompt.allowedFacts.join('; ') || 'none'}.`,
@@ -79,6 +80,10 @@ function allowedByokHosts() {
   return new Set([...DEFAULT_ALLOWED_BYOK_HOSTS, ...configured]);
 }
 
+function normalizePressure(value: unknown): InterviewPressure {
+  return value === 'empathy' || value === 'confront' ? value : 'neutral';
+}
+
 export default {
   async fetch(request: Request) {
     if (request.method !== 'POST') {
@@ -95,6 +100,7 @@ export default {
         evidenceIds: Array.isArray(body.evidenceIds) ? body.evidenceIds : [],
         resistance: Number(body.resistance) || 0,
         contradictions: Number(body.contradictions) || 0,
+        pressure: normalizePressure(body.pressure),
         llm: body.llm,
       };
       const result = evaluateNpcPolicy(normalized);
@@ -103,6 +109,7 @@ export default {
         answer: naturalized.answer,
         resistanceDelta: result.resistanceDelta,
         contradictionDelta: result.contradictionDelta,
+        contradictionId: result.contradictionId ?? null,
         mode: naturalized.model ? 'llm' : 'rules',
         model: naturalized.model,
       });
