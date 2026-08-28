@@ -61,8 +61,8 @@ describe('NPC case-fact firewall', () => {
   });
 
   it('does not mistake normal words containing an evidence substring for evidence', () => {
-    const prompt = promptFor({ witnessId: 'kamil', question: 'When did the argument start?', resistance: 25, pressure: 'neutral' });
-    const decision = validateNpcReply('The argument had begun before I went back to the bar.', prompt);
+    const prompt = promptFor({ witnessId: 'kamil', question: 'What were you doing?', resistance: 25, pressure: 'neutral' });
+    const decision = validateNpcReply('My shift had begun at the bar.', prompt);
     expect(decision).toEqual({ safe: true });
   });
 
