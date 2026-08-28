@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { chromeBuiltInAvailability } from '../ai/chromeBuiltinProvider';
 import { detectBrowserAiCapabilities } from '../ai/capabilities';
 import { initializeBrowserQwen, initializeChromeBuiltIn, selectRulesFallback, testAndSelectByok } from '../ai/npcRuntime';
+import { byokConfigurationAvailability, localQwenAvailability } from '../ai/providerAvailability';
 import { formatRuntimeMs } from '../ai/runtimeDiagnostics';
 import type { ProviderAvailability } from '../ai/types';
 import { useGameInputBlocker } from '../game/useGameInputBlocker';
@@ -39,6 +40,13 @@ export function AiSettingsPanel() {
 
   if (!open) return null;
 
+  const byokStatus: ProviderAvailability = provider === 'byok' && runtime.state === 'ready' && runtime.activeBackend === 'remote'
+    ? { state: 'available', label: 'Active & tested', detail: runtime.activeModel ?? undefined }
+    : byokConfigurationAvailability(byokBaseUrl, byokModel, byokApiKey);
+  const localStatus: ProviderAvailability = provider === 'browser-qwen' && runtime.state === 'ready' && ['npu', 'webgpu', 'wasm'].includes(runtime.activeBackend ?? '')
+    ? { state: 'available', label: `Active on ${runtime.activeBackend}`, detail: runtime.activeModel ?? undefined }
+    : localQwenAvailability(capabilities, browserAcceleration);
+
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
     setActionError(null);
@@ -70,6 +78,11 @@ export function AiSettingsPanel() {
               <span className="cost-badge">BYOK</span>
             </div>
             <p>OpenAI-compatible cloud model. The key is kept only in tab memory, sent through the Vercel proxy for each request, and never persisted by the game.</p>
+            <div className="capability-row" aria-label="BYOK characteristics">
+              <span>Privacy: cloud</span><span>Speed: network</span><span>Cost: provider</span>
+            </div>
+            <div className={`availability availability-${byokStatus.state}`}>{byokStatus.label}</div>
+            {byokStatus.detail && <small>{byokStatus.detail}</small>}
             <label>Endpoint
               <input value={byokBaseUrl} onChange={(event) => setByokBaseUrl(event.target.value)} placeholder="https://openrouter.ai/api/v1" />
             </label>
@@ -89,11 +102,16 @@ export function AiSettingsPanel() {
               <span className="cost-badge">FREE · LOCAL</span>
             </div>
             <p>Runs in the browser through Transformers.js. Dialog does not leave the device.</p>
+            <div className="capability-row" aria-label="Local model characteristics">
+              <span>Privacy: local</span><span>Speed: hardware</span><span>Cost: free</span>
+            </div>
             <div className="capability-row">
               <span className={capabilities.webnn ? 'cap-ok' : 'cap-off'}>WebNN API {capabilities.webnn ? '✓' : '—'}</span>
               <span className={capabilities.webgpu ? 'cap-ok' : 'cap-off'}>WebGPU {capabilities.webgpu ? '✓' : '—'}</span>
               <span className={capabilities.wasm ? 'cap-ok' : 'cap-off'}>CPU/WASM {capabilities.wasm ? '✓' : '—'}</span>
             </div>
+            <div className={`availability availability-${localStatus.state}`}>{localStatus.label}</div>
+            {localStatus.detail && <small>{localStatus.detail}</small>}
             <label>Model profile
               <select value={browserProfile} onChange={(event) => setBrowserProfile(event.target.value as 'auto' | 'quality' | 'lite')}>
                 <option value="auto">Auto</option>
@@ -109,7 +127,7 @@ export function AiSettingsPanel() {
                 <option value="wasm">CPU only · WASM</option>
               </select>
             </label>
-            <button type="button" className="primary-button" disabled={busy} onClick={() => void run(initializeBrowserQwen)}>Download / initialize local model</button>
+            <button type="button" className="primary-button" disabled={busy || localStatus.state === 'unsupported'} onClick={() => void run(initializeBrowserQwen)}>Download / initialize local model</button>
             <small>WebNN API availability is only a capability hint. `Active backend: NPU` appears only after the model session really initializes with `webnn-npu`. NPU-only never silently falls back. Qwen thinking is disabled for low-latency NPC replies.</small>
           </article>
 
@@ -119,6 +137,9 @@ export function AiSettingsPanel() {
               <span className="cost-badge">FREE</span>
             </div>
             <p>Uses Chrome Prompt API / LanguageModel when the browser and device expose it.</p>
+            <div className="capability-row" aria-label="Chrome built-in characteristics">
+              <span>Privacy: browser</span><span>Speed: device</span><span>Cost: free</span>
+            </div>
             <div className={`availability availability-${chrome.state}`}>{chrome.label}</div>
             {chrome.detail && <small>{chrome.detail}</small>}
             <button type="button" className="primary-button" disabled={busy || chrome.state === 'unsupported'} onClick={() => void run(initializeChromeBuiltIn)}>Initialize Chrome model</button>
