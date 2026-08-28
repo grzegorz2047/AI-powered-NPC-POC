@@ -1,0 +1,1 @@
+Generated image source sheets are prepared locally; runtime integration is in progress after Vercel visual geometry validation.
