@@ -53,6 +53,15 @@ describe('Roosevelt multi-map world contract', () => {
     expect(maps).toHaveLength(3);
   });
 
+  it('keeps semantic map membership in worldManifest aligned with Tiled entity anchors', () => {
+    for (const map of maps) {
+      const actualClues = [...map.anchors.values()].filter((anchor) => anchor.kind === 'clue').map((anchor) => anchor.entityId).sort();
+      const actualWitnesses = [...map.anchors.values()].filter((anchor) => anchor.kind === 'witness').map((anchor) => anchor.entityId).sort();
+      expect(actualClues, `${map.id} clueIds`).toEqual([...(WORLD_MAPS[map.id].clueIds as readonly string[])].sort());
+      expect(actualWitnesses, `${map.id} witnessIds`).toEqual([...(WORLD_MAPS[map.id].witnessIds as readonly string[])].sort());
+    }
+  });
+
   it('places every canonical clue and witness exactly once across the real-hotel world', () => {
     const clueCounts = new Map(clues.map((clue) => [clue.id, 0]));
     const witnessCounts = new Map(witnesses.map((witness) => [witness.id, 0]));
