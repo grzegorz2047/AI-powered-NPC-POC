@@ -20,12 +20,12 @@ The game is designed around three provider modes:
 2. Local browser inference using a ready-made WebGPU/WebNN runtime.
 3. Chrome Prompt API / Gemini Nano when the browser exposes the built-in model.
 
-The local browser mode should expose two free profiles:
+The local browser mode exposes two free profiles:
 
 - **Quality:** Qwen3-4B-class model for stronger hardware and better NPC dialogue.
 - **Lite:** `onnx-community/Qwen3-0.6B-ONNX` through Transformers.js + WebGPU for weaker devices. This mode requires no API key and keeps dialogue on-device.
 
-The settings screen should be able to recommend the Lite or Quality profile based on detected browser/GPU capability, while still letting the player choose manually.
+The settings screen should offer `Auto`, `Quality`, and `Lite`. `Auto` must recommend a profile from browser/WebGPU capability and available device-memory hints, but never start a multi-gigabyte model download without explicit user confirmation.
 
 ## Optional server LLM
 
