@@ -37,12 +37,25 @@ export function PhaserGame() {
       },
     });
 
+    // Phaser 4.2's isometric culler can address outside LayerData after camera pan / map swaps.
+    // Roosevelt maps are small, so rendering the full floor layer is both safe and cheap.
+    const enforceSafeIsometricRendering = () => {
+      if (currentMapId === 'prototype-room-307') return;
+      const activeScene = game.scene.getScene('roosevelt-investigation');
+      if (!activeScene) return;
+      for (const child of activeScene.children.list) {
+        if (child instanceof Phaser.Tilemaps.TilemapLayer) child.skipCull = true;
+      }
+    };
+    game.events.on(Phaser.Core.Events.POST_STEP, enforceSafeIsometricRendering);
+
     const unsubscribeInputGate = subscribeGameInputBlocked((blocked) => {
       if (game.input) game.input.enabled = !blocked;
     });
 
     return () => {
       unsubscribeInputGate();
+      game.events.off(Phaser.Core.Events.POST_STEP, enforceSafeIsometricRendering);
       game.destroy(true);
     };
   }, [currentMapId, spawnId]);
