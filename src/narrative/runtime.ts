@@ -7,7 +7,7 @@ export function getNarrativeLine(path: string): string {
     story.ChoosePathString(path);
     const lines: string[] = [];
     while (story.canContinue) {
-      lines.push(story.Continue().trim());
+      lines.push((story.Continue() ?? '').trim());
     }
     return lines.filter(Boolean).join(' ');
   } catch {
