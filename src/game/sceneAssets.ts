@@ -27,17 +27,39 @@ export const SCENE_SVG_ASSETS = [
   ['clue-cctv-still', '/assets/scene/clue-cctv-still.svg'],
 ] as const;
 
-export const ROOSEVELT_IMAGE_ASSETS = [
-  ['mockup-detective', '/assets/mockup/detective.webp'],
-  ['mockup-kamil', '/assets/mockup/kamil.webp'],
-  ['mockup-irena', '/assets/mockup/irena.webp'],
-  ['mockup-marek', '/assets/mockup/marek.webp'],
-  ['mockup-reception', '/assets/mockup/reception-desk.webp'],
-  ['mockup-door307', '/assets/mockup/door-307.webp'],
-  ['mockup-elevator', '/assets/mockup/elevator.webp'],
-  ['mockup-stairs', '/assets/mockup/stairs.webp'],
-  ['mockup-laundry', '/assets/mockup/laundry.webp'],
-] as const;
+export const ROOSEVELT_GENERATED_SHEETS = {
+  characters: {
+    key: 'generated-roosevelt-characters',
+    url: '/assets/generated/hotel-characters-atlas.webp',
+    frameWidth: 128,
+    frameHeight: 192,
+  },
+  props: {
+    key: 'generated-roosevelt-props',
+    url: '/assets/generated/hotel-props-atlas.webp',
+    frameWidth: 192,
+    frameHeight: 192,
+  },
+} as const;
+
+export const ROOSEVELT_CHARACTER_FRAME = {
+  detective: 0,
+  marek: 1,
+  irena: 2,
+  nina: 3,
+  kamil: 4,
+} as const;
+
+export const ROOSEVELT_PROP_FRAME = {
+  room307: 0,
+  elevator: 1,
+  reception: 2,
+  stairs: 3,
+  cctvDesk: 4,
+  laundry: 5,
+  cleaningCart: 6,
+  luggageCart: 7,
+} as const;
 
 export const ROOSEVELT_FLOOR_TEXTURE_BY_MAP: Record<Exclude<WorldMapId, 'prototype-room-307'>, string> = {
   'roosevelt-lobby': '/assets/mockup/floor-lobby.webp',
@@ -51,14 +73,11 @@ export const ROOSEVELT_WALL_TEXTURES_BY_MAP: Record<Exclude<WorldMapId, 'prototy
   'roosevelt-basement': { nw: 'wall-service-nw', ne: 'wall-service-ne' },
 };
 
-export const ROOSEVELT_PLAYER_TEXTURE = 'mockup-detective';
-
-export const ROOSEVELT_WITNESS_TEXTURE_BY_ID: Record<string, string> = {
-  kamil: 'mockup-kamil',
-  // Nina was not visible as a clean full-body figure in the approved mockup, so keep the authored sprite until a clean crop exists.
-  nina: 'npc-nina',
-  irena: 'mockup-irena',
-  marek: 'mockup-marek',
+export const ROOSEVELT_WITNESS_FRAME_BY_ID: Record<string, number> = {
+  kamil: ROOSEVELT_CHARACTER_FRAME.kamil,
+  nina: ROOSEVELT_CHARACTER_FRAME.nina,
+  irena: ROOSEVELT_CHARACTER_FRAME.irena,
+  marek: ROOSEVELT_CHARACTER_FRAME.marek,
 };
 
 export const CLUE_TEXTURE_BY_ID: Record<string, string> = {
