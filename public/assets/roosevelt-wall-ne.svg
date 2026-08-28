@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#806f59"/><stop offset=".5" stop-color="#5e5041"/><stop offset="1" stop-color="#3a3028"/></linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#1b100c"/><stop offset=".45" stop-color="#2f1d16"/><stop offset="1" stop-color="#422a1f"/></linearGradient>
+    <pattern id="damask" width="18" height="22" patternUnits="userSpaceOnUse"><path d="M9 2c4 5 5 9 0 14C4 11 5 7 9 2Zm0 8c-3 1-5 4-5 7m5-7c3 1 5 4 5 7" fill="none" stroke="#ead2a2" stroke-opacity=".12" stroke-width="1"/></pattern>
+    <filter id="grain"><feTurbulence baseFrequency=".8" numOctaves="2" seed="7"/><feColorMatrix values="0 0 0 0 .34 0 0 0 0 .25 0 0 0 0 .18 0 0 0 .15 0"/></filter>
+    <clipPath id="wall"><path d="M64 64 128 96 128 48 64 16Z"/></clipPath>
+  </defs>
+  <path d="M64 64 128 96 128 48 64 16Z" fill="url(#paper)" stroke="#17110d" stroke-width="2"/>
+  <g clip-path="url(#wall)"><rect x="62" y="15" width="66" height="82" fill="url(#damask)"/><rect x="60" width="70" height="100" filter="url(#grain)" opacity=".16"/></g>
+  <path d="M64 46 128 78v18L64 64Z" fill="url(#wood)" stroke="#0d0907" stroke-width="1.5"/>
+  <path d="M72 51v12M88 59v12M104 67v12M120 75v12" stroke="#8b6340" stroke-opacity=".40"/>
+  <path d="M64 44 128 76" stroke="#c6a16c" stroke-opacity=".32" stroke-width="2"/>
+  <path d="M64 17 128 49" stroke="#d3b27c" stroke-opacity=".12"/>
+  <path d="M62 64 126 96" stroke="#050403" stroke-opacity=".55" stroke-width="3"/>
+</svg>
