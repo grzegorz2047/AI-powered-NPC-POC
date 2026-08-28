@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
+import { useWorldStore } from '../state/worldStore';
 import { GameScene } from './GameScene';
 import { subscribeGameInputBlocked } from './uiInputGate';
+import { WORLD_MAPS } from './worldManifest';
 
 export function PhaserGame() {
   const hostRef = useRef<HTMLDivElement>(null);
+  const currentMapId = useWorldStore((state) => state.currentMapId);
+  const spawnId = useWorldStore((state) => state.spawnId);
 
   useEffect(() => {
     if (!hostRef.current) return;
@@ -15,7 +19,7 @@ export function PhaserGame() {
       width: 1024,
       height: 640,
       backgroundColor: '#070b12',
-      scene: [GameScene],
+      scene: [new GameScene(currentMapId, spawnId)],
       render: {
         antialias: true,
         pixelArt: false,
@@ -36,7 +40,13 @@ export function PhaserGame() {
       unsubscribeInputGate();
       game.destroy(true);
     };
-  }, []);
+  }, [currentMapId, spawnId]);
 
-  return <div ref={hostRef} className="game-host" aria-label="Hotel Nocturne investigation scene" />;
+  return (
+    <div
+      ref={hostRef}
+      className="game-host"
+      aria-label={`Hotel Nocturne investigation scene: ${WORLD_MAPS[currentMapId].title}`}
+    />
+  );
 }
