@@ -35,6 +35,8 @@ export function validateRequiredNavigation(
       continue;
     }
 
+    if (destination.x === start.x && destination.y === start.y) continue;
+
     if (!findTilePath(grid, start, destination).length) {
       issues.push({
         kind: 'unreachable',
