@@ -1,13 +1,20 @@
 import { useEffect, useState } from 'react';
 import { clues, witnesses } from '../data/caseData';
 import { useGameInputBlocker } from '../game/useGameInputBlocker';
+import { WORLD_MAPS } from '../game/worldManifest';
 import { useInvestigationStore } from '../state/investigationStore';
+import { useWorldStore } from '../state/worldStore';
 
 export function AccessibleScenePanel() {
   const [open, setOpen] = useState(false);
   const discovered = useInvestigationStore((state) => state.discoveredClueIds);
   const discoverClue = useInvestigationStore((state) => state.discoverClue);
   const selectWitness = useInvestigationStore((state) => state.selectWitness);
+  const currentMapId = useWorldStore((state) => state.currentMapId);
+  const currentMap = WORLD_MAPS[currentMapId];
+  const localClues = clues.filter((clue) => (currentMap.clueIds as readonly string[]).includes(clue.id));
+  const localWitnesses = witnesses.filter((witness) => (currentMap.witnessIds as readonly string[]).includes(witness.id));
+  const localDiscovered = localClues.filter((clue) => discovered.includes(clue.id)).length;
   useGameInputBlocker('scene-list', open);
 
   useEffect(() => {
@@ -38,16 +45,17 @@ export function AccessibleScenePanel() {
             <button type="button" onClick={() => setOpen(false)}>Close</button>
           </div>
           <p className="access-intro">
-            Keyboard alternative to the canvas. Inspecting a clue here performs the same investigation action as clicking its hotspot.
+            {currentMap.title}. Keyboard alternative to the canvas. Only people and hotspots physically present on this hotel level are listed here.
           </p>
 
           <section className="access-section" aria-labelledby="access-clues-heading">
             <div className="access-section-title">
-              <h3 id="access-clues-heading">Clues</h3>
-              <span>{discovered.length}/{clues.length}</span>
+              <h3 id="access-clues-heading">Clues on this level</h3>
+              <span>{localDiscovered}/{localClues.length}</span>
             </div>
             <div className="access-item-list">
-              {clues.map((clue) => {
+              {localClues.length === 0 && <p className="small-copy">No investigation hotspots on this level.</p>}
+              {localClues.map((clue) => {
                 const found = discovered.includes(clue.id);
                 return (
                   <button
@@ -68,11 +76,12 @@ export function AccessibleScenePanel() {
 
           <section className="access-section" aria-labelledby="access-witnesses-heading">
             <div className="access-section-title">
-              <h3 id="access-witnesses-heading">Witnesses</h3>
-              <span>{witnesses.length}</span>
+              <h3 id="access-witnesses-heading">Witnesses on this level</h3>
+              <span>{localWitnesses.length}</span>
             </div>
             <div className="access-item-list">
-              {witnesses.map((witness) => (
+              {localWitnesses.length === 0 && <p className="small-copy">No witness is currently on this level.</p>}
+              {localWitnesses.map((witness) => (
                 <button
                   type="button"
                   key={witness.id}
