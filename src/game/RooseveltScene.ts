@@ -9,10 +9,8 @@ import { readMapZones } from './mapZones';
 import {
   CLUE_TEXTURE_BY_ID,
   ROOSEVELT_FLOOR_TEXTURE_BY_MAP,
-  ROOSEVELT_GENERATED_PROP_SHEET,
   ROOSEVELT_IMAGE_ASSETS,
   ROOSEVELT_PLAYER_TEXTURE,
-  ROOSEVELT_PROP_FRAME,
   ROOSEVELT_WALL_TEXTURES_BY_MAP,
   ROOSEVELT_WITNESS_TEXTURE_BY_ID,
   SCENE_SVG_ASSETS,
@@ -55,11 +53,6 @@ export class RooseveltScene extends Phaser.Scene {
     this.load.image('roosevelt-floor', ROOSEVELT_FLOOR_TEXTURE_BY_MAP[this.worldMapId]);
     for (const [key, url] of SCENE_SVG_ASSETS) this.load.svg(key, url);
     for (const [key, url] of ROOSEVELT_IMAGE_ASSETS) this.load.image(key, url);
-    this.load.spritesheet(ROOSEVELT_GENERATED_PROP_SHEET.key, ROOSEVELT_GENERATED_PROP_SHEET.url, {
-      frameWidth: ROOSEVELT_GENERATED_PROP_SHEET.frameWidth,
-      frameHeight: ROOSEVELT_GENERATED_PROP_SHEET.frameHeight,
-      endFrame: ROOSEVELT_GENERATED_PROP_SHEET.endFrame,
-    });
     for (const asset of Object.values(GAME_AUDIO)) this.load.audio(asset.key, asset.url);
   }
 
@@ -212,15 +205,8 @@ export class RooseveltScene extends Phaser.Scene {
     if (this.walkabilityGrid[tileY]?.[tileX] !== 1) throw new Error(`${this.worldMapId} ${label} is not on Walkable`);
   }
 
-  private generatedProp(frame: number, x: number, y: number, width: number, height: number, depth: number) {
-    return this.add.image(x, y, ROOSEVELT_GENERATED_PROP_SHEET.key, frame)
-      .setOrigin(0.5, 1)
-      .setDisplaySize(width, height)
-      .setDepth(depth);
-  }
-
-  private authoredCart(x: number, y: number, width: number, height: number, depth: number, alpha = 0.92) {
-    return this.add.image(x, y, 'prop-cart')
+  private propArt(texture: string, x: number, y: number, width: number, height: number, depth: number, alpha = 1) {
+    return this.add.image(x, y, texture)
       .setOrigin(0.5, 1)
       .setDisplaySize(width, height)
       .setDepth(depth)
@@ -252,32 +238,36 @@ export class RooseveltScene extends Phaser.Scene {
     for (const zone of readMapZones(objects)) {
       const point = this.tileToWorld(zone.tileX, zone.tileY);
       if (zone.id === 'room-307') {
-        this.generatedProp(ROOSEVELT_PROP_FRAME.room307, point.x + 34, point.y + 72, 276, 276, point.y + 126);
+        this.propArt('mockup-door307', point.x + 46, point.y + 54, 102, 184, point.y + 120);
       }
       if (zone.id === 'main-lobby') {
-        this.generatedProp(ROOSEVELT_PROP_FRAME.reception, point.x - 92, point.y + 120, 300, 300, point.y + 142);
+        this.propArt('mockup-reception', point.x - 92, point.y + 118, 310, 200, point.y + 142);
       }
       if (zone.id === 'lounge' && this.worldMapId === 'roosevelt-lobby') {
-        this.authoredCart(point.x - 54, point.y + 102, 92, 82, point.y + 116);
+        this.propArt('prop-cart', point.x - 54, point.y + 102, 92, 82, point.y + 116, 0.92);
       }
       if (zone.id === 'laundry') {
-        this.generatedProp(ROOSEVELT_PROP_FRAME.laundry, point.x + 72, point.y + 126, 264, 264, point.y + 148);
-        this.authoredCart(point.x - 82, point.y + 106, 88, 82, point.y + 138);
+        this.propArt('mockup-laundry', point.x + 96, point.y + 126, 260, 242, point.y + 148);
+        this.propArt('prop-cart', point.x - 82, point.y + 106, 88, 82, point.y + 138, 0.92);
       }
       if (zone.id === 'service-hall' && this.worldMapId === 'roosevelt-floor-3') {
-        this.generatedProp(ROOSEVELT_PROP_FRAME.cctvDesk, point.x + 58, point.y + 112, 238, 238, point.y + 138);
+        this.propArt('prop-cctv', point.x + 56, point.y + 90, 110, 86, point.y + 128, 0.95);
       }
       if (zone.id === 'service-hall' && this.worldMapId !== 'roosevelt-floor-3') {
-        this.authoredCart(point.x - 38, point.y + 90, 86, 80, point.y + 112, 0.9);
+        this.propArt('prop-cart', point.x - 38, point.y + 90, 86, 80, point.y + 112, 0.9);
       }
       if (zone.id === 'service-corridor' && this.worldMapId === 'roosevelt-basement') {
-        this.authoredCart(point.x - 44, point.y + 90, 90, 84, point.y + 112);
+        this.propArt('prop-cart', point.x - 44, point.y + 90, 90, 84, point.y + 112, 0.92);
       }
       if (zone.id === 'guest-corridor-west' && this.worldMapId === 'roosevelt-floor-3') {
-        this.generatedProp(ROOSEVELT_PROP_FRAME.stairs, point.x - 72, point.y + 126, 244, 244, point.y + 146);
+        this.propArt('mockup-stairs', point.x - 82, point.y + 124, 208, 236, point.y + 144, 0.96);
       }
       if (zone.id === 'guest-corridor-east' && this.worldMapId === 'roosevelt-floor-3') {
-        this.authoredCart(point.x + 44, point.y + 100, 88, 82, point.y + 118, 0.94);
+        this.propArt('prop-cart', point.x + 44, point.y + 100, 88, 82, point.y + 118, 0.94);
+        this.propArt('prop-window', point.x + 76, point.y + 26, 82, 72, point.y + 56, 0.86);
+      }
+      if (zone.id === 'palm-room' && this.worldMapId === 'roosevelt-lobby') {
+        this.propArt('prop-window', point.x + 40, point.y + 18, 82, 72, point.y + 54, 0.86);
       }
     }
   }
@@ -481,7 +471,7 @@ export class RooseveltScene extends Phaser.Scene {
 
   private addTransition(transition: MapTransition) {
     const point = this.tileToWorld(transition.tileX, transition.tileY);
-    const elevator = this.generatedProp(ROOSEVELT_PROP_FRAME.elevator, point.x, point.y + 56, 238, 238, point.y + 108).setAlpha(0.98);
+    const elevator = this.propArt('mockup-elevator', point.x, point.y + 54, 124, 240, point.y + 104, 0.98);
     const marker = this.add.text(point.x, point.y + 16, '⇅', {
       fontFamily: 'Arial, sans-serif', fontSize: '15px', color: '#e0c47d', backgroundColor: '#10100ce8', padding: { x: 6, y: 3 },
     }).setOrigin(0.5).setDepth(point.y + 132);
