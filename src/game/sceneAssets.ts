@@ -1,4 +1,5 @@
 import { clues, witnesses } from '../data/caseData';
+import type { WorldMapId } from './worldManifest';
 
 export const SCENE_SVG_ASSETS = [
   ['detective', '/assets/scene/detective.svg'],
@@ -12,6 +13,11 @@ export const SCENE_SVG_ASSETS = [
   ['prop-cart', '/assets/scene/prop-cart.svg'],
   ['prop-laundry', '/assets/scene/prop-laundry.svg'],
   ['prop-window', '/assets/scene/prop-window.svg'],
+  ['prop-elevator', '/assets/scene/prop-elevator.svg'],
+  ['wall-hotel-nw', '/assets/roosevelt-wall-nw.svg'],
+  ['wall-hotel-ne', '/assets/roosevelt-wall-ne.svg'],
+  ['wall-service-nw', '/assets/roosevelt-service-wall-nw.svg'],
+  ['wall-service-ne', '/assets/roosevelt-service-wall-ne.svg'],
   ['clue-whisky', '/assets/scene/clue-whisky.svg'],
   ['clue-keycard', '/assets/scene/clue-keycard.svg'],
   ['clue-cctv-note', '/assets/scene/clue-cctv-note.svg'],
@@ -20,6 +26,18 @@ export const SCENE_SVG_ASSETS = [
   ['clue-heron', '/assets/scene/clue-heron.svg'],
   ['clue-cctv-still', '/assets/scene/clue-cctv-still.svg'],
 ] as const;
+
+export const ROOSEVELT_FLOOR_TEXTURE_BY_MAP: Record<Exclude<WorldMapId, 'prototype-room-307'>, string> = {
+  'roosevelt-lobby': '/assets/roosevelt-floor-lobby.svg',
+  'roosevelt-floor-3': '/assets/roosevelt-floor-guest.svg',
+  'roosevelt-basement': '/assets/roosevelt-floor-service.svg',
+};
+
+export const ROOSEVELT_WALL_TEXTURES_BY_MAP: Record<Exclude<WorldMapId, 'prototype-room-307'>, { nw: string; ne: string }> = {
+  'roosevelt-lobby': { nw: 'wall-hotel-nw', ne: 'wall-hotel-ne' },
+  'roosevelt-floor-3': { nw: 'wall-hotel-nw', ne: 'wall-hotel-ne' },
+  'roosevelt-basement': { nw: 'wall-service-nw', ne: 'wall-service-ne' },
+};
 
 export const CLUE_TEXTURE_BY_ID: Record<string, string> = {
   'whisky-glass': 'clue-whisky',
