@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="64" viewBox="0 0 128 64">
+  <defs>
+    <linearGradient id="stone" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#7a6d5a"/><stop offset=".45" stop-color="#5f5548"/><stop offset="1" stop-color="#3e3932"/>
+    </linearGradient>
+    <pattern id="marble" width="16" height="12" patternUnits="userSpaceOnUse" patternTransform="skewX(-18)">
+      <rect width="8" height="6" fill="#c0ad8a" fill-opacity=".10"/><rect x="8" y="6" width="8" height="6" fill="#191712" fill-opacity=".14"/>
+      <path d="M1 1c4 2 7-1 12 2M3 9c4-3 7 1 11-1" stroke="#d6c6a5" stroke-opacity=".10" fill="none"/>
+    </pattern>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="9"/><feColorMatrix values="0 0 0 0 0.5 0 0 0 0 0.42 0 0 0 0 0.32 0 0 0 .13 0"/></filter>
+    <clipPath id="diamond"><path d="M64 1 127 32 64 63 1 32Z"/></clipPath>
+  </defs>
+  <path d="M64 1 127 32 64 63 1 32Z" fill="url(#stone)" stroke="#b49a6b" stroke-opacity=".55"/>
+  <g clip-path="url(#diamond)"><rect width="128" height="64" fill="url(#marble)"/><rect width="128" height="64" filter="url(#grain)" opacity=".18"/></g>
+  <path d="M16 32 64 8l48 24-48 24Z" fill="none" stroke="#e0ca9c" stroke-opacity=".12"/>
+  <path d="M40 20 88 44M88 20 40 44" stroke="#211e1a" stroke-opacity=".22"/>
+  <path d="M64 2v60M2 32h124" stroke="#e9d6ad" stroke-opacity=".05"/>
+</svg>
