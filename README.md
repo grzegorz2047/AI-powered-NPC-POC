@@ -23,7 +23,7 @@ The game is designed around three provider modes:
 The local browser mode exposes two free profiles:
 
 - **Quality:** Qwen3-4B-class model for stronger hardware and better NPC dialogue.
-- **Lite:** `onnx-community/Qwen3-0.6B-ONNX` through Transformers.js + WebGPU for weaker devices. This mode requires no API key and keeps dialogue on-device.
+- **Lite:** `onnx-community/Qwen3-0.6B-ONNX` through Hugging Face Transformers.js + WebGPU for weaker devices. Hugging Face maintains a working Qwen3 WebGPU browser example for this exact model. This mode requires no API key and keeps dialogue on-device.
 
 The settings screen should offer `Auto`, `Quality`, and `Lite`. `Auto` must recommend a profile from browser/WebGPU capability and available device-memory hints, but never start a multi-gigabyte model download without explicit user confirmation.
 
