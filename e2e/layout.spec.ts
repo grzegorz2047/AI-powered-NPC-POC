@@ -24,6 +24,16 @@ async function expectInsideViewportHorizontally(page: Page, locator: Locator, na
   expect(box.x + box.width, `${name}: exceeds viewport width`).toBeLessThanOrEqual(viewport.width + 1);
 }
 
+async function expectInsideViewportVertically(page: Page, locator: Locator, name: string) {
+  const viewport = page.viewportSize();
+  const box = await locator.boundingBox();
+  expect(viewport, `${name}: viewport missing`).not.toBeNull();
+  expect(box, `${name}: element has no bounding box`).not.toBeNull();
+  if (!viewport || !box) return;
+  expect(box.y, `${name}: starts above viewport`).toBeGreaterThanOrEqual(-1);
+  expect(box.y + box.height, `${name}: falls below viewport`).toBeLessThanOrEqual(viewport.height + 1);
+}
+
 test('visual QA: investigation layout fits 1280x720', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/');
@@ -35,6 +45,7 @@ test('visual QA: investigation layout fits 1280x720', async ({ page }) => {
   await expectInsideViewportHorizontally(page, page.locator('.game-host'), 'game scene');
   await expectInsideViewportHorizontally(page, page.locator('.evidence-board'), 'evidence board');
   await expectInsideViewportHorizontally(page, page.locator('.detective-thought'), 'detective thought');
+  await expectInsideViewportVertically(page, page.locator('.detective-thought'), 'detective thought');
 
   await page.screenshot({ path: `${visualDir}/${target}-1280x720-investigation.png`, fullPage: false });
 });
