@@ -119,6 +119,35 @@ test('opening AI settings does not download a local model', async ({ page }) => 
   expect(remoteModelRequests).toEqual([]);
 });
 
+test('first in-game gesture starts the real Phaser ambience sources', async ({ page }) => {
+  await page.addInitScript(() => {
+    const marker = window as typeof window & { __hotelAudioStarts?: number };
+    marker.__hotelAudioStarts = 0;
+    if (typeof AudioBufferSourceNode === 'undefined') return;
+
+    const originalStart = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function (
+      this: AudioBufferSourceNode,
+      when?: number,
+      offset?: number,
+      duration?: number,
+    ) {
+      marker.__hotelAudioStarts = (marker.__hotelAudioStarts ?? 0) + 1;
+      return originalStart.call(this, when, offset, duration);
+    };
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: /Start investigation/i }).click();
+  await expect(page.getByLabel(/investigation scene: Lobby \/ First Floor/i)).toBeVisible();
+
+  await page.locator('canvas').click({ position: { x: 512, y: 320 } });
+  await expect.poll(
+    () => page.evaluate(() => (window as typeof window & { __hotelAudioStarts?: number }).__hotelAudioStarts ?? 0),
+    { timeout: 3000 },
+  ).toBeGreaterThanOrEqual(2);
+});
+
 test('deployed Vercel Function runtime responds', async ({ request }) => {
   test.skip(!process.env.PLAYWRIGHT_BASE_URL, 'Remote API smoke runs only against a deployed preview.');
 
