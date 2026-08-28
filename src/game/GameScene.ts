@@ -8,6 +8,8 @@ const FLOOR_OFFSET_Y = 95;
 const INTERACTION_DISTANCE = 82;
 const WALK_BOUNDS = new Phaser.Geom.Rectangle(225, 150, 585, 350);
 
+type SceneFloorLayer = Phaser.Tilemaps.TilemapLayer | Phaser.Tilemaps.TilemapGPULayer | null;
+
 export class GameScene extends Phaser.Scene {
   private tooltip?: Phaser.GameObjects.Container;
   private player?: Phaser.GameObjects.Container;
@@ -109,7 +111,7 @@ export class GameScene extends Phaser.Scene {
     zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.walkTo(pointer.worldX, pointer.worldY));
   }
 
-  private createPlayer(floor: Phaser.Tilemaps.TilemapLayer | null) {
+  private createPlayer(floor: SceneFloorLayer) {
     const start = floor?.tileToWorldXY(2, 6) ?? new Phaser.Math.Vector2(340, 440);
     const shadow = this.add.ellipse(0, 0, 36, 13, 0x000000, 0.34);
     const body = this.add.image(0, -48, 'detective').setDisplaySize(50, 88);
