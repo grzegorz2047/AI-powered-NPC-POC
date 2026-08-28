@@ -51,7 +51,7 @@ export const WORLD_MAPS = {
 } as const;
 
 export type WorldMapId = keyof typeof WORLD_MAPS;
-export const DEFAULT_WORLD_MAP: WorldMapId = 'prototype-room-307';
+export const DEFAULT_WORLD_MAP: WorldMapId = 'roosevelt-lobby';
 
 export function isWorldMapId(value: unknown): value is WorldMapId {
   return typeof value === 'string' && value in WORLD_MAPS;
