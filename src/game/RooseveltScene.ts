@@ -69,6 +69,7 @@ export class RooseveltScene extends Phaser.Scene {
     const walkableLayer = map.getLayer('Walkable');
     if (!floor || !walkableLayer) throw new Error(`${this.worldMapId} must contain Floor and Walkable tile layers`);
     floor.setDepth(-20);
+    if ('setSkipCull' in floor && typeof floor.setSkipCull === 'function') floor.setSkipCull(true);
 
     const walkableTiles = new Set<string>();
     const worldBounds: WorldBounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
