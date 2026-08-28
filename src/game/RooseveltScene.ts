@@ -66,22 +66,25 @@ export class RooseveltScene extends Phaser.Scene {
     if (!tileset) throw new Error(`Unable to bind Roosevelt floor tileset for ${this.worldMapId}`);
 
     const floor = map.createLayer('Floor', tileset, 0, 0);
-    const walkable = map.createLayer('Walkable', tileset, 0, 0);
-    if (!floor || !walkable) throw new Error(`${this.worldMapId} must contain Floor and Walkable tile layers`);
+    const walkableLayer = map.getLayer('Walkable');
+    if (!floor || !walkableLayer) throw new Error(`${this.worldMapId} must contain Floor and Walkable tile layers`);
     floor.setDepth(-20);
-    walkable.setVisible(false);
 
     const walkableTiles = new Set<string>();
     const worldBounds: WorldBounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
-    walkable.forEachTile((tile) => {
-      if (tile.index < 0) return;
-      walkableTiles.add(`${tile.x}:${tile.y}`);
-      const point = floor.tileToWorldXY(tile.x, tile.y);
-      worldBounds.minX = Math.min(worldBounds.minX, point.x - 160);
-      worldBounds.maxX = Math.max(worldBounds.maxX, point.x + 160);
-      worldBounds.minY = Math.min(worldBounds.minY, point.y - 160);
-      worldBounds.maxY = Math.max(worldBounds.maxY, point.y + 170);
-    });
+    for (let tileY = 0; tileY < walkableLayer.data.length; tileY += 1) {
+      const row = walkableLayer.data[tileY] ?? [];
+      for (let tileX = 0; tileX < row.length; tileX += 1) {
+        const tile = row[tileX];
+        if (!tile || tile.index < 0) continue;
+        walkableTiles.add(`${tileX}:${tileY}`);
+        const point = floor.tileToWorldXY(tileX, tileY);
+        worldBounds.minX = Math.min(worldBounds.minX, point.x - 160);
+        worldBounds.maxX = Math.max(worldBounds.maxX, point.x + 160);
+        worldBounds.minY = Math.min(worldBounds.minY, point.y - 160);
+        worldBounds.maxY = Math.max(worldBounds.maxY, point.y + 170);
+      }
+    }
     this.walkabilityGrid = createWalkabilityMatrix(map.width, map.height, (x, y) => walkableTiles.has(`${x}:${y}`));
 
     this.addArchitecture(floor, walkableTiles, map.getObjectLayer('Zones')?.objects);
@@ -94,7 +97,7 @@ export class RooseveltScene extends Phaser.Scene {
     this.setupCameraControls();
 
     this.addZoneLabels(floor, map.getObjectLayer('Zones')?.objects);
-    this.addWalkZones(floor, walkable);
+    this.addWalkZones(floor, walkableTiles);
 
     for (const clueId of WORLD_MAPS[this.worldMapId].clueIds) {
       const clue = clueById[clueId];
@@ -227,15 +230,17 @@ export class RooseveltScene extends Phaser.Scene {
     if (!this.player || !Number.isFinite(bounds.minX)) return;
     const paddingX = 300;
     const paddingY = 240;
-    this.cameras.main.setBounds(
+    const camera = this.cameras.main;
+    camera.setBounds(
       bounds.minX - paddingX,
       bounds.minY - paddingY,
       bounds.maxX - bounds.minX + paddingX * 2,
       bounds.maxY - bounds.minY + paddingY * 2,
     );
-    this.cameras.main.setZoom(0.86);
-    this.cameras.main.setDeadzone(210, 130);
-    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    camera.setZoom(0.68);
+    camera.centerOn(this.player.x, this.player.y);
+    camera.setDeadzone(210, 130);
+    camera.startFollow(this.player, true, 0.12, 0.12);
   }
 
   private setupCameraControls() {
@@ -292,6 +297,7 @@ export class RooseveltScene extends Phaser.Scene {
   private resumeCameraFollow() {
     if (!this.player) return;
     this.cameraDetached = false;
+    this.cameras.main.centerOn(this.player.x, this.player.y);
     this.cameras.main.setDeadzone(210, 130);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
     this.cameraModeText?.setText('CAMERA FOLLOW · RMB/MMB DRAG · WHEEL ZOOM · WASD/ARROWS PAN');
@@ -310,15 +316,15 @@ export class RooseveltScene extends Phaser.Scene {
     }
   }
 
-  private addWalkZones(floor: FloorLayer, walkable: FloorLayer) {
-    walkable.forEachTile((tile) => {
-      if (tile.index < 0) return;
-      const point = floor.tileToWorldXY(tile.x, tile.y);
+  private addWalkZones(floor: FloorLayer, walkableTiles: Set<string>) {
+    for (const tileKey of walkableTiles) {
+      const [tileX, tileY] = tileKey.split(':').map(Number);
+      const point = floor.tileToWorldXY(tileX, tileY);
       const zone = this.add.zone(point.x, point.y + 32, 112, 54).setInteractive({ useHandCursor: true }).setDepth(-1);
       zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-        if (pointer.leftButtonDown()) this.walkToTile(floor, tile.x, tile.y);
+        if (pointer.leftButtonDown()) this.walkToTile(floor, tileX, tileY);
       });
-    });
+    }
   }
 
   private createPlayer(floor: FloorLayer, tileX: number, tileY: number) {
