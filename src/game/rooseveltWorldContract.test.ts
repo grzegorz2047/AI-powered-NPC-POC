@@ -62,6 +62,18 @@ describe('Roosevelt multi-map world contract', () => {
     }
   });
 
+  it('keeps keyboard navigation in worldManifest aligned with Tiled transition targets', () => {
+    for (const map of maps) {
+      const tiledTargets = map.transitions
+        .map((transition) => `${transition.targetMap}:${transition.targetSpawn}`)
+        .sort();
+      const accessibleTargets = WORLD_MAPS[map.id].navigation
+        .map((transition) => `${transition.targetMap}:${transition.targetSpawn}`)
+        .sort();
+      expect(accessibleTargets, `${map.id} accessible navigation`).toEqual(tiledTargets);
+    }
+  });
+
   it('places every canonical clue and witness exactly once across the real-hotel world', () => {
     const clueCounts = new Map(clues.map((clue) => [clue.id, 0]));
     const witnessCounts = new Map(witnesses.map((witness) => [witness.id, 0]));
