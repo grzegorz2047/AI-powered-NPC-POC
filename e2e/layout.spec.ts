@@ -34,11 +34,18 @@ async function expectInsideViewportVertically(page: Page, locator: Locator, name
   expect(box.y + box.height, `${name}: falls below viewport`).toBeLessThanOrEqual(viewport.height + 1);
 }
 
-test('visual QA: investigation layout fits 1280x720', async ({ page }) => {
+async function openSceneList(page: Page) {
+  await page.getByRole('button', { name: 'Scene list' }).click();
+  const scene = page.getByRole('dialog', { name: 'Accessible investigation scene' });
+  await expect(scene).toBeVisible();
+  return scene;
+}
+
+test('visual QA: Roosevelt lobby, floor 3, basement and free camera fit 1280x720', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/');
   await page.getByRole('button', { name: /Start investigation|Continue investigation/i }).click();
-  await expect(page.locator('canvas')).toBeVisible();
+  await expect(page.getByLabel(/investigation scene: Lobby \/ First Floor/i)).toBeVisible();
 
   await expectNoHorizontalOverflow(page);
   await expectInsideViewportHorizontally(page, page.locator('.topbar'), 'topbar');
@@ -46,8 +53,33 @@ test('visual QA: investigation layout fits 1280x720', async ({ page }) => {
   await expectInsideViewportHorizontally(page, page.locator('.evidence-board'), 'evidence board');
   await expectInsideViewportHorizontally(page, page.locator('.detective-thought'), 'detective thought');
   await expectInsideViewportVertically(page, page.locator('.detective-thought'), 'detective thought');
+  await page.screenshot({ path: `${visualDir}/${target}-1280x720-roosevelt-lobby.png`, fullPage: false });
 
-  await page.screenshot({ path: `${visualDir}/${target}-1280x720-investigation.png`, fullPage: false });
+  let scene = await openSceneList(page);
+  await scene.getByRole('button', { name: /Elevator to third floor \/ Room 307/i }).click();
+  await expect(page.getByLabel(/investigation scene: Third Floor \/ Room 307/i)).toBeVisible();
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: `${visualDir}/${target}-1280x720-roosevelt-floor3.png`, fullPage: false });
+
+  const canvas = page.locator('canvas');
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  if (box) {
+    await page.mouse.move(box.x + box.width * 0.55, box.y + box.height * 0.55);
+    await page.mouse.wheel(0, -420);
+    await page.keyboard.down('d');
+    await page.waitForTimeout(220);
+    await page.keyboard.up('d');
+    await page.waitForTimeout(100);
+    await page.screenshot({ path: `${visualDir}/${target}-1280x720-roosevelt-floor3-panzoom.png`, fullPage: false });
+    await page.keyboard.press('f');
+  }
+
+  scene = await openSceneList(page);
+  await scene.getByRole('button', { name: /Service elevator to basement/i }).click();
+  await expect(page.getByLabel(/investigation scene: Basement \/ Service/i)).toBeVisible();
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: `${visualDir}/${target}-1280x720-roosevelt-basement.png`, fullPage: false });
 });
 
 test('visual QA: compact 600x800 layout stays usable', async ({ page }) => {
@@ -63,9 +95,7 @@ test('visual QA: compact 600x800 layout stays usable', async ({ page }) => {
   await expectInsideViewportHorizontally(page, page.locator('.game-host'), 'compact game scene');
   await expectInsideViewportHorizontally(page, page.locator('.evidence-board'), 'compact evidence board');
 
-  await page.getByRole('button', { name: 'Scene list' }).click();
-  const sceneList = page.getByRole('dialog', { name: 'Accessible investigation scene' });
-  await expect(sceneList).toBeVisible();
+  const sceneList = await openSceneList(page);
   await expectInsideViewportHorizontally(page, sceneList, 'compact scene list');
   await expectNoHorizontalOverflow(page);
 
