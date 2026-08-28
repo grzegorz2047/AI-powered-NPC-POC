@@ -27,16 +27,38 @@ export const SCENE_SVG_ASSETS = [
   ['clue-cctv-still', '/assets/scene/clue-cctv-still.svg'],
 ] as const;
 
+export const ROOSEVELT_IMAGE_ASSETS = [
+  ['mockup-detective', '/assets/mockup/detective.webp'],
+  ['mockup-kamil', '/assets/mockup/kamil.webp'],
+  ['mockup-irena', '/assets/mockup/irena.webp'],
+  ['mockup-marek', '/assets/mockup/marek.webp'],
+  ['mockup-reception', '/assets/mockup/reception-desk.webp'],
+  ['mockup-door307', '/assets/mockup/door-307.webp'],
+  ['mockup-elevator', '/assets/mockup/elevator.webp'],
+  ['mockup-stairs', '/assets/mockup/stairs.webp'],
+  ['mockup-laundry', '/assets/mockup/laundry.webp'],
+] as const;
+
 export const ROOSEVELT_FLOOR_TEXTURE_BY_MAP: Record<Exclude<WorldMapId, 'prototype-room-307'>, string> = {
-  'roosevelt-lobby': '/assets/roosevelt-floor-lobby.svg',
-  'roosevelt-floor-3': '/assets/roosevelt-floor-guest.svg',
-  'roosevelt-basement': '/assets/roosevelt-floor-service.svg',
+  'roosevelt-lobby': '/assets/mockup/floor-lobby.webp',
+  'roosevelt-floor-3': '/assets/mockup/floor-guest.webp',
+  'roosevelt-basement': '/assets/mockup/floor-service.webp',
 };
 
 export const ROOSEVELT_WALL_TEXTURES_BY_MAP: Record<Exclude<WorldMapId, 'prototype-room-307'>, { nw: string; ne: string }> = {
   'roosevelt-lobby': { nw: 'wall-hotel-nw', ne: 'wall-hotel-ne' },
   'roosevelt-floor-3': { nw: 'wall-hotel-nw', ne: 'wall-hotel-ne' },
   'roosevelt-basement': { nw: 'wall-service-nw', ne: 'wall-service-ne' },
+};
+
+export const ROOSEVELT_PLAYER_TEXTURE = 'mockup-detective';
+
+export const ROOSEVELT_WITNESS_TEXTURE_BY_ID: Record<string, string> = {
+  kamil: 'mockup-kamil',
+  // Nina was not visible as a clean full-body figure in the approved mockup, so keep the authored sprite until a clean crop exists.
+  nina: 'npc-nina',
+  irena: 'mockup-irena',
+  marek: 'mockup-marek',
 };
 
 export const CLUE_TEXTURE_BY_ID: Record<string, string> = {
