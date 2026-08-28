@@ -8,12 +8,13 @@ import { readMapTransitions, type MapTransition } from './mapTransitions';
 import { readMapZones } from './mapZones';
 import {
   CLUE_TEXTURE_BY_ID,
-  ROOSEVELT_CHARACTER_FRAME,
   ROOSEVELT_FLOOR_TEXTURE_BY_MAP,
-  ROOSEVELT_GENERATED_SHEETS,
+  ROOSEVELT_GENERATED_PROP_SHEET,
+  ROOSEVELT_IMAGE_ASSETS,
+  ROOSEVELT_PLAYER_TEXTURE,
   ROOSEVELT_PROP_FRAME,
   ROOSEVELT_WALL_TEXTURES_BY_MAP,
-  ROOSEVELT_WITNESS_FRAME_BY_ID,
+  ROOSEVELT_WITNESS_TEXTURE_BY_ID,
   SCENE_SVG_ASSETS,
 } from './sceneAssets';
 import { createWalkabilityMatrix, findTilePath, type TilePoint } from './tilePathfinding';
@@ -53,13 +54,12 @@ export class RooseveltScene extends Phaser.Scene {
     this.load.tilemapTiledJSON('roosevelt-map', WORLD_MAPS[this.worldMapId].mapUrl);
     this.load.image('roosevelt-floor', ROOSEVELT_FLOOR_TEXTURE_BY_MAP[this.worldMapId]);
     for (const [key, url] of SCENE_SVG_ASSETS) this.load.svg(key, url);
-    for (const sheet of Object.values(ROOSEVELT_GENERATED_SHEETS)) {
-      this.load.spritesheet(sheet.key, sheet.url, {
-        frameWidth: sheet.frameWidth,
-        frameHeight: sheet.frameHeight,
-        endFrame: sheet.endFrame,
-      });
-    }
+    for (const [key, url] of ROOSEVELT_IMAGE_ASSETS) this.load.image(key, url);
+    this.load.spritesheet(ROOSEVELT_GENERATED_PROP_SHEET.key, ROOSEVELT_GENERATED_PROP_SHEET.url, {
+      frameWidth: ROOSEVELT_GENERATED_PROP_SHEET.frameWidth,
+      frameHeight: ROOSEVELT_GENERATED_PROP_SHEET.frameHeight,
+      endFrame: ROOSEVELT_GENERATED_PROP_SHEET.endFrame,
+    });
     for (const asset of Object.values(GAME_AUDIO)) this.load.audio(asset.key, asset.url);
   }
 
@@ -213,7 +213,7 @@ export class RooseveltScene extends Phaser.Scene {
   }
 
   private generatedProp(frame: number, x: number, y: number, width: number, height: number, depth: number) {
-    return this.add.image(x, y, ROOSEVELT_GENERATED_SHEETS.props.key, frame)
+    return this.add.image(x, y, ROOSEVELT_GENERATED_PROP_SHEET.key, frame)
       .setOrigin(0.5, 1)
       .setDisplaySize(width, height)
       .setDepth(depth);
@@ -373,8 +373,7 @@ export class RooseveltScene extends Phaser.Scene {
   private createPlayer(tileX: number, tileY: number) {
     const start = this.tileToWorld(tileX, tileY);
     const shadow = this.add.ellipse(0, 0, 48, 17, 0x000000, 0.54);
-    const body = this.add.image(0, -70, ROOSEVELT_GENERATED_SHEETS.characters.key, ROOSEVELT_CHARACTER_FRAME.detective)
-      .setDisplaySize(86, 130);
+    const body = this.add.image(0, -70, ROOSEVELT_PLAYER_TEXTURE).setDisplaySize(86, 130);
     this.playerBody = body;
     this.playerTile = { x: tileX, y: tileY };
     this.player = this.add.container(start.x, start.y + 56, [shadow, body]).setDepth(start.y + 150).setName('detective');
@@ -461,8 +460,8 @@ export class RooseveltScene extends Phaser.Scene {
 
   private addWitness(id: string, name: string, role: string, tileX: number, tileY: number, x: number, y: number) {
     const shadow = this.add.ellipse(x, y, 48, 17, 0x000000, 0.54).setDepth(y + 88);
-    const frame = ROOSEVELT_WITNESS_FRAME_BY_ID[id] ?? ROOSEVELT_CHARACTER_FRAME.nina;
-    const body = this.add.image(x, y, ROOSEVELT_GENERATED_SHEETS.characters.key, frame)
+    const texture = ROOSEVELT_WITNESS_TEXTURE_BY_ID[id] ?? 'npc-nina';
+    const body = this.add.image(x, y, texture)
       .setOrigin(0.5, 1)
       .setDisplaySize(82, 130)
       .setDepth(y + 96);
