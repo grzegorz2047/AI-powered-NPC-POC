@@ -15,11 +15,12 @@ test('menu -> evidence -> new lead -> rules interview works in a real browser', 
   await expect(page.getByText('NEW LEAD').first()).toBeVisible();
 
   await page.getByRole('button', { name: /Nina Sokolowska: Who owns master card M-01/i }).click();
-  await expect(page.getByRole('dialog', { name: /Interview with Nina Sokolowska/i })).toBeVisible();
-  await page.getByRole('button', { name: /Who owns master card M-01/i }).click();
+  const interview = page.getByRole('dialog', { name: /Interview with Nina Sokolowska/i });
+  await expect(interview).toBeVisible();
+  await interview.getByRole('button', { name: /Who owns master card M-01/i }).click();
 
-  await expect(page.getByText(/M-01 is the manager master card/i)).toBeVisible();
-  await expect(page.getByText(/AI rules/i)).toBeVisible();
+  await expect(interview.getByText(/M-01 is the manager master card/i)).toBeVisible();
+  await expect(interview.getByText(/AI rules/i)).toBeVisible();
 });
 
 test('accessibility scene is spoiler-safe and Marek cannot confess without contradictions', async ({ page }) => {
