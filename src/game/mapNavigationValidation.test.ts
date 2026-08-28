@@ -19,6 +19,16 @@ describe('map navigation validation', () => {
     ])).toEqual([]);
   });
 
+  it('accepts a witness already standing on the player spawn tile', () => {
+    const grid = [[1]];
+    expect(validateRequiredNavigation(grid, player, [
+      {
+        requirement: { kind: 'witness', entityId: 'nina' },
+        anchor: { entityId: 'nina', kind: 'witness', tileX: 0, tileY: 0 },
+      },
+    ])).toEqual([]);
+  });
+
   it('reports an isolated required witness', () => {
     const grid = [
       [1, 1, 0],
