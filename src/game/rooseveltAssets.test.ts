@@ -1,10 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import {
-  ROOSEVELT_FLOOR_TEXTURE_BY_MAP,
-  ROOSEVELT_GENERATED_PROP_SHEET,
-  ROOSEVELT_IMAGE_ASSETS,
-} from './sceneAssets';
+import { ROOSEVELT_FLOOR_TEXTURE_BY_MAP, ROOSEVELT_IMAGE_ASSETS } from './sceneAssets';
 
 function readPublicAsset(url: string) {
   const relative = url.replace(/^\//, '');
@@ -19,13 +15,8 @@ function expectWebp(url: string) {
 }
 
 describe('Roosevelt visual assets', () => {
-  it('keeps the generated environment atlas and stable character crops checked in as WebP', () => {
-    expectWebp(ROOSEVELT_GENERATED_PROP_SHEET.url);
-    expect(ROOSEVELT_GENERATED_PROP_SHEET.frameWidth).toBeGreaterThan(0);
-    expect(ROOSEVELT_GENERATED_PROP_SHEET.frameHeight).toBeGreaterThan(0);
-    expect(ROOSEVELT_GENERATED_PROP_SHEET.endFrame).toBe(5);
-
-    expect(ROOSEVELT_IMAGE_ASSETS).toHaveLength(4);
+  it('keeps transparent mockup-derived character and environment crops checked in as WebP', () => {
+    expect(ROOSEVELT_IMAGE_ASSETS).toHaveLength(9);
     for (const [, url] of ROOSEVELT_IMAGE_ASSETS) expectWebp(url);
   });
 
