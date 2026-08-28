@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@huggingface/transformers": "4.2.0",
+    "easystarjs": "0.4.4",
     "inkjs": "^2.4.0",
     "phaser": "4.2.1",
     "react": "^19.1.0",
