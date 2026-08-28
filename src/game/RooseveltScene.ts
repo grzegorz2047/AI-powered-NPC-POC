@@ -9,9 +9,11 @@ import { readMapZones } from './mapZones';
 import {
   CLUE_TEXTURE_BY_ID,
   ROOSEVELT_FLOOR_TEXTURE_BY_MAP,
+  ROOSEVELT_IMAGE_ASSETS,
+  ROOSEVELT_PLAYER_TEXTURE,
   ROOSEVELT_WALL_TEXTURES_BY_MAP,
+  ROOSEVELT_WITNESS_TEXTURE_BY_ID,
   SCENE_SVG_ASSETS,
-  WITNESS_TEXTURE_BY_ID,
 } from './sceneAssets';
 import { createWalkabilityMatrix, findTilePath, type TilePoint } from './tilePathfinding';
 import { WORLD_MAPS, type WorldMapId } from './worldManifest';
@@ -47,8 +49,9 @@ export class RooseveltScene extends Phaser.Scene {
 
   preload() {
     this.load.tilemapTiledJSON('roosevelt-map', WORLD_MAPS[this.worldMapId].mapUrl);
-    this.load.svg('roosevelt-floor', ROOSEVELT_FLOOR_TEXTURE_BY_MAP[this.worldMapId], { width: 128, height: 64 });
+    this.load.image('roosevelt-floor', ROOSEVELT_FLOOR_TEXTURE_BY_MAP[this.worldMapId]);
     for (const [key, url] of SCENE_SVG_ASSETS) this.load.svg(key, url);
+    for (const [key, url] of ROOSEVELT_IMAGE_ASSETS) this.load.image(key, url);
     for (const asset of Object.values(GAME_AUDIO)) this.load.audio(asset.key, asset.url);
   }
 
@@ -178,20 +181,44 @@ export class RooseveltScene extends Phaser.Scene {
 
     for (const zone of readMapZones(objects)) {
       const point = floor.tileToWorldXY(zone.tileX, zone.tileY);
-      if (zone.zoneId === 'room-307') {
-        this.add.image(point.x + 34, point.y + 31, 'prop-door307').setOrigin(0.5, 1).setDisplaySize(62, 98).setDepth(point.y + 72);
+      if (zone.id === 'room-307') {
+        this.add.image(point.x + 42, point.y + 42, 'mockup-door307')
+          .setOrigin(0.5, 1)
+          .setDisplaySize(86, 154)
+          .setDepth(point.y + 104);
       }
-      if (zone.zoneId === 'main-lobby') {
-        this.add.image(point.x - 38, point.y + 70, 'prop-reception').setOrigin(0.5, 1).setDisplaySize(128, 76).setDepth(point.y + 92);
+      if (zone.id === 'main-lobby') {
+        this.add.image(point.x - 90, point.y + 104, 'mockup-reception')
+          .setOrigin(0.5, 1)
+          .setDisplaySize(260, 168)
+          .setDepth(point.y + 126);
       }
-      if (zone.zoneId === 'laundry') {
-        this.add.image(point.x + 35, point.y + 72, 'prop-laundry').setOrigin(0.5, 1).setDisplaySize(112, 82).setDepth(point.y + 94);
+      if (zone.id === 'laundry') {
+        this.add.image(point.x + 90, point.y + 112, 'mockup-laundry')
+          .setOrigin(0.5, 1)
+          .setDisplaySize(220, 205)
+          .setDepth(point.y + 132);
       }
-      if (zone.zoneId === 'service-hall' || zone.zoneId === 'service-corridor') {
-        this.add.image(point.x - 40, point.y + 66, 'prop-cart').setOrigin(0.5, 1).setDisplaySize(78, 72).setDepth(point.y + 90).setAlpha(0.86);
+      if (zone.id === 'service-hall' || zone.id === 'service-corridor') {
+        this.add.image(point.x - 40, point.y + 66, 'prop-cart')
+          .setOrigin(0.5, 1)
+          .setDisplaySize(78, 72)
+          .setDepth(point.y + 90)
+          .setAlpha(0.86);
       }
-      if (zone.zoneId === 'guest-corridor-east' || zone.zoneId === 'palm-room') {
-        this.add.image(point.x + 38, point.y + 16, 'prop-window').setOrigin(0.5, 1).setDisplaySize(74, 64).setDepth(point.y + 48).setAlpha(0.82);
+      if (zone.id === 'guest-corridor-west' && this.worldMapId === 'roosevelt-floor-3') {
+        this.add.image(point.x - 76, point.y + 110, 'mockup-stairs')
+          .setOrigin(0.5, 1)
+          .setDisplaySize(180, 204)
+          .setDepth(point.y + 126)
+          .setAlpha(0.92);
+      }
+      if (zone.id === 'guest-corridor-east' || zone.id === 'palm-room') {
+        this.add.image(point.x + 38, point.y + 16, 'prop-window')
+          .setOrigin(0.5, 1)
+          .setDisplaySize(74, 64)
+          .setDepth(point.y + 48)
+          .setAlpha(0.82);
       }
     }
   }
@@ -297,7 +324,7 @@ export class RooseveltScene extends Phaser.Scene {
   private createPlayer(floor: FloorLayer, tileX: number, tileY: number) {
     const start = floor.tileToWorldXY(tileX, tileY);
     const shadow = this.add.ellipse(0, 0, 44, 16, 0x000000, 0.52);
-    const body = this.add.image(0, -56, 'detective').setDisplaySize(64, 112);
+    const body = this.add.image(0, -60, ROOSEVELT_PLAYER_TEXTURE).setDisplaySize(70, 116);
     this.playerBody = body;
     this.playerTile = { x: tileX, y: tileY };
     this.player = this.add.container(start.x, start.y + 54, [shadow, body]).setDepth(start.y + 134).setName('detective');
@@ -324,7 +351,7 @@ export class RooseveltScene extends Phaser.Scene {
   private followPath(floor: FloorLayer, path: TilePoint[], index: number, generation: number, onArrive?: () => void) {
     if (!this.player || generation !== this.movementGeneration) return;
     if (index >= path.length) {
-      this.playerBody?.setY(-56);
+      this.playerBody?.setY(-60);
       onArrive?.();
       return;
     }
@@ -336,7 +363,7 @@ export class RooseveltScene extends Phaser.Scene {
     const duration = Phaser.Math.Clamp(Phaser.Math.Distance.Between(this.player.x, this.player.y, x, y) * 2.5, 90, 260);
     if (this.playerBody) {
       this.playerBody.setFlipX(x < this.player.x);
-      this.tweens.add({ targets: this.playerBody, y: -60, duration: Math.max(55, duration / 2), yoyo: true });
+      this.tweens.add({ targets: this.playerBody, y: -64, duration: Math.max(55, duration / 2), yoyo: true });
     }
     this.tweens.add({
       targets: this.player,
@@ -384,7 +411,8 @@ export class RooseveltScene extends Phaser.Scene {
 
   private addWitness(floor: FloorLayer, id: string, name: string, role: string, tileX: number, tileY: number, x: number, y: number) {
     const shadow = this.add.ellipse(x, y, 44, 16, 0x000000, 0.52).setDepth(y + 65);
-    const body = this.add.image(x, y, WITNESS_TEXTURE_BY_ID[id]).setOrigin(0.5, 1).setDisplaySize(64, 112).setDepth(y + 73);
+    const texture = ROOSEVELT_WITNESS_TEXTURE_BY_ID[id] ?? 'npc-nina';
+    const body = this.add.image(x, y, texture).setOrigin(0.5, 1).setDisplaySize(68, 116).setDepth(y + 73);
     const label = this.add.text(x, y + 8, name.split(' ')[0], {
       fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#e7ddca', backgroundColor: '#0c0d0be8', padding: { x: 5, y: 3 },
     }).setOrigin(0.5).setDepth(y + 84);
@@ -401,15 +429,15 @@ export class RooseveltScene extends Phaser.Scene {
 
   private addTransition(floor: FloorLayer, transition: MapTransition) {
     const point = floor.tileToWorldXY(transition.tileX, transition.tileY);
-    const elevator = this.add.image(point.x, point.y + 26, 'prop-elevator')
+    const elevator = this.add.image(point.x, point.y + 44, 'mockup-elevator')
       .setOrigin(0.5, 1)
-      .setDisplaySize(72, 104)
-      .setDepth(point.y + 70)
-      .setAlpha(0.95);
+      .setDisplaySize(106, 208)
+      .setDepth(point.y + 76)
+      .setAlpha(0.98);
     const marker = this.add.text(point.x, point.y + 14, '⇅', {
       fontFamily: 'Arial, sans-serif', fontSize: '15px', color: '#e0c47d', backgroundColor: '#10100ce8', padding: { x: 6, y: 3 },
-    }).setOrigin(0.5).setDepth(point.y + 92);
-    const hit = this.add.zone(point.x, point.y - 20, 76, 112).setInteractive({ useHandCursor: true }).setDepth(point.y + 94);
+    }).setOrigin(0.5).setDepth(point.y + 104);
+    const hit = this.add.zone(point.x, point.y - 28, 100, 196).setInteractive({ useHandCursor: true }).setDepth(point.y + 106);
     hit.on('pointerover', (pointer: Phaser.Input.Pointer) => {
       elevator.setTint(0xffe7ae); marker.setColor('#ffe0a0'); this.showTooltip(transition.label, pointer.worldX, pointer.worldY - 48);
     });
@@ -424,7 +452,7 @@ export class RooseveltScene extends Phaser.Scene {
     this.add.text(26, 24, `HOTEL NOCTURNE / ${map.title.toUpperCase()}`, {
       fontFamily: 'Georgia, serif', fontSize: '20px', color: '#e1c98d', backgroundColor: '#090a07e3', padding: { x: 8, y: 5 },
     }).setScrollFactor(0).setDepth(30000);
-    this.add.text(26, 58, 'ROOSEVELT HOTEL 1925 · ISOMETRIC TOPOLOGY RECONSTRUCTION', {
+    this.add.text(26, 58, 'ROOSEVELT HOTEL 1925 · MOCKUP-GUIDED ISOMETRIC RECONSTRUCTION', {
       fontFamily: 'Arial, sans-serif', fontSize: '9px', color: '#93917c', letterSpacing: 1,
     }).setScrollFactor(0).setDepth(30000);
     this.objectiveText = this.add.text(996, 26, '', {
