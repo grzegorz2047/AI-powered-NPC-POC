@@ -1,20 +1,35 @@
 import { expect, test } from '@playwright/test';
 
-test('menu -> evidence -> new lead -> rules interview works in a real browser', async ({ page }) => {
+test('menu -> Roosevelt evidence -> new lead -> lobby rules interview works in a real browser', async ({ page }) => {
   await page.goto('/');
 
   await expect(page.getByRole('heading', { name: 'Room 307' })).toBeVisible();
   await page.getByRole('button', { name: /Start investigation/i }).click();
-  await expect(page.locator('canvas')).toBeVisible();
+  await expect(page.getByLabel(/investigation scene: Lobby \/ First Floor/i)).toBeVisible();
 
   await page.getByRole('button', { name: 'Scene list' }).click();
-  await expect(page.getByRole('dialog', { name: 'Accessible investigation scene' })).toBeVisible();
-  await page.getByRole('button', { name: /Inspect clue: Master keycard log/i }).click();
+  let scene = page.getByRole('dialog', { name: 'Accessible investigation scene' });
+  await scene.getByRole('button', { name: /Elevator to third floor \/ Room 307/i }).click();
+  await expect(page.getByLabel(/investigation scene: Third Floor \/ Room 307/i)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Scene list' }).click();
+  scene = page.getByRole('dialog', { name: 'Accessible investigation scene' });
+  await scene.getByRole('button', { name: /Inspect clue: Master keycard log/i }).click();
+  await scene.getByRole('button', { name: 'Close' }).click();
 
   await expect(page.getByRole('heading', { name: 'Master keycard log' })).toBeVisible();
   await expect(page.getByText('NEW LEAD').first()).toBeVisible();
 
-  await page.getByRole('button', { name: /Nina Sokolowska: Who owns master card M-01/i }).click();
+  const ninaLead = page.getByRole('button', { name: /Nina Sokolowska: Who owns master card M-01/i });
+  await expect(ninaLead).toBeDisabled();
+
+  await page.getByRole('button', { name: 'Scene list' }).click();
+  scene = page.getByRole('dialog', { name: 'Accessible investigation scene' });
+  await scene.getByRole('button', { name: /Elevator to lobby/i }).click();
+  await expect(page.getByLabel(/investigation scene: Lobby \/ First Floor/i)).toBeVisible();
+  await expect(ninaLead).toBeEnabled();
+
+  await ninaLead.click();
   const interview = page.getByRole('dialog', { name: /Interview with Nina Sokolowska/i });
   await expect(interview).toBeVisible();
   await interview.getByRole('button', { name: /Who owns master card M-01/i }).click();
@@ -26,7 +41,7 @@ test('menu -> evidence -> new lead -> rules interview works in a real browser', 
 test('accessibility scene is spoiler-safe and Marek cannot confess without contradictions', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /Start investigation/i }).click();
-  await expect(page.locator('canvas')).toBeVisible();
+  await expect(page.getByLabel(/investigation scene: Lobby \/ First Floor/i)).toBeVisible();
 
   await page.getByRole('button', { name: 'Scene list' }).click();
   const scene = page.getByRole('dialog', { name: 'Accessible investigation scene' });
@@ -43,14 +58,7 @@ test('accessibility scene is spoiler-safe and Marek cannot confess without contr
   await expect(interview.getByText(/fatal blow|I killed|I murdered/i)).toHaveCount(0);
 });
 
-test('Roosevelt real-hotel world is level-scoped and accessible navigation crosses all three maps', async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem('hotel-nocturne-world-location', JSON.stringify({
-      state: { currentMapId: 'roosevelt-lobby', spawnId: 'detective' },
-      version: 0,
-    }));
-  });
-
+test('Roosevelt real-hotel world is the default and accessible navigation crosses all three maps', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /Start investigation/i }).click();
   await expect(page.getByLabel(/investigation scene: Lobby \/ First Floor/i)).toBeVisible();
@@ -143,4 +151,25 @@ test('deployed Vercel rules API evaluates the same reveal policy', async ({ requ
   expect(payload.answer?.length).toBeGreaterThan(0);
   expect(payload.resistanceDelta).toBe(-8);
   expect(payload.contradictionDelta).toBe(1);
+});
+
+test('deployed Vercel preview serves every checked-in game audio asset', async ({ request }) => {
+  test.skip(!process.env.PLAYWRIGHT_BASE_URL, 'Remote audio smoke runs only against a deployed preview.');
+
+  const audioPaths = [
+    '/audio/rain-loop.wav',
+    '/audio/hotel-hum-loop.wav',
+    '/audio/thunder.wav',
+    '/audio/card-click.wav',
+    '/audio/evidence-sting.wav',
+    '/audio/contradiction-sting.wav',
+  ];
+
+  for (const path of audioPaths) {
+    const response = await request.get(path);
+    const body = await response.body();
+    expect(response.ok(), `${path} -> ${response.status()}`).toBe(true);
+    expect(body.length, `${path} should contain a WAV payload`).toBeGreaterThan(44);
+    expect(body.subarray(0, 4).toString('ascii'), `${path} RIFF header`).toBe('RIFF');
+  }
 });
