@@ -23,10 +23,82 @@
       "width": 10,
       "x": 0,
       "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 2,
+      "name": "Entities",
+      "objects": [
+        { "id": 1, "name": "whisky-glass", "point": true, "type": "clue", "x": 0, "y": 0, "properties": [
+          { "name": "entityId", "type": "string", "value": "whisky-glass" },
+          { "name": "tileX", "type": "int", "value": 4 },
+          { "name": "tileY", "type": "int", "value": 3 }
+        ]},
+        { "id": 2, "name": "keycard-log", "point": true, "type": "clue", "x": 0, "y": 0, "properties": [
+          { "name": "entityId", "type": "string", "value": "keycard-log" },
+          { "name": "tileX", "type": "int", "value": 2 },
+          { "name": "tileY", "type": "int", "value": 2 }
+        ]},
+        { "id": 3, "name": "cctv-note", "point": true, "type": "clue", "x": 0, "y": 0, "properties": [
+          { "name": "entityId", "type": "string", "value": "cctv-note" },
+          { "name": "tileX", "type": "int", "value": 7 },
+          { "name": "tileY", "type": "int", "value": 1 }
+        ]},
+        { "id": 4, "name": "green-fiber", "point": true, "type": "clue", "x": 0, "y": 0, "properties": [
+          { "name": "entityId", "type": "string", "value": "green-fiber" },
+          { "name": "tileX", "type": "int", "value": 5 },
+          { "name": "tileY", "type": "int", "value": 2 }
+        ]},
+        { "id": 5, "name": "burnt-ledger", "point": true, "type": "clue", "x": 0, "y": 0, "properties": [
+          { "name": "entityId", "type": "string", "value": "burnt-ledger" },
+          { "name": "tileX", "type": "int", "value": 8 },
+          { "name": "tileY", "type": "int", "value": 4 }
+        ]},
+        { "id": 6, "name": "brass-heron", "point": true, "type": "clue", "x": 0, "y": 0, "properties": [
+          { "name": "entityId", "type": "string", "value": "brass-heron" },
+          { "name": "tileX", "type": "int", "value": 7 },
+          { "name": "tileY", "type": "int", "value": 5 }
+        ]},
+        { "id": 7, "name": "cctv-still", "point": true, "type": "clue", "x": 0, "y": 0, "properties": [
+          { "name": "entityId", "type": "string", "value": "cctv-still" },
+          { "name": "tileX", "type": "int", "value": 8 },
+          { "name": "tileY", "type": "int", "value": 1 }
+        ]},
+        { "id": 8, "name": "kamil", "point": true, "type": "witness", "x": 0, "y": 0, "properties": [
+          { "name": "entityId", "type": "string", "value": "kamil" },
+          { "name": "tileX", "type": "int", "value": 1 },
+          { "name": "tileY", "type": "int", "value": 5 }
+        ]},
+        { "id": 9, "name": "nina", "point": true, "type": "witness", "x": 0, "y": 0, "properties": [
+          { "name": "entityId", "type": "string", "value": "nina" },
+          { "name": "tileX", "type": "int", "value": 2 },
+          { "name": "tileY", "type": "int", "value": 6 }
+        ]},
+        { "id": 10, "name": "irena", "point": true, "type": "witness", "x": 0, "y": 0, "properties": [
+          { "name": "entityId", "type": "string", "value": "irena" },
+          { "name": "tileX", "type": "int", "value": 6 },
+          { "name": "tileY", "type": "int", "value": 6 }
+        ]},
+        { "id": 11, "name": "marek", "point": true, "type": "witness", "x": 0, "y": 0, "properties": [
+          { "name": "entityId", "type": "string", "value": "marek" },
+          { "name": "tileX", "type": "int", "value": 4 },
+          { "name": "tileY", "type": "int", "value": 6 }
+        ]},
+        { "id": 12, "name": "detective", "point": true, "type": "player", "x": 0, "y": 0, "properties": [
+          { "name": "entityId", "type": "string", "value": "detective" },
+          { "name": "tileX", "type": "int", "value": 2 },
+          { "name": "tileY", "type": "int", "value": 6 }
+        ]}
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
     }
   ],
-  "nextlayerid": 2,
-  "nextobjectid": 1,
+  "nextlayerid": 3,
+  "nextobjectid": 13,
   "orientation": "isometric",
   "renderorder": "right-down",
   "tiledversion": "1.11.2",
