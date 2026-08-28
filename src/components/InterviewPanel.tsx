@@ -47,6 +47,7 @@ export function InterviewPanel() {
   const activeWitnessId = witnessId;
   const transcript = transcripts[activeWitnessId] ?? [];
   const witnessProgress = progress[activeWitnessId] ?? { resistance: witness.resistance, contradictions: 0, contradictionIds: [] };
+  const resistanceState = resistanceLabel(witnessProgress.resistance);
 
   async function ask(text: string, selectedPressure: InterviewPressure = pressure) {
     const trimmed = text.trim();
@@ -85,11 +86,18 @@ export function InterviewPanel() {
       <section className="interview-panel">
         <header className="interview-header">
           <div>
-            <span className="eyebrow">WITNESS / {resistanceLabel(witnessProgress.resistance)} · AI {activeBackend ?? provider}</span>
+            <span className="eyebrow">WITNESS / {resistanceState} · AI {activeBackend ?? provider}</span>
             <h2>{witness.name}</h2>
             <p>{witness.role}</p>
-            <div className="resistance-meter" aria-label={`Witness resistance ${witnessProgress.resistance} out of 100`}>
-              <small>Resistance</small><strong>{witnessProgress.resistance}/100</strong>
+            <div
+              className="resistance-meter"
+              role="progressbar"
+              aria-label={`Witness resistance: ${resistanceState}`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={witnessProgress.resistance}
+            >
+              <small>Resistance · {resistanceState}</small>
               <div className="resistance-meter-track"><span style={{ width: `${witnessProgress.resistance}%` }} /></div>
             </div>
           </div>
