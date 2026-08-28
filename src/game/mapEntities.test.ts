@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mapAnchorKey, readEntityAnchors } from './mapEntities';
 
 describe('Tiled entity anchors', () => {
-  it('reads clue and witness positions from object properties', () => {
+  it('reads clue, witness and player positions from object properties', () => {
     const anchors = readEntityAnchors([
       { type: 'clue', properties: [
         { name: 'entityId', value: 'keycard-log' },
@@ -14,10 +14,16 @@ describe('Tiled entity anchors', () => {
         { name: 'tileX', value: 2 },
         { name: 'tileY', value: 6 },
       ] },
+      { type: 'player', properties: [
+        { name: 'entityId', value: 'detective' },
+        { name: 'tileX', value: 2 },
+        { name: 'tileY', value: 6 },
+      ] },
     ]);
 
     expect(anchors.get(mapAnchorKey('clue', 'keycard-log'))).toMatchObject({ tileX: 2, tileY: 2 });
     expect(anchors.get(mapAnchorKey('witness', 'nina'))).toMatchObject({ tileX: 2, tileY: 6 });
+    expect(anchors.get(mapAnchorKey('player', 'detective'))).toMatchObject({ tileX: 2, tileY: 6 });
   });
 
   it('ignores malformed or decorative Tiled objects', () => {
