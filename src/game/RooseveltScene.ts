@@ -54,7 +54,11 @@ export class RooseveltScene extends Phaser.Scene {
     this.load.image('roosevelt-floor', ROOSEVELT_FLOOR_TEXTURE_BY_MAP[this.worldMapId]);
     for (const [key, url] of SCENE_SVG_ASSETS) this.load.svg(key, url);
     for (const sheet of Object.values(ROOSEVELT_GENERATED_SHEETS)) {
-      this.load.spritesheet(sheet.key, sheet.url, { frameWidth: sheet.frameWidth, frameHeight: sheet.frameHeight });
+      this.load.spritesheet(sheet.key, sheet.url, {
+        frameWidth: sheet.frameWidth,
+        frameHeight: sheet.frameHeight,
+        endFrame: sheet.endFrame,
+      });
     }
     for (const asset of Object.values(GAME_AUDIO)) this.load.audio(asset.key, asset.url);
   }
@@ -215,6 +219,14 @@ export class RooseveltScene extends Phaser.Scene {
       .setDepth(depth);
   }
 
+  private authoredCart(x: number, y: number, width: number, height: number, depth: number, alpha = 0.92) {
+    return this.add.image(x, y, 'prop-cart')
+      .setOrigin(0.5, 1)
+      .setDisplaySize(width, height)
+      .setDepth(depth)
+      .setAlpha(alpha);
+  }
+
   private addArchitecture(visibleFloorTiles: Set<string>, objects: Parameters<typeof readMapZones>[0]) {
     const wallTextures = ROOSEVELT_WALL_TEXTURES_BY_MAP[this.worldMapId];
     const isVisible = (x: number, y: number) => visibleFloorTiles.has(`${x}:${y}`);
@@ -246,26 +258,26 @@ export class RooseveltScene extends Phaser.Scene {
         this.generatedProp(ROOSEVELT_PROP_FRAME.reception, point.x - 92, point.y + 120, 300, 300, point.y + 142);
       }
       if (zone.id === 'lounge' && this.worldMapId === 'roosevelt-lobby') {
-        this.generatedProp(ROOSEVELT_PROP_FRAME.luggageCart, point.x - 54, point.y + 102, 156, 156, point.y + 116);
+        this.authoredCart(point.x - 54, point.y + 102, 92, 82, point.y + 116);
       }
       if (zone.id === 'laundry') {
         this.generatedProp(ROOSEVELT_PROP_FRAME.laundry, point.x + 72, point.y + 126, 264, 264, point.y + 148);
-        this.generatedProp(ROOSEVELT_PROP_FRAME.cleaningCart, point.x - 82, point.y + 106, 150, 150, point.y + 138);
+        this.authoredCart(point.x - 82, point.y + 106, 88, 82, point.y + 138);
       }
       if (zone.id === 'service-hall' && this.worldMapId === 'roosevelt-floor-3') {
         this.generatedProp(ROOSEVELT_PROP_FRAME.cctvDesk, point.x + 58, point.y + 112, 238, 238, point.y + 138);
       }
       if (zone.id === 'service-hall' && this.worldMapId !== 'roosevelt-floor-3') {
-        this.generatedProp(ROOSEVELT_PROP_FRAME.cleaningCart, point.x - 38, point.y + 90, 142, 142, point.y + 112).setAlpha(0.9);
+        this.authoredCart(point.x - 38, point.y + 90, 86, 80, point.y + 112, 0.9);
       }
       if (zone.id === 'service-corridor' && this.worldMapId === 'roosevelt-basement') {
-        this.generatedProp(ROOSEVELT_PROP_FRAME.cleaningCart, point.x - 44, point.y + 90, 150, 150, point.y + 112);
+        this.authoredCart(point.x - 44, point.y + 90, 90, 84, point.y + 112);
       }
       if (zone.id === 'guest-corridor-west' && this.worldMapId === 'roosevelt-floor-3') {
         this.generatedProp(ROOSEVELT_PROP_FRAME.stairs, point.x - 72, point.y + 126, 244, 244, point.y + 146);
       }
       if (zone.id === 'guest-corridor-east' && this.worldMapId === 'roosevelt-floor-3') {
-        this.generatedProp(ROOSEVELT_PROP_FRAME.luggageCart, point.x + 44, point.y + 100, 154, 154, point.y + 118).setAlpha(0.94);
+        this.authoredCart(point.x + 44, point.y + 100, 88, 82, point.y + 118, 0.94);
       }
     }
   }
