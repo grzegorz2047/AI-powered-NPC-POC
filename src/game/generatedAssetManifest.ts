@@ -1,0 +1,15 @@
+export const GENERATED_ROOSEVELT_ASSETS = {
+  detective: '/assets/generated/character-detective.webp',
+  marek: '/assets/generated/character-marek.webp',
+  irena: '/assets/generated/character-irena.webp',
+  nina: '/assets/generated/character-nina.webp',
+  kamil: '/assets/generated/character-kamil.webp',
+  room307: '/assets/generated/wall-door307.webp',
+  elevator: '/assets/generated/elevator.webp',
+  reception: '/assets/generated/reception.webp',
+  stairs: '/assets/generated/stairs.webp',
+  cctvDesk: '/assets/generated/cctv-desk.webp',
+  laundry: '/assets/generated/laundry.webp',
+  cleaningCart: '/assets/generated/cleaning-cart.webp',
+  luggageCart: '/assets/generated/luggage-cart.webp',
+} as const;
