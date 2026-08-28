@@ -25,8 +25,29 @@
       "y": 0
     },
     {
-      "draworder": "topdown",
+      "data": [
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1
+      ],
+      "height": 8,
       "id": 2,
+      "name": "Walkable",
+      "opacity": 1,
+      "type": "tilelayer",
+      "visible": false,
+      "width": 10,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 3,
       "name": "Entities",
       "objects": [
         { "id": 1, "name": "whisky-glass", "point": true, "type": "clue", "x": 0, "y": 0, "properties": [
@@ -97,7 +118,7 @@
       "y": 0
     }
   ],
-  "nextlayerid": 3,
+  "nextlayerid": 4,
   "nextobjectid": 13,
   "orientation": "isometric",
   "renderorder": "right-down",
