@@ -7,16 +7,23 @@ import { EvidenceBoard } from './components/EvidenceBoard';
 import { InterviewPanel } from './components/InterviewPanel';
 import { useAiSettingsStore } from './state/aiSettingsStore';
 import { useInvestigationStore } from './state/investigationStore';
+import { useWorldStore } from './state/worldStore';
 
 const PhaserGame = lazy(() => import('./game/PhaserGame').then((module) => ({ default: module.PhaserGame })));
 
 export default function App() {
   const resetCase = useInvestigationStore((state) => state.resetCase);
+  const resetWorld = useWorldStore((state) => state.resetWorld);
   const discoveredClueIds = useInvestigationStore((state) => state.discoveredClueIds);
   const setAiOpen = useAiSettingsStore((state) => state.setPanelOpen);
   const provider = useAiSettingsStore((state) => state.provider);
   const activeBackend = useAiSettingsStore((state) => state.runtime.activeBackend);
   const [started, setStarted] = useState(false);
+
+  function resetInvestigation() {
+    resetCase();
+    resetWorld();
+  }
 
   if (!started) {
     return (
@@ -63,7 +70,7 @@ export default function App() {
           </button>
           <AccessibleScenePanel />
           <AccusationPanel />
-          <button type="button" className="ghost-button" onClick={resetCase}>Reset case</button>
+          <button type="button" className="ghost-button" onClick={resetInvestigation}>Reset case</button>
         </div>
       </header>
 
