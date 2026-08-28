@@ -43,6 +43,59 @@ test('accessibility scene is spoiler-safe and Marek cannot confess without contr
   await expect(interview.getByText(/fatal blow|I killed|I murdered/i)).toHaveCount(0);
 });
 
+test('Roosevelt real-hotel world is level-scoped and accessible navigation crosses all three maps', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('hotel-nocturne-world-location', JSON.stringify({
+      state: { currentMapId: 'roosevelt-lobby', spawnId: 'detective' },
+      version: 0,
+    }));
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: /Start investigation/i }).click();
+  await expect(page.getByLabel(/investigation scene: Lobby \/ First Floor/i)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Scene list' }).click();
+  let scene = page.getByRole('dialog', { name: 'Accessible investigation scene' });
+  await expect(scene.getByText(/Lobby \/ First Floor/)).toBeVisible();
+  await expect(scene.getByRole('button', { name: /Nina Sokolowska/i })).toBeVisible();
+  await expect(scene.getByRole('button', { name: /Kamil Nowak/i })).toBeVisible();
+  await expect(scene.getByRole('button', { name: /Marek Wolski/i })).toBeVisible();
+  await expect(scene.getByRole('button', { name: /Irena Maj/i })).toHaveCount(0);
+  await expect(scene.getByText(/No investigation hotspots on this level/i)).toBeVisible();
+
+  await scene.getByRole('button', { name: /Elevator to third floor \/ Room 307/i }).click();
+  await expect(page.getByLabel(/investigation scene: Third Floor \/ Room 307/i)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Scene list' }).click();
+  scene = page.getByRole('dialog', { name: 'Accessible investigation scene' });
+  await expect(scene.getByRole('button', { name: /Inspect clue: Master keycard log/i })).toBeVisible();
+  await expect(scene.getByRole('button', { name: /Irena Maj/i })).toBeVisible();
+  await expect(scene.getByRole('button', { name: /Kamil Nowak/i })).toHaveCount(0);
+  await scene.getByRole('button', { name: /Inspect clue: Master keycard log/i }).click();
+  await scene.getByRole('button', { name: 'Close' }).click();
+
+  const ninaLead = page.getByRole('button', { name: /Nina Sokolowska: Who owns master card M-01/i });
+  await expect(ninaLead).toBeDisabled();
+
+  await page.getByRole('button', { name: 'Scene list' }).click();
+  scene = page.getByRole('dialog', { name: 'Accessible investigation scene' });
+  await scene.getByRole('button', { name: /Elevator to lobby/i }).click();
+  await expect(page.getByLabel(/investigation scene: Lobby \/ First Floor/i)).toBeVisible();
+  await expect(ninaLead).toBeEnabled();
+
+  await page.getByRole('button', { name: 'Scene list' }).click();
+  scene = page.getByRole('dialog', { name: 'Accessible investigation scene' });
+  await scene.getByRole('button', { name: /Service elevator to basement/i }).click();
+  await expect(page.getByLabel(/investigation scene: Basement \/ Service/i)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Scene list' }).click();
+  scene = page.getByRole('dialog', { name: 'Accessible investigation scene' });
+  await expect(scene.getByRole('button', { name: /Inspect clue: Burnt ledger fragment/i })).toBeVisible();
+  await expect(scene.getByRole('button', { name: /Inspect clue: Brass heron statuette/i })).toBeVisible();
+  await expect(scene.getByText(/No witness is currently on this level/i)).toBeVisible();
+});
+
 test('opening AI settings does not download a local model', async ({ page }) => {
   const remoteModelRequests: string[] = [];
   page.on('request', (request) => {
