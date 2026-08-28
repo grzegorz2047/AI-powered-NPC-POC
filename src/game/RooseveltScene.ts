@@ -18,11 +18,11 @@ import {
 import { createWalkabilityMatrix, findTilePath, type TilePoint } from './tilePathfinding';
 import { WORLD_MAPS, type WorldMapId } from './worldManifest';
 
-type FloorLayer = Phaser.Tilemaps.TilemapLayer | Phaser.Tilemaps.TilemapGPULayer;
 type WorldBounds = { minX: number; minY: number; maxX: number; maxY: number };
 type CameraKeys = Record<'W' | 'A' | 'S' | 'D' | 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', Phaser.Input.Keyboard.Key>;
 
 export class RooseveltScene extends Phaser.Scene {
+  private tilemap?: Phaser.Tilemaps.Tilemap;
   private player?: Phaser.GameObjects.Container;
   private playerBody?: Phaser.GameObjects.Image;
   private playerTile?: TilePoint;
@@ -62,14 +62,12 @@ export class RooseveltScene extends Phaser.Scene {
     this.input.once('pointerdown', () => this.startAmbience());
 
     const map = this.make.tilemap({ key: 'roosevelt-map' });
-    const tileset = map.addTilesetImage('nocturne-floor', 'roosevelt-floor');
-    if (!tileset) throw new Error(`Unable to bind Roosevelt floor tileset for ${this.worldMapId}`);
-
-    const floor = map.createLayer('Floor', tileset, 0, 0);
+    this.tilemap = map;
+    const floorLayer = map.getLayer('Floor');
     const walkableLayer = map.getLayer('Walkable');
-    if (!floor || !walkableLayer) throw new Error(`${this.worldMapId} must contain Floor and Walkable tile layers`);
-    floor.setDepth(-20);
-    if ('setSkipCull' in floor && typeof floor.setSkipCull === 'function') floor.setSkipCull(true);
+    if (!floorLayer || !walkableLayer) throw new Error(`${this.worldMapId} must contain Floor and Walkable tile layers`);
+
+    this.renderFloor(floorLayer);
 
     const walkableTiles = new Set<string>();
     const worldBounds: WorldBounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
@@ -79,7 +77,7 @@ export class RooseveltScene extends Phaser.Scene {
         const tile = row[tileX];
         if (!tile || tile.index < 0) continue;
         walkableTiles.add(`${tileX}:${tileY}`);
-        const point = floor.tileToWorldXY(tileX, tileY);
+        const point = this.tileToWorld(tileX, tileY);
         worldBounds.minX = Math.min(worldBounds.minX, point.x - 160);
         worldBounds.maxX = Math.max(worldBounds.maxX, point.x + 160);
         worldBounds.minY = Math.min(worldBounds.minY, point.y - 160);
@@ -88,25 +86,25 @@ export class RooseveltScene extends Phaser.Scene {
     }
     this.walkabilityGrid = createWalkabilityMatrix(map.width, map.height, (x, y) => walkableTiles.has(`${x}:${y}`));
 
-    this.addArchitecture(floor, walkableTiles, map.getObjectLayer('Zones')?.objects);
+    this.addArchitecture(walkableTiles, map.getObjectLayer('Zones')?.objects);
 
     const anchors = readEntityAnchors(map.getObjectLayer('Entities')?.objects);
     const playerAnchor = requireEntityAnchor(anchors, 'player', this.spawnId);
     this.assertWalkable(playerAnchor.tileX, playerAnchor.tileY, `player:${this.spawnId}`);
-    this.createPlayer(floor, playerAnchor.tileX, playerAnchor.tileY);
+    this.createPlayer(playerAnchor.tileX, playerAnchor.tileY);
     this.configureCamera(worldBounds);
     this.setupCameraControls();
 
-    this.addZoneLabels(floor, map.getObjectLayer('Zones')?.objects);
-    this.addWalkZones(floor, walkableTiles);
+    this.addZoneLabels(map.getObjectLayer('Zones')?.objects);
+    this.addWalkZones(walkableTiles);
 
     for (const clueId of WORLD_MAPS[this.worldMapId].clueIds) {
       const clue = clueById[clueId];
       if (!clue) throw new Error(`Unknown clue in ${this.worldMapId}: ${clueId}`);
       const anchor = requireEntityAnchor(anchors, 'clue', clueId);
       this.assertWalkable(anchor.tileX, anchor.tileY, `clue:${clueId}`);
-      const point = floor.tileToWorldXY(anchor.tileX, anchor.tileY);
-      this.addClueHotspot(floor, clueId, clue.title, anchor.tileX, anchor.tileY, point.x, point.y + 36);
+      const point = this.tileToWorld(anchor.tileX, anchor.tileY);
+      this.addClueHotspot(clueId, clue.title, anchor.tileX, anchor.tileY, point.x, point.y + 36);
     }
 
     for (const witnessId of WORLD_MAPS[this.worldMapId].witnessIds) {
@@ -114,13 +112,13 @@ export class RooseveltScene extends Phaser.Scene {
       if (!witness) throw new Error(`Unknown witness in ${this.worldMapId}: ${witnessId}`);
       const anchor = requireEntityAnchor(anchors, 'witness', witnessId);
       this.assertWalkable(anchor.tileX, anchor.tileY, `witness:${witnessId}`);
-      const point = floor.tileToWorldXY(anchor.tileX, anchor.tileY);
-      this.addWitness(floor, witnessId, witness.name, witness.role, anchor.tileX, anchor.tileY, point.x, point.y + 52);
+      const point = this.tileToWorld(anchor.tileX, anchor.tileY);
+      this.addWitness(witnessId, witness.name, witness.role, anchor.tileX, anchor.tileY, point.x, point.y + 52);
     }
 
     for (const transition of readMapTransitions(map.getObjectLayer('Transitions')?.objects)) {
       this.assertWalkable(transition.tileX, transition.tileY, `transition:${transition.id}`);
-      this.addTransition(floor, transition);
+      this.addTransition(transition);
     }
 
     this.addHud();
@@ -155,18 +153,40 @@ export class RooseveltScene extends Phaser.Scene {
     if (down) camera.scrollY += speed;
   }
 
+  private tileToWorld(tileX: number, tileY: number) {
+    if (!this.tilemap) throw new Error('Roosevelt tilemap is not initialized');
+    const point = this.tilemap.tileToWorldXY(tileX, tileY, undefined, undefined, 'Floor');
+    if (!point) throw new Error(`Unable to project Roosevelt tile ${tileX}:${tileY}`);
+    return point;
+  }
+
+  private renderFloor(layer: Phaser.Tilemaps.LayerData) {
+    for (let tileY = 0; tileY < layer.data.length; tileY += 1) {
+      const row = layer.data[tileY] ?? [];
+      for (let tileX = 0; tileX < row.length; tileX += 1) {
+        const tile = row[tileX];
+        if (!tile || tile.index < 0) continue;
+        const point = this.tileToWorld(tileX, tileY);
+        this.add.image(point.x, point.y + 32, 'roosevelt-floor')
+          .setOrigin(0.5)
+          .setDisplaySize(128, 64)
+          .setDepth(point.y - 20);
+      }
+    }
+  }
+
   private assertWalkable(tileX: number, tileY: number, label: string) {
     if (this.walkabilityGrid[tileY]?.[tileX] !== 1) throw new Error(`${this.worldMapId} ${label} is not on Walkable`);
   }
 
-  private addArchitecture(floor: FloorLayer, walkableTiles: Set<string>, objects: Parameters<typeof readMapZones>[0]) {
+  private addArchitecture(walkableTiles: Set<string>, objects: Parameters<typeof readMapZones>[0]) {
     const wallTextures = ROOSEVELT_WALL_TEXTURES_BY_MAP[this.worldMapId];
     const isWalkable = (x: number, y: number) => walkableTiles.has(`${x}:${y}`);
 
     for (let y = 0; y < this.walkabilityGrid.length; y += 1) {
       for (let x = 0; x < (this.walkabilityGrid[y]?.length ?? 0); x += 1) {
         if (!isWalkable(x, y)) continue;
-        const point = floor.tileToWorldXY(x, y);
+        const point = this.tileToWorld(x, y);
         const wallDepth = point.y + 24;
         if (!isWalkable(x - 1, y)) {
           this.add.image(point.x, point.y + 32, wallTextures.nw)
@@ -184,7 +204,7 @@ export class RooseveltScene extends Phaser.Scene {
     }
 
     for (const zone of readMapZones(objects)) {
-      const point = floor.tileToWorldXY(zone.tileX, zone.tileY);
+      const point = this.tileToWorld(zone.tileX, zone.tileY);
       if (zone.id === 'room-307') {
         this.add.image(point.x + 42, point.y + 42, 'mockup-door307')
           .setOrigin(0.5, 1)
@@ -304,9 +324,9 @@ export class RooseveltScene extends Phaser.Scene {
     this.cameraModeText?.setText('CAMERA FOLLOW · RMB/MMB DRAG · WHEEL ZOOM · WASD/ARROWS PAN');
   }
 
-  private addZoneLabels(floor: FloorLayer, objects: Parameters<typeof readMapZones>[0]) {
+  private addZoneLabels(objects: Parameters<typeof readMapZones>[0]) {
     for (const zone of readMapZones(objects)) {
-      const point = floor.tileToWorldXY(zone.tileX, zone.tileY);
+      const point = this.tileToWorld(zone.tileX, zone.tileY);
       this.add.text(point.x, point.y + 28, zone.label, {
         fontFamily: 'Arial, sans-serif',
         fontSize: '10px',
@@ -317,19 +337,19 @@ export class RooseveltScene extends Phaser.Scene {
     }
   }
 
-  private addWalkZones(floor: FloorLayer, walkableTiles: Set<string>) {
+  private addWalkZones(walkableTiles: Set<string>) {
     for (const tileKey of walkableTiles) {
       const [tileX, tileY] = tileKey.split(':').map(Number);
-      const point = floor.tileToWorldXY(tileX, tileY);
+      const point = this.tileToWorld(tileX, tileY);
       const zone = this.add.zone(point.x, point.y + 32, 112, 54).setInteractive({ useHandCursor: true }).setDepth(-1);
       zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-        if (pointer.leftButtonDown()) this.walkToTile(floor, tileX, tileY);
+        if (pointer.leftButtonDown()) this.walkToTile(tileX, tileY);
       });
     }
   }
 
-  private createPlayer(floor: FloorLayer, tileX: number, tileY: number) {
-    const start = floor.tileToWorldXY(tileX, tileY);
+  private createPlayer(tileX: number, tileY: number) {
+    const start = this.tileToWorld(tileX, tileY);
     const shadow = this.add.ellipse(0, 0, 44, 16, 0x000000, 0.52);
     const body = this.add.image(0, -60, ROOSEVELT_PLAYER_TEXTURE).setDisplaySize(70, 116);
     this.playerBody = body;
@@ -337,7 +357,7 @@ export class RooseveltScene extends Phaser.Scene {
     this.player = this.add.container(start.x, start.y + 54, [shadow, body]).setDepth(start.y + 134).setName('detective');
   }
 
-  private walkToTile(floor: FloorLayer, tileX: number, tileY: number, onArrive?: () => void) {
+  private walkToTile(tileX: number, tileY: number, onArrive?: () => void) {
     if (!this.player || !this.playerTile) return;
     const path = findTilePath(this.walkabilityGrid, this.playerTile, { x: tileX, y: tileY });
     if (!path.length && (this.playerTile.x !== tileX || this.playerTile.y !== tileY)) {
@@ -352,10 +372,10 @@ export class RooseveltScene extends Phaser.Scene {
     const generation = ++this.movementGeneration;
     this.tweens.killTweensOf(this.player);
     if (this.playerBody) this.tweens.killTweensOf(this.playerBody);
-    this.followPath(floor, path.slice(1), 0, generation, onArrive);
+    this.followPath(path.slice(1), 0, generation, onArrive);
   }
 
-  private followPath(floor: FloorLayer, path: TilePoint[], index: number, generation: number, onArrive?: () => void) {
+  private followPath(path: TilePoint[], index: number, generation: number, onArrive?: () => void) {
     if (!this.player || generation !== this.movementGeneration) return;
     if (index >= path.length) {
       this.playerBody?.setY(-60);
@@ -364,7 +384,7 @@ export class RooseveltScene extends Phaser.Scene {
     }
 
     const next = path[index];
-    const point = floor.tileToWorldXY(next.x, next.y);
+    const point = this.tileToWorld(next.x, next.y);
     const x = point.x;
     const y = point.y + 54;
     const duration = Phaser.Math.Clamp(Phaser.Math.Distance.Between(this.player.x, this.player.y, x, y) * 2.5, 90, 260);
@@ -382,12 +402,12 @@ export class RooseveltScene extends Phaser.Scene {
       onComplete: () => {
         if (generation !== this.movementGeneration) return;
         this.playerTile = next;
-        this.followPath(floor, path, index + 1, generation, onArrive);
+        this.followPath(path, index + 1, generation, onArrive);
       },
     });
   }
 
-  private addClueHotspot(floor: FloorLayer, id: string, title: string, tileX: number, tileY: number, x: number, y: number) {
+  private addClueHotspot(id: string, title: string, tileX: number, tileY: number, x: number, y: number) {
     const discovered = useInvestigationStore.getState().discoveredClueIds.includes(id);
     const ring = this.add.ellipse(x, y, 58, 23, discovered ? 0x7b837a : 0xc2a76a, discovered ? 0.05 : 0.09)
       .setStrokeStyle(1.5, discovered ? 0x858b84 : 0xd0b775, discovered ? 0.24 : 0.58).setDepth(y + 70);
@@ -402,7 +422,7 @@ export class RooseveltScene extends Phaser.Scene {
     hit.on('pointerout', () => { image.setScale(1); this.hideTooltip(); });
     hit.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (!pointer.leftButtonDown()) return;
-      this.walkToTile(floor, tileX, tileY, () => {
+      this.walkToTile(tileX, tileY, () => {
         const wasDiscovered = useInvestigationStore.getState().discoveredClueIds.includes(id);
         useInvestigationStore.getState().discoverClue(id);
         if (!wasDiscovered) {
@@ -416,7 +436,7 @@ export class RooseveltScene extends Phaser.Scene {
     });
   }
 
-  private addWitness(floor: FloorLayer, id: string, name: string, role: string, tileX: number, tileY: number, x: number, y: number) {
+  private addWitness(id: string, name: string, role: string, tileX: number, tileY: number, x: number, y: number) {
     const shadow = this.add.ellipse(x, y, 44, 16, 0x000000, 0.52).setDepth(y + 65);
     const texture = ROOSEVELT_WITNESS_TEXTURE_BY_ID[id] ?? 'npc-nina';
     const body = this.add.image(x, y, texture).setOrigin(0.5, 1).setDisplaySize(68, 116).setDepth(y + 73);
@@ -430,12 +450,12 @@ export class RooseveltScene extends Phaser.Scene {
     });
     hit.on('pointerout', () => { body.setScale(1); shadow.setScale(1); label.setColor('#e7ddca'); this.hideTooltip(); });
     hit.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.leftButtonDown()) this.walkToTile(floor, tileX, tileY, () => useInvestigationStore.getState().selectWitness(id));
+      if (pointer.leftButtonDown()) this.walkToTile(tileX, tileY, () => useInvestigationStore.getState().selectWitness(id));
     });
   }
 
-  private addTransition(floor: FloorLayer, transition: MapTransition) {
-    const point = floor.tileToWorldXY(transition.tileX, transition.tileY);
+  private addTransition(transition: MapTransition) {
+    const point = this.tileToWorld(transition.tileX, transition.tileY);
     const elevator = this.add.image(point.x, point.y + 44, 'mockup-elevator')
       .setOrigin(0.5, 1)
       .setDisplaySize(106, 208)
@@ -450,7 +470,7 @@ export class RooseveltScene extends Phaser.Scene {
     });
     hit.on('pointerout', () => { elevator.clearTint(); marker.setColor('#e0c47d'); this.hideTooltip(); });
     hit.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.leftButtonDown()) this.walkToTile(floor, transition.tileX, transition.tileY, () => useWorldStore.getState().navigate(transition.targetMap, transition.targetSpawn));
+      if (pointer.leftButtonDown()) this.walkToTile(transition.tileX, transition.tileY, () => useWorldStore.getState().navigate(transition.targetMap, transition.targetSpawn));
     });
   }
 
