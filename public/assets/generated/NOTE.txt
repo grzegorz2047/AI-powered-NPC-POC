@@ -1,0 +1,1 @@
+Binary upload path uses Git Data blobs; text files in this directory only document the generated-art pipeline.
