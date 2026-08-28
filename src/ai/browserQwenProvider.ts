@@ -1,6 +1,7 @@
 import type { AllowedNpcPrompt } from '../domain/npcPolicy';
 import { guardedNpcSystemPrompt, guardedNpcUserPrompt } from '../domain/npcPrompt';
 import { detectBrowserAiCapabilities, recommendQwenProfile, resolveBackendCandidates, transformersDevice } from './capabilities';
+import { elapsedRuntimeMs, runtimeNowMs } from './runtimeDiagnostics';
 import type { BrowserAcceleration, BrowserBackend, BrowserQwenProfile, NpcModelProvider, NpcReply, ProviderAvailability, RuntimeDiagnostics } from './types';
 
 const MODELS = {
@@ -56,6 +57,7 @@ export class BrowserQwenProvider implements NpcModelProvider {
   }
 
   async initialize(): Promise<RuntimeDiagnostics> {
+    const startedAt = runtimeNowMs();
     await this.dispose();
     const capabilities = detectBrowserAiCapabilities();
     const resolvedProfile = recommendQwenProfile(this.profile, capabilities);
@@ -69,9 +71,10 @@ export class BrowserQwenProvider implements NpcModelProvider {
       this.events.onProgress?.(0, `Initializing ${model.label} on ${backendLabel(backend)}…`);
       try {
         const device = transformersDevice(backend);
+        const dtype = model.dtype[backend];
         const created = await transformers.pipeline('text-generation', model.repository, {
           device,
-          dtype: model.dtype[backend],
+          dtype,
           progress_callback: (event) => {
             const progress = readProgress(event);
             this.events.onProgress?.(progress, progressMessage(event, model.label));
@@ -87,8 +90,11 @@ export class BrowserQwenProvider implements NpcModelProvider {
           requestedBackend: this.acceleration,
           activeBackend: backend,
           activeModel: model.label,
+          activeDtype: dtype,
           fallbackUsed: this.fallbackUsed,
           progress: 100,
+          initMs: elapsedRuntimeMs(startedAt),
+          lastResponseMs: null,
           message: `${model.label} ready on ${backendLabel(backend)}${this.fallbackUsed ? ' (fallback)' : ''}.`,
           lastError: failures.length ? failures.join(' | ') : null,
         };

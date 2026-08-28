@@ -1,5 +1,6 @@
 import type { AllowedNpcPrompt } from '../domain/npcPolicy';
 import { guardedNpcPromptToText } from '../domain/npcPrompt';
+import { elapsedRuntimeMs, runtimeNowMs } from './runtimeDiagnostics';
 import type { NpcModelProvider, NpcReply, ProviderAvailability, RuntimeDiagnostics } from './types';
 
 type ChromeLanguageModelSession = {
@@ -37,6 +38,7 @@ export class ChromeBuiltinProvider implements NpcModelProvider {
   }
 
   async initialize(): Promise<RuntimeDiagnostics> {
+    const startedAt = runtimeNowMs();
     const api = getLanguageModelApi();
     if (!api) throw new Error('Chrome Prompt API is not available in this browser.');
     this.session?.destroy?.();
@@ -46,8 +48,11 @@ export class ChromeBuiltinProvider implements NpcModelProvider {
       requestedBackend: 'chrome',
       activeBackend: 'chrome',
       activeModel: 'Chrome built-in LanguageModel',
+      activeDtype: 'browser-managed',
       fallbackUsed: false,
       progress: 100,
+      initMs: elapsedRuntimeMs(startedAt),
+      lastResponseMs: null,
       message: 'Chrome built-in model is ready.',
       lastError: null,
     };

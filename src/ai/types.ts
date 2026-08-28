@@ -24,8 +24,11 @@ export type RuntimeDiagnostics = {
   requestedBackend: BrowserAcceleration | 'remote' | 'chrome' | 'rules' | null;
   activeBackend: BrowserBackend | 'remote' | 'chrome' | 'rules' | null;
   activeModel: string | null;
+  activeDtype: string | null;
   fallbackUsed: boolean;
   progress: number | null;
+  initMs: number | null;
+  lastResponseMs: number | null;
   message: string;
   lastError: string | null;
 };

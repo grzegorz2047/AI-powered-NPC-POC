@@ -3,6 +3,7 @@ import { enforceNpcReplyFirewall } from '../domain/npcReplyFirewall';
 import { useAiSettingsStore } from '../state/aiSettingsStore';
 import { BrowserQwenProvider } from './browserQwenProvider';
 import { ChromeBuiltinProvider } from './chromeBuiltinProvider';
+import { elapsedRuntimeMs, runtimeNowMs } from './runtimeDiagnostics';
 import type { NpcReply, RuntimeDiagnostics } from './types';
 
 export type RuntimeNpcAnswer = NpcReply & {
@@ -23,6 +24,7 @@ export async function initializeBrowserQwen() {
       requestedBackend: settings.browserAcceleration,
       activeBackend: null,
       activeModel: model,
+      activeDtype: null,
       fallbackUsed: false,
       message: `Trying ${backend}…`,
       lastError: null,
@@ -35,8 +37,11 @@ export async function initializeBrowserQwen() {
     requestedBackend: settings.browserAcceleration,
     activeBackend: null,
     activeModel: null,
+    activeDtype: null,
     fallbackUsed: false,
     progress: 0,
+    initMs: null,
+    lastResponseMs: null,
     message: 'Preparing local Qwen…',
     lastError: null,
   });
@@ -55,7 +60,18 @@ export async function initializeBrowserQwen() {
 export async function initializeChromeBuiltIn() {
   await chromeProvider?.dispose();
   chromeProvider = new ChromeBuiltinProvider();
-  useAiSettingsStore.getState().setRuntime({ state: 'loading', requestedBackend: 'chrome', message: 'Preparing Chrome built-in model…', progress: null, lastError: null });
+  useAiSettingsStore.getState().setRuntime({
+    state: 'loading',
+    requestedBackend: 'chrome',
+    activeBackend: null,
+    activeModel: null,
+    activeDtype: null,
+    initMs: null,
+    lastResponseMs: null,
+    message: 'Preparing Chrome built-in model…',
+    progress: null,
+    lastError: null,
+  });
   try {
     const diagnostics = await chromeProvider.initialize();
     useAiSettingsStore.getState().setRuntime(diagnostics);
@@ -75,8 +91,11 @@ export function selectRulesFallback(message = 'Deterministic dialogue is active.
     requestedBackend: 'rules',
     activeBackend: 'rules',
     activeModel: null,
+    activeDtype: null,
     fallbackUsed: false,
     progress: 100,
+    initMs: null,
+    lastResponseMs: null,
     message,
     lastError: null,
   });
@@ -93,8 +112,11 @@ export function selectByok() {
     requestedBackend: 'remote',
     activeBackend: 'remote',
     activeModel: state.byokModel.trim(),
+    activeDtype: 'provider-managed',
     fallbackUsed: false,
     progress: 100,
+    initMs: null,
+    lastResponseMs: null,
     message: 'BYOK provider selected. The API key is stored only in this tab memory.',
     lastError: null,
   });
@@ -103,6 +125,7 @@ export function selectByok() {
 export async function testAndSelectByok() {
   selectByok();
   useAiSettingsStore.getState().setRuntime({ state: 'checking', message: 'Testing BYOK connection…', progress: null, lastError: null });
+  const startedAt = runtimeNowMs();
   try {
     const reply = await askByok({
       witnessId: 'kamil',
@@ -120,8 +143,10 @@ export async function testAndSelectByok() {
       requestedBackend: 'remote',
       activeBackend: 'remote',
       activeModel: reply.model,
+      activeDtype: 'provider-managed',
       fallbackUsed: false,
       progress: 100,
+      lastResponseMs: elapsedRuntimeMs(startedAt),
       message: 'BYOK connection works and passed the case-fact firewall.',
       lastError: null,
     });
@@ -129,7 +154,7 @@ export async function testAndSelectByok() {
   } catch (error) {
     const message = errorMessage(error);
     useAiSettingsStore.getState().setProvider('rules');
-    useAiSettingsStore.getState().setRuntime({ state: 'error', activeBackend: 'rules', fallbackUsed: true, message: 'BYOK test failed.', lastError: message });
+    useAiSettingsStore.getState().setRuntime({ state: 'error', activeBackend: 'rules', activeDtype: null, fallbackUsed: true, message: 'BYOK test failed.', lastError: message });
     throw error;
   }
 }
@@ -138,6 +163,7 @@ export async function askNpc(request: NpcPolicyRequest): Promise<RuntimeNpcAnswe
   const policy = evaluateNpcPolicy(request);
   const prompt = buildAllowedNpcPrompt(request, policy);
   const settings = useAiSettingsStore.getState();
+  const startedAt = runtimeNowMs();
 
   try {
     let reply: NpcReply;
@@ -154,11 +180,13 @@ export async function askNpc(request: NpcPolicyRequest): Promise<RuntimeNpcAnswe
     }
 
     if (reply.backend !== 'rules') {
+      useAiSettingsStore.getState().setRuntime({ lastResponseMs: elapsedRuntimeMs(startedAt) });
       const filtered = enforceNpcReplyFirewall(reply.answer, prompt);
       if (filtered.rejected) {
         useAiSettingsStore.getState().setRuntime({
           state: 'fallback',
           activeBackend: 'rules',
+          activeDtype: null,
           fallbackUsed: true,
           message: 'AI reply was filtered by the case-fact firewall; deterministic dialogue was used.',
           lastError: `case-fact-firewall:${filtered.ruleId ?? 'unknown'}`,
@@ -178,6 +206,7 @@ export async function askNpc(request: NpcPolicyRequest): Promise<RuntimeNpcAnswe
     useAiSettingsStore.getState().setRuntime({
       state: 'fallback',
       activeBackend: 'rules',
+      activeDtype: null,
       fallbackUsed: true,
       message: `AI unavailable; deterministic dialogue used. ${message}`,
       lastError: message,
@@ -221,6 +250,7 @@ async function askByok(request: NpcPolicyRequest): Promise<NpcReply> {
     useAiSettingsStore.getState().setRuntime({
       state: 'fallback',
       activeBackend: 'rules',
+      activeDtype: null,
       fallbackUsed: true,
       message: 'Remote AI reply was filtered by the case-fact firewall; deterministic dialogue was used.',
       lastError: `case-fact-firewall:${payload.firewallRule ?? 'unknown'}`,

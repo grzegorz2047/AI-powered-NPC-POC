@@ -7,8 +7,11 @@ const initialRuntime: RuntimeDiagnostics = {
   requestedBackend: null,
   activeBackend: null,
   activeModel: null,
+  activeDtype: null,
   fallbackUsed: false,
   progress: null,
+  initMs: null,
+  lastResponseMs: null,
   message: 'Deterministic dialogue is active.',
   lastError: null,
 };

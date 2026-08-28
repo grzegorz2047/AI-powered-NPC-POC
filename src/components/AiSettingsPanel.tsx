@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { chromeBuiltInAvailability } from '../ai/chromeBuiltinProvider';
 import { detectBrowserAiCapabilities } from '../ai/capabilities';
 import { initializeBrowserQwen, initializeChromeBuiltIn, selectRulesFallback, testAndSelectByok } from '../ai/npcRuntime';
+import { formatRuntimeMs } from '../ai/runtimeDiagnostics';
 import type { ProviderAvailability } from '../ai/types';
 import { useGameInputBlocker } from '../game/useGameInputBlocker';
 import { useAiSettingsStore } from '../state/aiSettingsStore';
@@ -134,7 +135,10 @@ export function AiSettingsPanel() {
             <div><dt>Requested</dt><dd>{runtime.requestedBackend ?? '—'}</dd></div>
             <div><dt>Active backend</dt><dd>{runtime.activeBackend ?? '—'}</dd></div>
             <div><dt>Model</dt><dd>{runtime.activeModel ?? '—'}</dd></div>
+            <div><dt>Dtype</dt><dd>{runtime.activeDtype ?? '—'}</dd></div>
             <div><dt>Fallback</dt><dd>{runtime.fallbackUsed ? 'yes' : 'no'}</dd></div>
+            <div><dt>Initialization</dt><dd>{formatRuntimeMs(runtime.initMs)}</dd></div>
+            <div><dt>Last reply</dt><dd>{formatRuntimeMs(runtime.lastResponseMs)}</dd></div>
           </dl>
           {runtime.progress !== null && <div className="runtime-progress"><span style={{ width: `${runtime.progress}%` }} /></div>}
           <p>{runtime.message}</p>
