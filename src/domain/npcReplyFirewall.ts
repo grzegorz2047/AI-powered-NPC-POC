@@ -27,6 +27,12 @@ const INVENTED_EVIDENCE_TERMS = [
   'dna', 'cyanide', 'chloroform', 'rope', 'shell casing',
 ];
 
+const PROTECTED_CONTEXT_TERMS = [
+  'basement', 'garage', 'parking lot', 'rooftop', 'roof', 'kitchen', 'elevator',
+  'stairwell', 'service corridor', 'service area', 'laundry', 'lobby', 'bar',
+  'room 307', 'third floor',
+];
+
 const FACT_RULES: FirewallRule[] = [
   {
     id: 'marek-confession',
@@ -124,6 +130,19 @@ function containsWholeTerm(text: string, term: string) {
   return new RegExp(`\\b${escapeRegExp(term).replace(/\\ /g, '\\s+')}\\b`, 'i').test(text);
 }
 
+function newProperName(answer: string, allowed: string): string | null {
+  const titled = [...answer.matchAll(/\b(?:Mr|Ms|Mrs|Dr)\.?\s+([A-Z][a-z]{2,})\b/g)].map((match) => match[1]);
+  for (const surname of titled) {
+    if (!containsWholeTerm(allowed, normalized(surname))) return surname;
+  }
+
+  const pairs = [...answer.matchAll(/\b([A-Z][a-z]{2,}\s+[A-Z][a-z]{2,})\b/g)].map((match) => match[1]);
+  for (const pair of pairs) {
+    if (!allowed.includes(normalized(pair))) return pair;
+  }
+  return null;
+}
+
 export function validateNpcReply(answer: string, prompt: AllowedNpcPrompt): NpcReplyFirewallDecision {
   const text = normalized(answer);
   const allowed = allowedSurface(prompt);
@@ -148,6 +167,26 @@ export function validateNpcReply(answer: string, prompt: AllowedNpcPrompt): NpcR
     }
   }
 
+  for (const value of text.match(/\b\d{1,4}(?::\d{2})?\b/g) ?? []) {
+    if (!containsWholeTerm(allowed, value)) {
+      return {
+        safe: false,
+        ruleId: `invented-number:${value}`,
+        reason: `The reply introduced numeric fact "${value}" that is not present in the allowed turn context.`,
+      };
+    }
+  }
+
+  for (const term of PROTECTED_CONTEXT_TERMS) {
+    if (containsWholeTerm(text, term) && !containsWholeTerm(allowed, term)) {
+      return {
+        safe: false,
+        ruleId: `invented-context:${term}`,
+        reason: `The reply introduced location/context "${term}" outside the allowed turn context.`,
+      };
+    }
+  }
+
   for (const term of INVENTED_EVIDENCE_TERMS) {
     if (containsWholeTerm(text, term) && !containsWholeTerm(allowed, term)) {
       return {
@@ -156,6 +195,15 @@ export function validateNpcReply(answer: string, prompt: AllowedNpcPrompt): NpcR
         reason: `The reply introduced evidence term "${term}" that is not allowed for this turn.`,
       };
     }
+  }
+
+  const properName = newProperName(answer, allowed);
+  if (properName) {
+    return {
+      safe: false,
+      ruleId: `invented-name:${properName}`,
+      reason: `The reply introduced proper name "${properName}" outside the allowed turn context.`,
+    };
   }
 
   return { safe: true };

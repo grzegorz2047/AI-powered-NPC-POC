@@ -73,6 +73,27 @@ describe('NPC case-fact firewall', () => {
     if (!decision.safe) expect(decision.ruleId).toBe('protected-time:22:23');
   });
 
+  it('rejects a newly invented timestamp even when it is not part of the canon', () => {
+    const prompt = promptFor({ witnessId: 'kamil', question: 'When was this?', resistance: 25, pressure: 'neutral' });
+    const decision = validateNpcReply('It was exactly 22:50.', prompt);
+    expect(decision.safe).toBe(false);
+    if (!decision.safe) expect(decision.ruleId).toBe('invented-number:22:50');
+  });
+
+  it('rejects a newly invented location', () => {
+    const prompt = promptFor({ witnessId: 'nina', question: 'Where did he go?', resistance: 50, pressure: 'neutral' });
+    const decision = validateNpcReply('I saw him go down to the basement.', prompt);
+    expect(decision.safe).toBe(false);
+    if (!decision.safe) expect(decision.ruleId).toBe('invented-context:basement');
+  });
+
+  it('rejects a newly invented person name', () => {
+    const prompt = promptFor({ witnessId: 'irena', question: 'Who else was there?', resistance: 70, pressure: 'empathy' });
+    const decision = validateNpcReply('I saw Anna Kowalska near the door.', prompt);
+    expect(decision.safe).toBe(false);
+    if (!decision.safe) expect(decision.ruleId).toBe('invented-name:Anna Kowalska');
+  });
+
   it('allows a safe natural paraphrase of an allowed M-01 fact', () => {
     const prompt = promptFor({
       witnessId: 'nina',
