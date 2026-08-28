@@ -6,13 +6,19 @@ import { useWorldStore } from '../state/worldStore';
 import { readEntityAnchors, requireEntityAnchor } from './mapEntities';
 import { readMapTransitions, type MapTransition } from './mapTransitions';
 import { readMapZones } from './mapZones';
-import { CLUE_TEXTURE_BY_ID, SCENE_SVG_ASSETS, WITNESS_TEXTURE_BY_ID } from './sceneAssets';
+import {
+  CLUE_TEXTURE_BY_ID,
+  ROOSEVELT_FLOOR_TEXTURE_BY_MAP,
+  ROOSEVELT_WALL_TEXTURES_BY_MAP,
+  SCENE_SVG_ASSETS,
+  WITNESS_TEXTURE_BY_ID,
+} from './sceneAssets';
 import { createWalkabilityMatrix, findTilePath, type TilePoint } from './tilePathfinding';
 import { WORLD_MAPS, type WorldMapId } from './worldManifest';
 
 type FloorLayer = Phaser.Tilemaps.TilemapLayer | Phaser.Tilemaps.TilemapGPULayer;
-
 type WorldBounds = { minX: number; minY: number; maxX: number; maxY: number };
+type CameraKeys = Record<'W' | 'A' | 'S' | 'D' | 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', Phaser.Input.Keyboard.Key>;
 
 export class RooseveltScene extends Phaser.Scene {
   private player?: Phaser.GameObjects.Container;
@@ -20,10 +26,17 @@ export class RooseveltScene extends Phaser.Scene {
   private playerTile?: TilePoint;
   private tooltip?: Phaser.GameObjects.Container;
   private objectiveText?: Phaser.GameObjects.Text;
+  private cameraModeText?: Phaser.GameObjects.Text;
   private unsubscribeStore?: () => void;
   private walkabilityGrid: number[][] = [];
   private movementGeneration = 0;
   private ambienceStarted = false;
+  private cameraDetached = false;
+  private cameraDragging = false;
+  private cameraDragX = 0;
+  private cameraDragY = 0;
+  private cameraKeys?: CameraKeys;
+  private recenterKey?: Phaser.Input.Keyboard.Key;
 
   constructor(
     private readonly worldMapId: Exclude<WorldMapId, 'prototype-room-307'>,
@@ -34,14 +47,15 @@ export class RooseveltScene extends Phaser.Scene {
 
   preload() {
     this.load.tilemapTiledJSON('roosevelt-map', WORLD_MAPS[this.worldMapId].mapUrl);
-    this.load.svg('roosevelt-floor', '/assets/roosevelt-floor.svg', { width: 128, height: 64 });
+    this.load.svg('roosevelt-floor', ROOSEVELT_FLOOR_TEXTURE_BY_MAP[this.worldMapId], { width: 128, height: 64 });
     for (const [key, url] of SCENE_SVG_ASSETS) this.load.svg(key, url);
     for (const asset of Object.values(GAME_AUDIO)) this.load.audio(asset.key, asset.url);
   }
 
   create() {
-    this.cameras.main.setBackgroundColor('#080806');
+    this.cameras.main.setBackgroundColor(this.worldMapId === 'roosevelt-basement' ? '#080b09' : '#090805');
     this.sound.mute = !useInvestigationStore.getState().soundEnabled;
+    this.input.mouse?.disableContextMenu();
     this.input.once('pointerdown', () => this.startAmbience());
 
     const map = this.make.tilemap({ key: 'roosevelt-map' });
@@ -51,7 +65,7 @@ export class RooseveltScene extends Phaser.Scene {
     const floor = map.createLayer('Floor', tileset, 0, 0);
     const walkable = map.createLayer('Walkable', tileset, 0, 0);
     if (!floor || !walkable) throw new Error(`${this.worldMapId} must contain Floor and Walkable tile layers`);
-    floor.setDepth(-10);
+    floor.setDepth(-20);
     walkable.setVisible(false);
 
     const walkableTiles = new Set<string>();
@@ -60,18 +74,21 @@ export class RooseveltScene extends Phaser.Scene {
       if (tile.index < 0) return;
       walkableTiles.add(`${tile.x}:${tile.y}`);
       const point = floor.tileToWorldXY(tile.x, tile.y);
-      worldBounds.minX = Math.min(worldBounds.minX, point.x - 96);
-      worldBounds.maxX = Math.max(worldBounds.maxX, point.x + 96);
-      worldBounds.minY = Math.min(worldBounds.minY, point.y - 64);
-      worldBounds.maxY = Math.max(worldBounds.maxY, point.y + 128);
+      worldBounds.minX = Math.min(worldBounds.minX, point.x - 160);
+      worldBounds.maxX = Math.max(worldBounds.maxX, point.x + 160);
+      worldBounds.minY = Math.min(worldBounds.minY, point.y - 160);
+      worldBounds.maxY = Math.max(worldBounds.maxY, point.y + 170);
     });
     this.walkabilityGrid = createWalkabilityMatrix(map.width, map.height, (x, y) => walkableTiles.has(`${x}:${y}`));
+
+    this.addArchitecture(floor, walkableTiles, map.getObjectLayer('Zones')?.objects);
 
     const anchors = readEntityAnchors(map.getObjectLayer('Entities')?.objects);
     const playerAnchor = requireEntityAnchor(anchors, 'player', this.spawnId);
     this.assertWalkable(playerAnchor.tileX, playerAnchor.tileY, `player:${this.spawnId}`);
     this.createPlayer(floor, playerAnchor.tileX, playerAnchor.tileY);
     this.configureCamera(worldBounds);
+    this.setupCameraControls();
 
     this.addZoneLabels(floor, map.getObjectLayer('Zones')?.objects);
     this.addWalkZones(floor, walkable);
@@ -91,7 +108,7 @@ export class RooseveltScene extends Phaser.Scene {
       const anchor = requireEntityAnchor(anchors, 'witness', witnessId);
       this.assertWalkable(anchor.tileX, anchor.tileY, `witness:${witnessId}`);
       const point = floor.tileToWorldXY(anchor.tileX, anchor.tileY);
-      this.addWitness(floor, witnessId, witness.name, witness.role, anchor.tileX, anchor.tileY, point.x, point.y + 50);
+      this.addWitness(floor, witnessId, witness.name, witness.role, anchor.tileX, anchor.tileY, point.x, point.y + 52);
     }
 
     for (const transition of readMapTransitions(map.getObjectLayer('Transitions')?.objects)) {
@@ -112,23 +129,145 @@ export class RooseveltScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.unsubscribeStore?.());
   }
 
+  update(_time: number, delta: number) {
+    if (!this.cameraKeys || !this.recenterKey) return;
+    if (Phaser.Input.Keyboard.JustDown(this.recenterKey)) this.resumeCameraFollow();
+
+    const left = this.cameraKeys.A.isDown || this.cameraKeys.LEFT.isDown;
+    const right = this.cameraKeys.D.isDown || this.cameraKeys.RIGHT.isDown;
+    const up = this.cameraKeys.W.isDown || this.cameraKeys.UP.isDown;
+    const down = this.cameraKeys.S.isDown || this.cameraKeys.DOWN.isDown;
+    if (!left && !right && !up && !down) return;
+
+    this.detachCamera();
+    const camera = this.cameras.main;
+    const speed = (0.52 * delta) / camera.zoom;
+    if (left) camera.scrollX -= speed;
+    if (right) camera.scrollX += speed;
+    if (up) camera.scrollY -= speed;
+    if (down) camera.scrollY += speed;
+  }
+
   private assertWalkable(tileX: number, tileY: number, label: string) {
     if (this.walkabilityGrid[tileY]?.[tileX] !== 1) throw new Error(`${this.worldMapId} ${label} is not on Walkable`);
   }
 
+  private addArchitecture(floor: FloorLayer, walkableTiles: Set<string>, objects: Parameters<typeof readMapZones>[0]) {
+    const wallTextures = ROOSEVELT_WALL_TEXTURES_BY_MAP[this.worldMapId];
+    const isWalkable = (x: number, y: number) => walkableTiles.has(`${x}:${y}`);
+
+    for (let y = 0; y < this.walkabilityGrid.length; y += 1) {
+      for (let x = 0; x < (this.walkabilityGrid[y]?.length ?? 0); x += 1) {
+        if (!isWalkable(x, y)) continue;
+        const point = floor.tileToWorldXY(x, y);
+        const wallDepth = point.y + 24;
+        if (!isWalkable(x - 1, y)) {
+          this.add.image(point.x, point.y + 32, wallTextures.nw)
+            .setOrigin(0.5, 0.75)
+            .setDisplaySize(128, 128)
+            .setDepth(wallDepth);
+        }
+        if (!isWalkable(x, y - 1)) {
+          this.add.image(point.x, point.y + 32, wallTextures.ne)
+            .setOrigin(0.5, 0.75)
+            .setDisplaySize(128, 128)
+            .setDepth(wallDepth + 0.1);
+        }
+      }
+    }
+
+    for (const zone of readMapZones(objects)) {
+      const point = floor.tileToWorldXY(zone.tileX, zone.tileY);
+      if (zone.zoneId === 'room-307') {
+        this.add.image(point.x + 34, point.y + 31, 'prop-door307').setOrigin(0.5, 1).setDisplaySize(62, 98).setDepth(point.y + 72);
+      }
+      if (zone.zoneId === 'main-lobby') {
+        this.add.image(point.x - 38, point.y + 70, 'prop-reception').setOrigin(0.5, 1).setDisplaySize(128, 76).setDepth(point.y + 92);
+      }
+      if (zone.zoneId === 'laundry') {
+        this.add.image(point.x + 35, point.y + 72, 'prop-laundry').setOrigin(0.5, 1).setDisplaySize(112, 82).setDepth(point.y + 94);
+      }
+      if (zone.zoneId === 'service-hall' || zone.zoneId === 'service-corridor') {
+        this.add.image(point.x - 40, point.y + 66, 'prop-cart').setOrigin(0.5, 1).setDisplaySize(78, 72).setDepth(point.y + 90).setAlpha(0.86);
+      }
+      if (zone.zoneId === 'guest-corridor-east' || zone.zoneId === 'palm-room') {
+        this.add.image(point.x + 38, point.y + 16, 'prop-window').setOrigin(0.5, 1).setDisplaySize(74, 64).setDepth(point.y + 48).setAlpha(0.82);
+      }
+    }
+  }
+
   private configureCamera(bounds: WorldBounds) {
     if (!this.player || !Number.isFinite(bounds.minX)) return;
-    const paddingX = 260;
-    const paddingY = 190;
+    const paddingX = 300;
+    const paddingY = 240;
     this.cameras.main.setBounds(
       bounds.minX - paddingX,
       bounds.minY - paddingY,
       bounds.maxX - bounds.minX + paddingX * 2,
       bounds.maxY - bounds.minY + paddingY * 2,
     );
-    this.cameras.main.setZoom(0.92);
+    this.cameras.main.setZoom(0.86);
     this.cameras.main.setDeadzone(210, 130);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+  }
+
+  private setupCameraControls() {
+    const keyboard = this.input.keyboard;
+    if (keyboard) {
+      this.cameraKeys = keyboard.addKeys({
+        W: Phaser.Input.Keyboard.KeyCodes.W,
+        A: Phaser.Input.Keyboard.KeyCodes.A,
+        S: Phaser.Input.Keyboard.KeyCodes.S,
+        D: Phaser.Input.Keyboard.KeyCodes.D,
+        UP: Phaser.Input.Keyboard.KeyCodes.UP,
+        DOWN: Phaser.Input.Keyboard.KeyCodes.DOWN,
+        LEFT: Phaser.Input.Keyboard.KeyCodes.LEFT,
+        RIGHT: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+      }) as CameraKeys;
+      this.recenterKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F);
+    }
+
+    this.input.on('wheel', (pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _deltaX: number, deltaY: number) => {
+      const camera = this.cameras.main;
+      const before = camera.getWorldPoint(pointer.x, pointer.y);
+      this.detachCamera();
+      camera.setZoom(Phaser.Math.Clamp(camera.zoom - deltaY * 0.0009, 0.48, 1.45));
+      const after = camera.getWorldPoint(pointer.x, pointer.y);
+      camera.scrollX += before.x - after.x;
+      camera.scrollY += before.y - after.y;
+    });
+
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (!pointer.rightButtonDown() && !pointer.middleButtonDown()) return;
+      this.detachCamera();
+      this.cameraDragging = true;
+      this.cameraDragX = pointer.x;
+      this.cameraDragY = pointer.y;
+    });
+    this.input.on('pointerup', () => { this.cameraDragging = false; });
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (!this.cameraDragging) return;
+      const camera = this.cameras.main;
+      camera.scrollX -= (pointer.x - this.cameraDragX) / camera.zoom;
+      camera.scrollY -= (pointer.y - this.cameraDragY) / camera.zoom;
+      this.cameraDragX = pointer.x;
+      this.cameraDragY = pointer.y;
+    });
+  }
+
+  private detachCamera() {
+    if (this.cameraDetached) return;
+    this.cameraDetached = true;
+    this.cameras.main.stopFollow();
+    this.cameraModeText?.setText('CAMERA FREE · F = FOLLOW DETECTIVE');
+  }
+
+  private resumeCameraFollow() {
+    if (!this.player) return;
+    this.cameraDetached = false;
+    this.cameras.main.setDeadzone(210, 130);
+    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    this.cameraModeText?.setText('CAMERA FOLLOW · RMB/MMB DRAG · WHEEL ZOOM · WASD/ARROWS PAN');
   }
 
   private addZoneLabels(floor: FloorLayer, objects: Parameters<typeof readMapZones>[0]) {
@@ -137,10 +276,10 @@ export class RooseveltScene extends Phaser.Scene {
       this.add.text(point.x, point.y + 28, zone.label, {
         fontFamily: 'Arial, sans-serif',
         fontSize: '10px',
-        color: '#b9aa8d',
-        backgroundColor: '#11110ed9',
+        color: '#c7b790',
+        backgroundColor: '#11100ddc',
         padding: { x: 5, y: 3 },
-      }).setOrigin(0.5).setDepth(point.y + 4).setAlpha(0.76);
+      }).setOrigin(0.5).setDepth(point.y + 110).setAlpha(0.84);
     }
   }
 
@@ -149,17 +288,19 @@ export class RooseveltScene extends Phaser.Scene {
       if (tile.index < 0) return;
       const point = floor.tileToWorldXY(tile.x, tile.y);
       const zone = this.add.zone(point.x, point.y + 32, 112, 54).setInteractive({ useHandCursor: true }).setDepth(-1);
-      zone.on('pointerdown', () => this.walkToTile(floor, tile.x, tile.y));
+      zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        if (pointer.leftButtonDown()) this.walkToTile(floor, tile.x, tile.y);
+      });
     });
   }
 
   private createPlayer(floor: FloorLayer, tileX: number, tileY: number) {
     const start = floor.tileToWorldXY(tileX, tileY);
-    const shadow = this.add.ellipse(0, 0, 38, 14, 0x000000, 0.48);
-    const body = this.add.image(0, -49, 'detective').setDisplaySize(52, 91);
+    const shadow = this.add.ellipse(0, 0, 44, 16, 0x000000, 0.52);
+    const body = this.add.image(0, -56, 'detective').setDisplaySize(64, 112);
     this.playerBody = body;
     this.playerTile = { x: tileX, y: tileY };
-    this.player = this.add.container(start.x, start.y + 52, [shadow, body]).setDepth(start.y + 130).setName('detective');
+    this.player = this.add.container(start.x, start.y + 54, [shadow, body]).setDepth(start.y + 134).setName('detective');
   }
 
   private walkToTile(floor: FloorLayer, tileX: number, tileY: number, onArrive?: () => void) {
@@ -183,7 +324,7 @@ export class RooseveltScene extends Phaser.Scene {
   private followPath(floor: FloorLayer, path: TilePoint[], index: number, generation: number, onArrive?: () => void) {
     if (!this.player || generation !== this.movementGeneration) return;
     if (index >= path.length) {
-      this.playerBody?.setY(-49);
+      this.playerBody?.setY(-56);
       onArrive?.();
       return;
     }
@@ -191,11 +332,11 @@ export class RooseveltScene extends Phaser.Scene {
     const next = path[index];
     const point = floor.tileToWorldXY(next.x, next.y);
     const x = point.x;
-    const y = point.y + 52;
+    const y = point.y + 54;
     const duration = Phaser.Math.Clamp(Phaser.Math.Distance.Between(this.player.x, this.player.y, x, y) * 2.5, 90, 260);
     if (this.playerBody) {
       this.playerBody.setFlipX(x < this.player.x);
-      this.tweens.add({ targets: this.playerBody, y: -53, duration: Math.max(55, duration / 2), yoyo: true });
+      this.tweens.add({ targets: this.playerBody, y: -60, duration: Math.max(55, duration / 2), yoyo: true });
     }
     this.tweens.add({
       targets: this.player,
@@ -203,7 +344,7 @@ export class RooseveltScene extends Phaser.Scene {
       y,
       duration,
       ease: 'Linear',
-      onUpdate: () => this.player?.setDepth((this.player?.y ?? y) + 130),
+      onUpdate: () => this.player?.setDepth((this.player?.y ?? y) + 134),
       onComplete: () => {
         if (generation !== this.movementGeneration) return;
         this.playerTile = next;
@@ -215,9 +356,9 @@ export class RooseveltScene extends Phaser.Scene {
   private addClueHotspot(floor: FloorLayer, id: string, title: string, tileX: number, tileY: number, x: number, y: number) {
     const discovered = useInvestigationStore.getState().discoveredClueIds.includes(id);
     const ring = this.add.ellipse(x, y, 58, 23, discovered ? 0x7b837a : 0xc2a76a, discovered ? 0.05 : 0.09)
-      .setStrokeStyle(1.5, discovered ? 0x858b84 : 0xd0b775, discovered ? 0.24 : 0.58).setDepth(y - 1);
-    const image = this.add.image(x, y - 20, CLUE_TEXTURE_BY_ID[id]).setDisplaySize(46, 46).setDepth(y + 1).setAlpha(discovered ? 0.72 : 0.94);
-    const hit = this.add.zone(x, y - 20, 66, 62).setInteractive({ useHandCursor: true }).setDepth(y + 5);
+      .setStrokeStyle(1.5, discovered ? 0x858b84 : 0xd0b775, discovered ? 0.24 : 0.58).setDepth(y + 70);
+    const image = this.add.image(x, y - 20, CLUE_TEXTURE_BY_ID[id]).setDisplaySize(48, 48).setDepth(y + 74).setAlpha(discovered ? 0.72 : 0.96);
+    const hit = this.add.zone(x, y - 20, 66, 62).setInteractive({ useHandCursor: true }).setDepth(y + 80);
     if (!discovered) this.tweens.add({ targets: ring, alpha: { from: 0.28, to: 0.72 }, duration: 1450, yoyo: true, repeat: -1 });
 
     hit.on('pointerover', (pointer: Phaser.Input.Pointer) => {
@@ -225,56 +366,73 @@ export class RooseveltScene extends Phaser.Scene {
       this.showTooltip(discovered ? `${title} · logged` : title, pointer.worldX, pointer.worldY - 36);
     });
     hit.on('pointerout', () => { image.setScale(1); this.hideTooltip(); });
-    hit.on('pointerdown', () => this.walkToTile(floor, tileX, tileY, () => {
-      const wasDiscovered = useInvestigationStore.getState().discoveredClueIds.includes(id);
-      useInvestigationStore.getState().discoverClue(id);
-      if (!wasDiscovered) {
-        for (const audio of audioForNewClue(id)) this.playAudio(audio);
-        this.tweens.killTweensOf(ring);
-        ring.setAlpha(0.28);
-        image.setAlpha(0.72);
-        this.flashMessage('EVIDENCE LOGGED', '#f0cf88');
-      }
-    }));
+    hit.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (!pointer.leftButtonDown()) return;
+      this.walkToTile(floor, tileX, tileY, () => {
+        const wasDiscovered = useInvestigationStore.getState().discoveredClueIds.includes(id);
+        useInvestigationStore.getState().discoverClue(id);
+        if (!wasDiscovered) {
+          for (const audio of audioForNewClue(id)) this.playAudio(audio);
+          this.tweens.killTweensOf(ring);
+          ring.setAlpha(0.28);
+          image.setAlpha(0.72);
+          this.flashMessage('EVIDENCE LOGGED', '#f0cf88');
+        }
+      });
+    });
   }
 
   private addWitness(floor: FloorLayer, id: string, name: string, role: string, tileX: number, tileY: number, x: number, y: number) {
-    const shadow = this.add.ellipse(x, y, 40, 14, 0x000000, 0.5).setDepth(y - 2);
-    const body = this.add.image(x, y, WITNESS_TEXTURE_BY_ID[id]).setOrigin(0.5, 1).setDisplaySize(56, 100).setDepth(y + 1);
+    const shadow = this.add.ellipse(x, y, 44, 16, 0x000000, 0.52).setDepth(y + 65);
+    const body = this.add.image(x, y, WITNESS_TEXTURE_BY_ID[id]).setOrigin(0.5, 1).setDisplaySize(64, 112).setDepth(y + 73);
     const label = this.add.text(x, y + 8, name.split(' ')[0], {
-      fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#ded6c8', backgroundColor: '#0c0d0bd9', padding: { x: 5, y: 3 },
-    }).setOrigin(0.5).setDepth(y + 6);
-    const hit = this.add.zone(x, y - 48, 66, 104).setInteractive({ useHandCursor: true }).setDepth(y + 7);
+      fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#e7ddca', backgroundColor: '#0c0d0be8', padding: { x: 5, y: 3 },
+    }).setOrigin(0.5).setDepth(y + 84);
+    const hit = this.add.zone(x, y - 54, 72, 116).setInteractive({ useHandCursor: true }).setDepth(y + 86);
     hit.on('pointerover', (pointer: Phaser.Input.Pointer) => {
       body.setScale(1.05); shadow.setScale(1.08); label.setColor('#f2d899');
       this.showTooltip(`${name} · ${role}`, pointer.worldX, pointer.worldY - 70);
     });
-    hit.on('pointerout', () => { body.setScale(1); shadow.setScale(1); label.setColor('#ded6c8'); this.hideTooltip(); });
-    hit.on('pointerdown', () => this.walkToTile(floor, tileX, tileY, () => useInvestigationStore.getState().selectWitness(id)));
+    hit.on('pointerout', () => { body.setScale(1); shadow.setScale(1); label.setColor('#e7ddca'); this.hideTooltip(); });
+    hit.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.leftButtonDown()) this.walkToTile(floor, tileX, tileY, () => useInvestigationStore.getState().selectWitness(id));
+    });
   }
 
   private addTransition(floor: FloorLayer, transition: MapTransition) {
     const point = floor.tileToWorldXY(transition.tileX, transition.tileY);
-    const marker = this.add.text(point.x, point.y + 17, '⇅', {
-      fontFamily: 'Arial, sans-serif', fontSize: '16px', color: '#d2b46f', backgroundColor: '#12120ee0', padding: { x: 6, y: 3 },
-    }).setOrigin(0.5).setDepth(point.y + 8);
-    const hit = this.add.zone(point.x, point.y + 18, 70, 52).setInteractive({ useHandCursor: true }).setDepth(point.y + 9);
-    hit.on('pointerover', (pointer: Phaser.Input.Pointer) => { marker.setColor('#ffe0a0'); this.showTooltip(transition.label, pointer.worldX, pointer.worldY - 36); });
-    hit.on('pointerout', () => { marker.setColor('#d2b46f'); this.hideTooltip(); });
-    hit.on('pointerdown', () => this.walkToTile(floor, transition.tileX, transition.tileY, () => useWorldStore.getState().navigate(transition.targetMap, transition.targetSpawn)));
+    const elevator = this.add.image(point.x, point.y + 26, 'prop-elevator')
+      .setOrigin(0.5, 1)
+      .setDisplaySize(72, 104)
+      .setDepth(point.y + 70)
+      .setAlpha(0.95);
+    const marker = this.add.text(point.x, point.y + 14, '⇅', {
+      fontFamily: 'Arial, sans-serif', fontSize: '15px', color: '#e0c47d', backgroundColor: '#10100ce8', padding: { x: 6, y: 3 },
+    }).setOrigin(0.5).setDepth(point.y + 92);
+    const hit = this.add.zone(point.x, point.y - 20, 76, 112).setInteractive({ useHandCursor: true }).setDepth(point.y + 94);
+    hit.on('pointerover', (pointer: Phaser.Input.Pointer) => {
+      elevator.setTint(0xffe7ae); marker.setColor('#ffe0a0'); this.showTooltip(transition.label, pointer.worldX, pointer.worldY - 48);
+    });
+    hit.on('pointerout', () => { elevator.clearTint(); marker.setColor('#e0c47d'); this.hideTooltip(); });
+    hit.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.leftButtonDown()) this.walkToTile(floor, transition.tileX, transition.tileY, () => useWorldStore.getState().navigate(transition.targetMap, transition.targetSpawn));
+    });
   }
 
   private addHud() {
     const map = WORLD_MAPS[this.worldMapId];
     this.add.text(26, 24, `HOTEL NOCTURNE / ${map.title.toUpperCase()}`, {
-      fontFamily: 'Georgia, serif', fontSize: '20px', color: '#d9c18c', backgroundColor: '#0a0b08cc', padding: { x: 8, y: 5 },
+      fontFamily: 'Georgia, serif', fontSize: '20px', color: '#e1c98d', backgroundColor: '#090a07e3', padding: { x: 8, y: 5 },
     }).setScrollFactor(0).setDepth(30000);
-    this.add.text(26, 58, 'ROOSEVELT HOTEL 1925 · TOPOLOGY RECONSTRUCTION', {
-      fontFamily: 'Arial, sans-serif', fontSize: '9px', color: '#7f846f', letterSpacing: 1,
+    this.add.text(26, 58, 'ROOSEVELT HOTEL 1925 · ISOMETRIC TOPOLOGY RECONSTRUCTION', {
+      fontFamily: 'Arial, sans-serif', fontSize: '9px', color: '#93917c', letterSpacing: 1,
     }).setScrollFactor(0).setDepth(30000);
     this.objectiveText = this.add.text(996, 26, '', {
-      fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#d0b36f', align: 'right', backgroundColor: '#0a0b08cc', padding: { x: 7, y: 5 },
+      fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#d0b36f', align: 'right', backgroundColor: '#090a07e3', padding: { x: 7, y: 5 },
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(30000);
+    this.cameraModeText = this.add.text(26, 607, 'CAMERA FOLLOW · RMB/MMB DRAG · WHEEL ZOOM · WASD/ARROWS PAN', {
+      fontFamily: 'Arial, sans-serif', fontSize: '9px', color: '#b9b5a2', backgroundColor: '#090a07de', padding: { x: 7, y: 5 },
+    }).setScrollFactor(0).setDepth(30000);
   }
 
   private updateObjective(found: number) {
@@ -282,7 +440,7 @@ export class RooseveltScene extends Phaser.Scene {
   }
 
   private flashMessage(textValue: string, color: string) {
-    const text = this.add.text(this.cameras.main.midPoint.x, this.cameras.main.midPoint.y - 150, textValue, {
+    const text = this.add.text(512, 185, textValue, {
       fontFamily: 'Arial, sans-serif', fontSize: '10px', fontStyle: 'bold', color, backgroundColor: '#090a08e8', padding: { x: 7, y: 4 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(31000);
     this.tweens.add({ targets: text, y: text.y - 16, alpha: 0, duration: 1000, onComplete: () => text.destroy() });
