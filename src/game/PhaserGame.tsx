@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { useWorldStore } from '../state/worldStore';
 import { GameScene } from './GameScene';
+import { RooseveltScene } from './RooseveltScene';
 import { subscribeGameInputBlocked } from './uiInputGate';
 import { WORLD_MAPS } from './worldManifest';
 
@@ -13,13 +14,17 @@ export function PhaserGame() {
   useEffect(() => {
     if (!hostRef.current) return;
 
+    const scene = currentMapId === 'prototype-room-307'
+      ? new GameScene(currentMapId, spawnId)
+      : new RooseveltScene(currentMapId, spawnId);
+
     const game = new Phaser.Game({
       type: Phaser.AUTO,
       parent: hostRef.current,
       width: 1024,
       height: 640,
       backgroundColor: '#070b12',
-      scene: [new GameScene(currentMapId, spawnId)],
+      scene: [scene],
       render: {
         antialias: true,
         pixelArt: false,
