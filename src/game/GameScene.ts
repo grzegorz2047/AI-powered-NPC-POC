@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { GAME_AUDIO, audioForNewClue, totalContradictions, type GameAudioName } from '../audio/gameAudio';
 import { clues, witnesses } from '../data/caseData';
 import { useInvestigationStore } from '../state/investigationStore';
 import { CLUE_TEXTURE_BY_ID, SCENE_SVG_ASSETS, WITNESS_TEXTURE_BY_ID } from './sceneAssets';
@@ -16,6 +17,7 @@ export class GameScene extends Phaser.Scene {
   private playerBody?: Phaser.GameObjects.Image;
   private objectiveText?: Phaser.GameObjects.Text;
   private unsubscribeStore?: () => void;
+  private ambienceStarted = false;
 
   constructor() {
     super('investigation');
@@ -25,10 +27,13 @@ export class GameScene extends Phaser.Scene {
     this.load.tilemapTiledJSON('hotel-map', '/maps/hotel-nocturne.json');
     this.load.svg('nocturne-floor', '/assets/nocturne-floor.svg', { width: 128, height: 64 });
     for (const [key, url] of SCENE_SVG_ASSETS) this.load.svg(key, url);
+    for (const asset of Object.values(GAME_AUDIO)) this.load.audio(asset.key, asset.url);
   }
 
   create() {
     this.cameras.main.setBackgroundColor('#05080d');
+    this.sound.mute = !useInvestigationStore.getState().soundEnabled;
+    this.input.once('pointerdown', () => this.startAmbience());
 
     const map = this.make.tilemap({ key: 'hotel-map' });
     const tileset = map.addTilesetImage('nocturne-floor', 'nocturne-floor');
@@ -59,8 +64,41 @@ export class GameScene extends Phaser.Scene {
       if (state.discoveredClueIds.length !== previous.discoveredClueIds.length) {
         this.updateObjective(state.discoveredClueIds.length);
       }
+      if (state.soundEnabled !== previous.soundEnabled) {
+        this.sound.mute = !state.soundEnabled;
+        if (state.soundEnabled) this.startAmbience();
+      }
+      if (totalContradictions(state.witnessProgress) > totalContradictions(previous.witnessProgress)) {
+        this.playAudio('contradiction');
+      }
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.unsubscribeStore?.());
+  }
+
+  private startAmbience() {
+    if (this.ambienceStarted) return;
+    this.ambienceStarted = true;
+
+    for (const name of ['rain', 'hotelHum'] as const) {
+      const asset = GAME_AUDIO[name];
+      if (this.cache.audio.exists(asset.key)) {
+        this.sound.play(asset.key, { loop: true, volume: asset.volume });
+      }
+    }
+
+    this.time.addEvent({
+      delay: 18000,
+      loop: true,
+      callback: () => {
+        if (Math.random() < 0.5) this.playAudio('thunder');
+      },
+    });
+  }
+
+  private playAudio(name: GameAudioName) {
+    const asset = GAME_AUDIO[name];
+    if (!this.cache.audio.exists(asset.key)) return;
+    this.sound.play(asset.key, { loop: false, volume: asset.volume });
   }
 
   private addHotelShell() {
@@ -209,6 +247,7 @@ export class GameScene extends Phaser.Scene {
         const wasDiscovered = useInvestigationStore.getState().discoveredClueIds.includes(id);
         useInvestigationStore.getState().discoverClue(id);
         if (!wasDiscovered) {
+          for (const audio of audioForNewClue(id)) this.playAudio(audio);
           this.tweens.killTweensOf(ring);
           ring.setAlpha(0.3).setScale(1);
           image.setAlpha(0.76);
