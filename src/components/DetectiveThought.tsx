@@ -5,7 +5,9 @@ import { useInvestigationStore } from '../state/investigationStore';
 export function DetectiveThought() {
   const thought = useInvestigationStore((state) => state.detectiveThought);
   const muted = useInvestigationStore((state) => state.muted);
+  const soundEnabled = useInvestigationStore((state) => state.soundEnabled);
   const toggleMute = useInvestigationStore((state) => state.toggleMute);
+  const toggleSound = useInvestigationStore((state) => state.toggleSound);
 
   useEffect(() => {
     if (muted || !thought || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
@@ -32,9 +34,14 @@ export function DetectiveThought() {
     <div className="detective-thought" aria-live="polite">
       <span className="thought-kicker">DETECTIVE</span>
       <p>{thought}</p>
-      <button type="button" className="ghost-button" onClick={toggleMute}>
-        {muted ? 'Narrator off' : 'Narrator on'}
-      </button>
+      <div className="thought-audio-actions">
+        <button type="button" className="ghost-button" onClick={toggleSound} aria-pressed={soundEnabled}>
+          {soundEnabled ? 'Sound on' : 'Sound off'}
+        </button>
+        <button type="button" className="ghost-button" onClick={toggleMute} aria-pressed={!muted}>
+          {muted ? 'Narrator off' : 'Narrator on'}
+        </button>
+      </div>
     </div>
   );
 }
