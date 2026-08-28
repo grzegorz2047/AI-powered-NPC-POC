@@ -16,7 +16,7 @@ import {
   SCENE_SVG_ASSETS,
 } from './sceneAssets';
 import { createWalkabilityMatrix, findTilePath, type TilePoint } from './tilePathfinding';
-import { ROOSEVELT_VISUAL_TARGET } from './visualTarget';
+import { ROOSEVELT_VISUAL_AREAS, ROOSEVELT_VISUAL_TARGET } from './visualTarget';
 import { WORLD_MAPS, type WorldMapId } from './worldManifest';
 
 type WorldBounds = { minX: number; minY: number; maxX: number; maxY: number };
@@ -68,26 +68,22 @@ export class RooseveltScene extends Phaser.Scene {
     const walkableLayer = map.getLayer('Walkable');
     if (!floorLayer || !walkableLayer) throw new Error(`${this.worldMapId} must contain Floor and Walkable tile layers`);
 
-    this.renderFloor(floorLayer);
+    const visibleFloorTiles = this.collectVisibleFloorTiles(floorLayer);
+    this.renderFloor(visibleFloorTiles);
 
     const walkableTiles = new Set<string>();
-    const worldBounds: WorldBounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
     for (let tileY = 0; tileY < walkableLayer.data.length; tileY += 1) {
       const row = walkableLayer.data[tileY] ?? [];
       for (let tileX = 0; tileX < row.length; tileX += 1) {
         const tile = row[tileX];
         if (!tile || tile.index < 0) continue;
         walkableTiles.add(`${tileX}:${tileY}`);
-        const point = this.tileToWorld(tileX, tileY);
-        worldBounds.minX = Math.min(worldBounds.minX, point.x - 96);
-        worldBounds.maxX = Math.max(worldBounds.maxX, point.x + 96);
-        worldBounds.minY = Math.min(worldBounds.minY, point.y - 130);
-        worldBounds.maxY = Math.max(worldBounds.maxY, point.y + 120);
       }
     }
     this.walkabilityGrid = createWalkabilityMatrix(map.width, map.height, (x, y) => walkableTiles.has(`${x}:${y}`));
+    const worldBounds = this.measureWorldBounds(visibleFloorTiles);
 
-    this.addArchitecture(walkableTiles, map.getObjectLayer('Zones')?.objects);
+    this.addArchitecture(visibleFloorTiles, map.getObjectLayer('Zones')?.objects);
 
     const anchors = readEntityAnchors(map.getObjectLayer('Entities')?.objects);
     const playerAnchor = requireEntityAnchor(anchors, 'player', this.spawnId);
@@ -161,18 +157,49 @@ export class RooseveltScene extends Phaser.Scene {
     return point;
   }
 
-  private renderFloor(layer: Phaser.Tilemaps.LayerData) {
+  private collectVisibleFloorTiles(layer: Phaser.Tilemaps.LayerData) {
+    if (!this.tilemap) throw new Error('Roosevelt tilemap is not initialized');
+    const tiles = new Set<string>();
     for (let tileY = 0; tileY < layer.data.length; tileY += 1) {
       const row = layer.data[tileY] ?? [];
       for (let tileX = 0; tileX < row.length; tileX += 1) {
         const tile = row[tileX];
-        if (!tile || tile.index < 0) continue;
-        const point = this.tileToWorld(tileX, tileY);
-        this.add.image(point.x, point.y + 32, 'roosevelt-floor')
-          .setOrigin(0.5)
-          .setDisplaySize(128, 64)
-          .setDepth(point.y - 20);
+        if (tile && tile.index >= 0) tiles.add(`${tileX}:${tileY}`);
       }
+    }
+
+    for (const area of ROOSEVELT_VISUAL_AREAS[this.worldMapId]) {
+      for (let tileY = area.y; tileY < area.y + area.height; tileY += 1) {
+        for (let tileX = area.x; tileX < area.x + area.width; tileX += 1) {
+          if (tileX < 0 || tileY < 0 || tileX >= this.tilemap.width || tileY >= this.tilemap.height) continue;
+          tiles.add(`${tileX}:${tileY}`);
+        }
+      }
+    }
+    return tiles;
+  }
+
+  private measureWorldBounds(tiles: Set<string>): WorldBounds {
+    const bounds: WorldBounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+    for (const tileKey of tiles) {
+      const [tileX, tileY] = tileKey.split(':').map(Number);
+      const point = this.tileToWorld(tileX, tileY);
+      bounds.minX = Math.min(bounds.minX, point.x - 96);
+      bounds.maxX = Math.max(bounds.maxX, point.x + 96);
+      bounds.minY = Math.min(bounds.minY, point.y - 130);
+      bounds.maxY = Math.max(bounds.maxY, point.y + 120);
+    }
+    return bounds;
+  }
+
+  private renderFloor(tiles: Set<string>) {
+    for (const tileKey of tiles) {
+      const [tileX, tileY] = tileKey.split(':').map(Number);
+      const point = this.tileToWorld(tileX, tileY);
+      this.add.image(point.x, point.y + 32, 'roosevelt-floor')
+        .setOrigin(0.5)
+        .setDisplaySize(128, 64)
+        .setDepth(point.y - 20);
     }
   }
 
@@ -180,27 +207,25 @@ export class RooseveltScene extends Phaser.Scene {
     if (this.walkabilityGrid[tileY]?.[tileX] !== 1) throw new Error(`${this.worldMapId} ${label} is not on Walkable`);
   }
 
-  private addArchitecture(walkableTiles: Set<string>, objects: Parameters<typeof readMapZones>[0]) {
+  private addArchitecture(visibleFloorTiles: Set<string>, objects: Parameters<typeof readMapZones>[0]) {
     const wallTextures = ROOSEVELT_WALL_TEXTURES_BY_MAP[this.worldMapId];
-    const isWalkable = (x: number, y: number) => walkableTiles.has(`${x}:${y}`);
+    const isVisible = (x: number, y: number) => visibleFloorTiles.has(`${x}:${y}`);
 
-    for (let y = 0; y < this.walkabilityGrid.length; y += 1) {
-      for (let x = 0; x < (this.walkabilityGrid[y]?.length ?? 0); x += 1) {
-        if (!isWalkable(x, y)) continue;
-        const point = this.tileToWorld(x, y);
-        const wallDepth = point.y + 24;
-        if (!isWalkable(x - 1, y)) {
-          this.add.image(point.x, point.y + 32, wallTextures.nw)
-            .setOrigin(0.5, 0.72)
-            .setDisplaySize(ROOSEVELT_VISUAL_TARGET.wallDisplay.width, ROOSEVELT_VISUAL_TARGET.wallDisplay.height)
-            .setDepth(wallDepth);
-        }
-        if (!isWalkable(x, y - 1)) {
-          this.add.image(point.x, point.y + 32, wallTextures.ne)
-            .setOrigin(0.5, 0.72)
-            .setDisplaySize(ROOSEVELT_VISUAL_TARGET.wallDisplay.width, ROOSEVELT_VISUAL_TARGET.wallDisplay.height)
-            .setDepth(wallDepth + 0.1);
-        }
+    for (const tileKey of visibleFloorTiles) {
+      const [x, y] = tileKey.split(':').map(Number);
+      const point = this.tileToWorld(x, y);
+      const wallDepth = point.y + 24;
+      if (!isVisible(x - 1, y)) {
+        this.add.image(point.x, point.y + 32, wallTextures.nw)
+          .setOrigin(0.5, 0.72)
+          .setDisplaySize(ROOSEVELT_VISUAL_TARGET.wallDisplay.width, ROOSEVELT_VISUAL_TARGET.wallDisplay.height)
+          .setDepth(wallDepth);
+      }
+      if (!isVisible(x, y - 1)) {
+        this.add.image(point.x, point.y + 32, wallTextures.ne)
+          .setOrigin(0.5, 0.72)
+          .setDisplaySize(ROOSEVELT_VISUAL_TARGET.wallDisplay.width, ROOSEVELT_VISUAL_TARGET.wallDisplay.height)
+          .setDepth(wallDepth + 0.1);
       }
     }
 
