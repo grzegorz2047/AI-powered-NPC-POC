@@ -7,6 +7,7 @@ export const WORLD_MAPS = {
     production: false,
     clueIds: ['whisky-glass', 'keycard-log', 'cctv-note', 'green-fiber', 'burnt-ledger', 'brass-heron', 'cctv-still'],
     witnessIds: ['kamil', 'nina', 'irena', 'marek'],
+    navigation: [],
   },
   'roosevelt-lobby': {
     id: 'roosevelt-lobby',
@@ -16,6 +17,10 @@ export const WORLD_MAPS = {
     production: true,
     clueIds: [],
     witnessIds: ['kamil', 'nina', 'marek'],
+    navigation: [
+      { label: 'Elevator to third floor / Room 307', targetMap: 'roosevelt-floor-3', targetSpawn: 'elevator-from-lobby' },
+      { label: 'Service elevator to basement', targetMap: 'roosevelt-basement', targetSpawn: 'service-elevator-from-lobby' },
+    ],
   },
   'roosevelt-floor-3': {
     id: 'roosevelt-floor-3',
@@ -25,6 +30,10 @@ export const WORLD_MAPS = {
     production: true,
     clueIds: ['whisky-glass', 'keycard-log', 'cctv-note', 'green-fiber', 'cctv-still'],
     witnessIds: ['irena'],
+    navigation: [
+      { label: 'Elevator to lobby', targetMap: 'roosevelt-lobby', targetSpawn: 'elevator-from-floor-3' },
+      { label: 'Service elevator to basement', targetMap: 'roosevelt-basement', targetSpawn: 'service-elevator-from-floor-3' },
+    ],
   },
   'roosevelt-basement': {
     id: 'roosevelt-basement',
@@ -34,6 +43,10 @@ export const WORLD_MAPS = {
     production: true,
     clueIds: ['burnt-ledger', 'brass-heron'],
     witnessIds: [],
+    navigation: [
+      { label: 'Service elevator to third floor', targetMap: 'roosevelt-floor-3', targetSpawn: 'service-elevator-from-basement' },
+      { label: 'Service elevator to lobby', targetMap: 'roosevelt-lobby', targetSpawn: 'service-elevator-from-basement' },
+    ],
   },
 } as const;
 
