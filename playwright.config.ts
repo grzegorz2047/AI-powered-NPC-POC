@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const localBaseURL = 'http://127.0.0.1:4173';
+const externalBaseURL = process.env.PLAYWRIGHT_BASE_URL?.replace(/\/$/, '');
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -11,7 +14,7 @@ export default defineConfig({
     ['html', { open: 'never' }],
   ],
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: externalBaseURL ?? localBaseURL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -22,9 +25,9 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
+  webServer: externalBaseURL ? undefined : {
     command: 'npm run dev -- --host 127.0.0.1 --port 4173',
-    url: 'http://127.0.0.1:4173',
+    url: localBaseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

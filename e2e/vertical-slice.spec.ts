@@ -57,3 +57,27 @@ test('opening AI settings does not download a local model', async ({ page }) => 
 
   expect(remoteModelRequests).toEqual([]);
 });
+
+test('deployed Vercel rules API evaluates the same reveal policy', async ({ request }) => {
+  test.skip(!process.env.PLAYWRIGHT_BASE_URL, 'Remote API smoke runs only against a deployed preview.');
+
+  const response = await request.post('/api/npc', {
+    data: {
+      witnessId: 'nina',
+      question: 'Who owns master card M-01?',
+      evidenceIds: ['keycard-log'],
+      resistance: 50,
+      contradictions: 0,
+    },
+  });
+
+  expect(response.ok()).toBe(true);
+  const payload = await response.json() as {
+    answer?: string;
+    resistanceDelta?: number;
+    contradictionDelta?: number;
+  };
+  expect(payload.answer?.length).toBeGreaterThan(0);
+  expect(payload.resistanceDelta).toBe(-8);
+  expect(payload.contradictionDelta).toBe(1);
+});

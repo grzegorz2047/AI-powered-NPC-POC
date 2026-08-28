@@ -20,7 +20,42 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: playwright-diagnostics
+          name: playwright-local-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  vercel-preview-smoke:
+    if: github.event_name == 'pull_request'
+    needs: chromium-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Resolve Ready Vercel preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/resolve-vercel-preview.mjs >> "$GITHUB_ENV"
+      - name: Smoke public Vercel preview
+        run: npm run test:e2e
+      - name: Upload Vercel smoke diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: playwright-vercel-diagnostics
           path: |
             playwright-report/
             test-results/
