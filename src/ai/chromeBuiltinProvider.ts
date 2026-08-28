@@ -1,4 +1,5 @@
-import { allowedPromptToText, type AllowedNpcPrompt } from '../domain/npcPolicy';
+import type { AllowedNpcPrompt } from '../domain/npcPolicy';
+import { guardedNpcPromptToText } from '../domain/npcPrompt';
 import type { NpcModelProvider, NpcReply, ProviderAvailability, RuntimeDiagnostics } from './types';
 
 type ChromeLanguageModelSession = {
@@ -54,7 +55,7 @@ export class ChromeBuiltinProvider implements NpcModelProvider {
 
   async generate(prompt: AllowedNpcPrompt): Promise<NpcReply> {
     if (!this.session) throw new Error('Chrome model is not initialized.');
-    const answer = (await this.session.prompt(allowedPromptToText(prompt))).trim();
+    const answer = (await this.session.prompt(guardedNpcPromptToText(prompt))).trim();
     return {
       answer: answer || prompt.fallbackAnswer,
       backend: 'chrome',

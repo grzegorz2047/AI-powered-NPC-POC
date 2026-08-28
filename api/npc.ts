@@ -1,4 +1,5 @@
 import { buildAllowedNpcPrompt, evaluateNpcPolicy, type InterviewPressure, type NpcPolicyRequest, type NpcPolicyResult } from '../src/domain/npcPolicy.js';
+import { guardedNpcSystemPrompt, guardedNpcUserPrompt } from '../src/domain/npcPrompt.js';
 import { enforceNpcReplyFirewall } from '../src/domain/npcReplyFirewall.js';
 
 type LlmConfig = {
@@ -35,18 +36,8 @@ async function naturalize(body: ApiRequest, result: NpcPolicyResult) {
       temperature: 0.65,
       max_tokens: 100,
       messages: [
-        {
-          role: 'system',
-          content: [
-            `You are ${prompt.witnessName}, a ${prompt.persona}.`,
-            `Current resistance: ${Math.round(prompt.resistance)}/100. Detective approach: ${prompt.pressure}.`,
-            'You are a witness in a detective game. Stay in character.',
-            'Use only the facts listed below. Never add new case facts, names, times, motives or evidence.',
-            `Allowed facts: ${prompt.allowedFacts.join('; ') || 'none'}.`,
-            'Reply in 1-3 natural sentences. If the question asks for a fact not allowed, evade or say you do not know.',
-          ].join('\n'),
-        },
-        { role: 'user', content: prompt.question },
+        { role: 'system', content: guardedNpcSystemPrompt(prompt) },
+        { role: 'user', content: guardedNpcUserPrompt(prompt) },
       ],
     }),
     signal: AbortSignal.timeout(20_000),
