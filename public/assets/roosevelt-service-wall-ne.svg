@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="plaster" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#717c70"/><stop offset=".55" stop-color="#515b54"/><stop offset="1" stop-color="#333c37"/></linearGradient>
+    <pattern id="brick" width="20" height="14" patternUnits="userSpaceOnUse"><path d="M0 7h20M10 0v7M5 7v7M15 7v7" stroke="#dde4d2" stroke-opacity=".08"/><path d="M2 3h4M11 10h6" stroke="#1b2420" stroke-opacity=".22"/></pattern>
+    <clipPath id="w"><path d="M64 64 128 96 128 48 64 16Z"/></clipPath>
+  </defs>
+  <path d="M64 64 128 96 128 48 64 16Z" fill="url(#plaster)" stroke="#111813" stroke-width="2"/>
+  <g clip-path="url(#w)"><rect x="62" width="70" height="100" fill="url(#brick)"/><path d="M74 27c14 7 27 13 47 23" stroke="#1d2924" stroke-width="4" opacity=".55"/><path d="M74 25c14 7 27 13 47 23" stroke="#829285" stroke-width="1.5" opacity=".65"/></g>
+  <path d="M64 46 128 78v18L64 64Z" fill="#29332e" stroke="#101511"/>
+  <path d="M64 45 128 77" stroke="#9eab96" stroke-opacity=".24"/>
+  <circle cx="84" cy="35" r="2.8" fill="#a88f5e" opacity=".4"/><circle cx="111" cy="49" r="2" fill="#232b27" opacity=".7"/>
+</svg>
