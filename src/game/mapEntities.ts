@@ -1,4 +1,4 @@
-export type MapEntityKind = 'clue' | 'witness';
+export type MapEntityKind = 'clue' | 'witness' | 'player';
 
 export type MapEntityAnchor = {
   entityId: string;
@@ -25,7 +25,7 @@ export function readEntityAnchors(objects: readonly TiledObjectLike[] | undefine
   const anchors = new Map<string, MapEntityAnchor>();
 
   for (const object of objects ?? []) {
-    if (object.type !== 'clue' && object.type !== 'witness') continue;
+    if (object.type !== 'clue' && object.type !== 'witness' && object.type !== 'player') continue;
 
     const entityId = propertyValue(object, 'entityId');
     const tileX = propertyValue(object, 'tileX');
