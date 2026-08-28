@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_AUDIO, audioForNewClue, totalContradictions, type GameAudioName } from '../audio/gameAudio';
 import { clues, witnesses } from '../data/caseData';
 import { useInvestigationStore } from '../state/investigationStore';
+import { readEntityAnchors, requireEntityAnchor } from './mapEntities';
 import { CLUE_TEXTURE_BY_ID, SCENE_SVG_ASSETS, WITNESS_TEXTURE_BY_ID } from './sceneAssets';
 
 const FLOOR_OFFSET_X = 510;
@@ -9,7 +10,7 @@ const FLOOR_OFFSET_Y = 95;
 const INTERACTION_DISTANCE = 82;
 const WALK_BOUNDS = new Phaser.Geom.Rectangle(225, 150, 585, 350);
 
-type SceneFloorLayer = Phaser.Tilemaps.TilemapLayer | Phaser.Tilemaps.TilemapGPULayer | null;
+type SceneFloorLayer = Phaser.Tilemaps.TilemapLayer | Phaser.Tilemaps.TilemapGPULayer;
 
 export class GameScene extends Phaser.Scene {
   private tooltip?: Phaser.GameObjects.Container;
@@ -38,23 +39,28 @@ export class GameScene extends Phaser.Scene {
     const map = this.make.tilemap({ key: 'hotel-map' });
     const tileset = map.addTilesetImage('nocturne-floor', 'nocturne-floor');
     const floor = map.createLayer('Floor', tileset!, FLOOR_OFFSET_X, FLOOR_OFFSET_Y);
-    floor?.setAlpha(0.98).setDepth(-2);
+    if (!floor) throw new Error('Tiled map is missing required Floor layer.');
+    floor.setAlpha(0.98).setDepth(-2);
+
+    const anchors = readEntityAnchors(map.getObjectLayer('Entities')?.objects);
 
     this.addHotelShell();
     this.addEnvironmentProps();
     this.addRoomLabels();
     this.addWalkZone();
-    this.createPlayer(floor);
+
+    const playerAnchor = requireEntityAnchor(anchors, 'player', 'detective');
+    this.createPlayer(floor, playerAnchor.tileX, playerAnchor.tileY);
 
     for (const clue of clues) {
-      const point = floor?.tileToWorldXY(clue.tileX, clue.tileY);
-      if (!point) continue;
+      const anchor = requireEntityAnchor(anchors, 'clue', clue.id);
+      const point = floor.tileToWorldXY(anchor.tileX, anchor.tileY);
       this.addClueHotspot(clue.id, clue.title, point.x, point.y + 36);
     }
 
     for (const witness of witnesses) {
-      const point = floor?.tileToWorldXY(witness.tileX, witness.tileY);
-      if (!point) continue;
+      const anchor = requireEntityAnchor(anchors, 'witness', witness.id);
+      const point = floor.tileToWorldXY(anchor.tileX, anchor.tileY);
       this.addWitness(witness.id, witness.name, witness.role, point.x, point.y + 50);
     }
 
@@ -149,8 +155,8 @@ export class GameScene extends Phaser.Scene {
     zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.walkTo(pointer.worldX, pointer.worldY));
   }
 
-  private createPlayer(floor: SceneFloorLayer) {
-    const start = floor?.tileToWorldXY(2, 6) ?? new Phaser.Math.Vector2(340, 440);
+  private createPlayer(floor: SceneFloorLayer, tileX: number, tileY: number) {
+    const start = floor.tileToWorldXY(tileX, tileY);
     const shadow = this.add.ellipse(0, 0, 36, 13, 0x000000, 0.34);
     const body = this.add.image(0, -48, 'detective').setDisplaySize(50, 88);
     this.playerBody = body;
