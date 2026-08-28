@@ -32,24 +32,12 @@ export const ROOSEVELT_IMAGE_ASSETS = [
   ['mockup-kamil', '/assets/mockup/kamil.webp'],
   ['mockup-irena', '/assets/mockup/irena.webp'],
   ['mockup-marek', '/assets/mockup/marek.webp'],
+  ['mockup-reception', '/assets/mockup/reception-desk.webp'],
+  ['mockup-door307', '/assets/mockup/door-307.webp'],
+  ['mockup-elevator', '/assets/mockup/elevator.webp'],
+  ['mockup-stairs', '/assets/mockup/stairs.webp'],
+  ['mockup-laundry', '/assets/mockup/laundry.webp'],
 ] as const;
-
-export const ROOSEVELT_GENERATED_PROP_SHEET = {
-  key: 'generated-roosevelt-props',
-  url: '/assets/generated/hotel-props-atlas.webp',
-  frameWidth: 300,
-  frameHeight: 300,
-  endFrame: 5,
-} as const;
-
-export const ROOSEVELT_PROP_FRAME = {
-  room307: 0,
-  elevator: 1,
-  reception: 2,
-  stairs: 3,
-  cctvDesk: 4,
-  laundry: 5,
-} as const;
 
 export const ROOSEVELT_FLOOR_TEXTURE_BY_MAP: Record<Exclude<WorldMapId, 'prototype-room-307'>, string> = {
   'roosevelt-lobby': '/assets/mockup/floor-lobby.webp',
