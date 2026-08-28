@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { askNpc } from '../ai/npcRuntime';
 import { witnessById } from '../data/caseData';
-import { availableQuestions } from '../domain/progression';
+import { availableQuestions, questionsUnlockedByClue } from '../domain/progression';
 import { useAiSettingsStore } from '../state/aiSettingsStore';
 import { useInvestigationStore } from '../state/investigationStore';
 
@@ -26,6 +26,10 @@ export function InterviewPanel() {
 
   const witness = witnessId ? witnessById[witnessId] : undefined;
   const questions = useMemo(() => witnessId ? availableQuestions(witnessId, clueIds) : [], [witnessId, clueIds]);
+  const newestQuestionIds = useMemo(() => {
+    const latestClueId = clueIds.at(-1);
+    return new Set(latestClueId ? questionsUnlockedByClue(latestClueId, clueIds).map((item) => item.id) : []);
+  }, [clueIds]);
 
   if (!witnessId || !witness) return null;
 
@@ -88,11 +92,22 @@ export function InterviewPanel() {
         </div>
 
         <div className="question-suggestions">
-          {questions.map((item) => (
-            <button key={item.id} type="button" onClick={() => void ask(item.text)} disabled={busy}>
-              {item.text}
-            </button>
-          ))}
+          {questions.map((item) => {
+            const alreadyAsked = transcript.some((line) => line.speaker === 'detective' && line.text === item.text);
+            const isNewLead = newestQuestionIds.has(item.id) && !alreadyAsked;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={isNewLead ? 'suggested-lead' : undefined}
+                onClick={() => void ask(item.text)}
+                disabled={busy}
+              >
+                {isNewLead && <span className="lead-badge">NEW LEAD</span>}
+                <span>{item.text}</span>
+              </button>
+            );
+          })}
         </div>
 
         <form className="ask-form" onSubmit={submit}>
