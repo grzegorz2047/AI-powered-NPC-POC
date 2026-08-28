@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/npc.ts": {
+      "includeFiles": "src/domain/npcPolicy.ts",
+      "maxDuration": 30
+    }
+  }
+}

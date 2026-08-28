@@ -1,4 +1,4 @@
-import { buildAllowedNpcPrompt, evaluateNpcPolicy, type NpcPolicyRequest, type NpcPolicyResult } from '../src/domain/npcPolicy';
+import { buildAllowedNpcPrompt, evaluateNpcPolicy, type NpcPolicyRequest, type NpcPolicyResult } from '../src/domain/npcPolicy.js';
 
 type LlmConfig = {
   baseUrl?: string;
