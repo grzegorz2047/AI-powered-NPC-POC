@@ -25,8 +25,9 @@ export function InterviewPanel() {
 
   if (!witnessId || !witness) return null;
 
-  const transcript = transcripts[witnessId] ?? [];
-  const witnessProgress = progress[witnessId] ?? { resistance: witness.resistance, contradictions: 0 };
+  const activeWitnessId = witnessId;
+  const transcript = transcripts[activeWitnessId] ?? [];
+  const witnessProgress = progress[activeWitnessId] ?? { resistance: witness.resistance, contradictions: 0 };
 
   async function ask(text: string) {
     const trimmed = text.trim();
@@ -37,7 +38,7 @@ export function InterviewPanel() {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          witnessId,
+          witnessId: activeWitnessId,
           question: trimmed,
           evidenceIds: clueIds,
           resistance: witnessProgress.resistance,
@@ -50,7 +51,7 @@ export function InterviewPanel() {
         contradictionDelta?: number;
       };
       addExchange(
-        witnessId,
+        activeWitnessId,
         trimmed,
         payload.answer ?? 'No answer.',
         payload.resistanceDelta ?? 0,
@@ -58,7 +59,7 @@ export function InterviewPanel() {
       );
       setQuestion('');
     } catch {
-      addExchange(witnessId, trimmed, 'The witness stares at you and says nothing.');
+      addExchange(activeWitnessId, trimmed, 'The witness stares at you and says nothing.');
     } finally {
       setBusy(false);
     }
