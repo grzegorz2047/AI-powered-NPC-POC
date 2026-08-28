@@ -42,3 +42,9 @@ export function readEntityAnchors(objects: readonly TiledObjectLike[] | undefine
 export function mapAnchorKey(kind: MapEntityKind, entityId: string) {
   return `${kind}:${entityId}`;
 }
+
+export function requireEntityAnchor(anchors: Map<string, MapEntityAnchor>, kind: MapEntityKind, entityId: string) {
+  const anchor = anchors.get(mapAnchorKey(kind, entityId));
+  if (!anchor) throw new Error(`Tiled map is missing required ${kind} anchor: ${entityId}`);
+  return anchor;
+}
