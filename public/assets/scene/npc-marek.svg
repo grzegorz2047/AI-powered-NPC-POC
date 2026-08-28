@@ -1,11 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="62" height="110" viewBox="0 0 62 110">
-  <ellipse cx="31" cy="105" rx="20" ry="4.5" fill="#020305" opacity=".44"/>
-  <path d="M18 44h26l7 55H11z" fill="#171c24" stroke="#090c11" stroke-width="2"/>
-  <path d="M22 45 31 58l9-13" fill="#ded7c9"/>
-  <path d="m31 54-4 28h8z" fill="#68454a"/>
-  <path d="M18 51 9 83l8 3 11-31M44 51l9 31-8 4-11-31" fill="#1d2430"/>
-  <circle cx="31" cy="30" r="12" fill="#bd9070"/>
-  <path d="M20 28c2-12 20-14 23 0-9-4-15-4-23 0Z" fill="#302b2a"/>
-  <rect x="38" y="60" width="8" height="5" rx="1" fill="#c2a060"/>
-  <path d="M15 99h11v8H13zM36 99h11l2 8H36z" fill="#070a0e"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="128" viewBox="0 0 80 128">
+  <defs>
+    <linearGradient id="suit" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#303845"/><stop offset=".48" stop-color="#1d2632"/><stop offset="1" stop-color="#0d1218"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c89a79"/><stop offset="1" stop-color="#8e6049"/></linearGradient>
+  </defs>
+  <ellipse cx="40" cy="120" rx="22" ry="5.5" fill="#020203" opacity=".52"/>
+  <path d="M28 48 19 59l-4 47 13 6 7-42 2 44h10l2-44 7 42 13-7-6-46-10-11Z" fill="url(#suit)" stroke="#070b10" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M31 50 40 66l10-16-5-4H35Z" fill="#e2d9c9" stroke="#635c52" stroke-width="1.5"/>
+  <path d="M37 58h6l-2 27h-3Z" fill="#713b43" stroke="#3e2227"/>
+  <path d="M22 61 11 93l10 4 14-31M58 61l11 31-10 5-14-31" fill="#222c38" stroke="#0d141c" stroke-width="2.5"/>
+  <path d="M26 109h13v10H23l2-10Zm16 0h12l3 10H42Z" fill="#090c10" stroke="#040506" stroke-width="2"/>
+  <path d="M31 29c1-11 17-15 23-5l2 10-4 12-12 5-12-6-3-11Z" fill="url(#skin)" stroke="#241711" stroke-width="2.3"/>
+  <path d="M27 30c1-12 16-17 26-9l3 10-8-5-4 5-6-5-8 6Z" fill="#322b29" stroke="#171310" stroke-width="2"/>
+  <path d="M34 35h4M46 34h4" stroke="#2c1c17" stroke-width="1.8" stroke-linecap="round"/><path d="M40 39l-1 4 4 1M34 46c5 2 10 1 14-2" stroke="#70473a" stroke-width="1.2" fill="none"/>
+  <rect x="51" y="58" width="9" height="6" rx="1.5" fill="#c6a45e" stroke="#71592f"/><path d="M53 60h5" stroke="#f3d98a"/>
+  <path d="M22 75h12v12H22z" fill="#141b23" stroke="#5f6870"/><path d="M25 78h6M25 82h5" stroke="#9ba0a0" opacity=".7"/>
 </svg>
