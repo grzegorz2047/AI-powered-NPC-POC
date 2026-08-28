@@ -26,11 +26,13 @@ type InvestigationState = {
   selectedWitnessId: string | null;
   detectiveThought: string;
   muted: boolean;
+  soundEnabled: boolean;
   witnessProgress: WitnessProgress;
   transcripts: Record<string, InterviewLine[]>;
   discoverClue: (clueId: string) => void;
   selectWitness: (witnessId: string | null) => void;
   toggleMute: () => void;
+  toggleSound: () => void;
   addInterviewExchange: (witnessId: string, question: string, answer: string, effects?: ExchangeEffects) => void;
   resetCase: () => void;
 };
@@ -46,6 +48,7 @@ export const useInvestigationStore = create<InvestigationState>()(
       selectedWitnessId: null,
       detectiveThought: 'Room 307 is sealed. Start with what the room can tell you.',
       muted: false,
+      soundEnabled: true,
       witnessProgress: initialProgress,
       transcripts: {},
       discoverClue: (clueId) => {
@@ -58,6 +61,7 @@ export const useInvestigationStore = create<InvestigationState>()(
       },
       selectWitness: (selectedWitnessId) => set({ selectedWitnessId }),
       toggleMute: () => set((state) => ({ muted: !state.muted })),
+      toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
       addInterviewExchange: (witnessId, question, answer, effects = {}) =>
         set((state) => {
           const current = state.witnessProgress[witnessId] ?? { resistance: 50, contradictions: 0, contradictionIds: [] };
@@ -92,6 +96,7 @@ export const useInvestigationStore = create<InvestigationState>()(
       partialize: (state) => ({
         discoveredClueIds: state.discoveredClueIds,
         muted: state.muted,
+        soundEnabled: state.soundEnabled,
         witnessProgress: state.witnessProgress,
         transcripts: state.transcripts,
       }),
