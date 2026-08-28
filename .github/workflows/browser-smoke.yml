@@ -35,6 +35,15 @@ jobs:
         if: github.event_name == 'pull_request'
         run: npm run test:e2e
 
+      - name: Upload visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: visual-qa-screenshots
+          path: test-results/visual-qa/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Upload Playwright diagnostics
         if: failure()
         uses: actions/upload-artifact@v7.0.1
