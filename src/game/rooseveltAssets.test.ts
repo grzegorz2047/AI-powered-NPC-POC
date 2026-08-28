@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ROOSEVELT_FLOOR_TEXTURE_BY_MAP, ROOSEVELT_GENERATED_SHEETS } from './sceneAssets';
+import {
+  ROOSEVELT_FLOOR_TEXTURE_BY_MAP,
+  ROOSEVELT_GENERATED_PROP_SHEET,
+  ROOSEVELT_IMAGE_ASSETS,
+} from './sceneAssets';
 
 function readPublicAsset(url: string) {
   const relative = url.replace(/^\//, '');
@@ -14,14 +18,15 @@ function expectWebp(url: string) {
   expect(file.subarray(8, 12).toString('ascii'), `${url} WEBP header`).toBe('WEBP');
 }
 
-describe('Roosevelt generated art', () => {
-  it('keeps both generated runtime atlases checked in as WebP', () => {
-    expect(Object.values(ROOSEVELT_GENERATED_SHEETS)).toHaveLength(2);
-    for (const sheet of Object.values(ROOSEVELT_GENERATED_SHEETS)) {
-      expectWebp(sheet.url);
-      expect(sheet.frameWidth).toBeGreaterThan(0);
-      expect(sheet.frameHeight).toBeGreaterThan(0);
-    }
+describe('Roosevelt visual assets', () => {
+  it('keeps the generated environment atlas and stable character crops checked in as WebP', () => {
+    expectWebp(ROOSEVELT_GENERATED_PROP_SHEET.url);
+    expect(ROOSEVELT_GENERATED_PROP_SHEET.frameWidth).toBeGreaterThan(0);
+    expect(ROOSEVELT_GENERATED_PROP_SHEET.frameHeight).toBeGreaterThan(0);
+    expect(ROOSEVELT_GENERATED_PROP_SHEET.endFrame).toBe(5);
+
+    expect(ROOSEVELT_IMAGE_ASSETS).toHaveLength(4);
+    for (const [, url] of ROOSEVELT_IMAGE_ASSETS) expectWebp(url);
   });
 
   it('keeps a distinct checked-in floor texture for every production map', () => {
