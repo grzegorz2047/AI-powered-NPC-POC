@@ -21,6 +21,10 @@ function propertyValue(object: TiledObjectLike, name: string) {
   return object.properties?.find((property) => property.name === name)?.value;
 }
 
+export function mapAnchorKey(kind: MapEntityKind, entityId: string) {
+  return `${kind}:${entityId}`;
+}
+
 export function readEntityAnchors(objects: readonly TiledObjectLike[] | undefined): Map<string, MapEntityAnchor> {
   const anchors = new Map<string, MapEntityAnchor>();
 
@@ -33,14 +37,12 @@ export function readEntityAnchors(objects: readonly TiledObjectLike[] | undefine
     if (typeof entityId !== 'string' || typeof tileX !== 'number' || typeof tileY !== 'number') continue;
 
     const anchor: MapEntityAnchor = { entityId, kind: object.type, tileX, tileY };
-    anchors.set(`${anchor.kind}:${anchor.entityId}`, anchor);
+    const key = mapAnchorKey(anchor.kind, anchor.entityId);
+    if (anchors.has(key)) throw new Error(`Tiled map contains duplicate ${anchor.kind} anchor: ${anchor.entityId}`);
+    anchors.set(key, anchor);
   }
 
   return anchors;
-}
-
-export function mapAnchorKey(kind: MapEntityKind, entityId: string) {
-  return `${kind}:${entityId}`;
 }
 
 export function requireEntityAnchor(anchors: Map<string, MapEntityAnchor>, kind: MapEntityKind, entityId: string) {
