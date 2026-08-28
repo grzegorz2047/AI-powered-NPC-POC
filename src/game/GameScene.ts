@@ -4,10 +4,10 @@ import { clues, witnesses } from '../data/caseData';
 import { useInvestigationStore } from '../state/investigationStore';
 import { readEntityAnchors, requireEntityAnchor } from './mapEntities';
 import { CLUE_TEXTURE_BY_ID, SCENE_SVG_ASSETS, WITNESS_TEXTURE_BY_ID } from './sceneAssets';
+import { createWalkabilityMatrix, findTilePath, type TilePoint } from './tilePathfinding';
 
 const FLOOR_OFFSET_X = 510;
 const FLOOR_OFFSET_Y = 95;
-const INTERACTION_DISTANCE = 82;
 
 type SceneFloorLayer = Phaser.Tilemaps.TilemapLayer | Phaser.Tilemaps.TilemapGPULayer;
 
@@ -15,9 +15,12 @@ export class GameScene extends Phaser.Scene {
   private tooltip?: Phaser.GameObjects.Container;
   private player?: Phaser.GameObjects.Container;
   private playerBody?: Phaser.GameObjects.Image;
+  private playerTile?: TilePoint;
   private objectiveText?: Phaser.GameObjects.Text;
   private unsubscribeStore?: () => void;
   private ambienceStarted = false;
+  private walkabilityGrid: number[][] = [];
+  private movementGeneration = 0;
 
   constructor() {
     super('investigation');
@@ -45,26 +48,39 @@ export class GameScene extends Phaser.Scene {
     if (!walkable) throw new Error('Tiled map is missing required Walkable layer.');
     walkable.setVisible(false);
 
+    const walkableTiles = new Set<string>();
+    walkable.forEachTile((tile) => {
+      if (tile.index >= 0) walkableTiles.add(`${tile.x}:${tile.y}`);
+    });
+    this.walkabilityGrid = createWalkabilityMatrix(map.width, map.height, (x, y) => walkableTiles.has(`${x}:${y}`));
+
     const anchors = readEntityAnchors(map.getObjectLayer('Entities')?.objects);
+    const requireWalkableAnchor = (kind: 'clue' | 'witness' | 'player', entityId: string) => {
+      const anchor = requireEntityAnchor(anchors, kind, entityId);
+      if (this.walkabilityGrid[anchor.tileY]?.[anchor.tileX] !== 1) {
+        throw new Error(`Tiled ${kind} anchor is not on a Walkable tile: ${entityId}`);
+      }
+      return anchor;
+    };
 
     this.addHotelShell();
     this.addEnvironmentProps();
     this.addRoomLabels();
     this.addWalkZones(floor, walkable);
 
-    const playerAnchor = requireEntityAnchor(anchors, 'player', 'detective');
+    const playerAnchor = requireWalkableAnchor('player', 'detective');
     this.createPlayer(floor, playerAnchor.tileX, playerAnchor.tileY);
 
     for (const clue of clues) {
-      const anchor = requireEntityAnchor(anchors, 'clue', clue.id);
+      const anchor = requireWalkableAnchor('clue', clue.id);
       const point = floor.tileToWorldXY(anchor.tileX, anchor.tileY);
-      this.addClueHotspot(clue.id, clue.title, point.x, point.y + 36);
+      this.addClueHotspot(floor, clue.id, clue.title, anchor.tileX, anchor.tileY, point.x, point.y + 36);
     }
 
     for (const witness of witnesses) {
-      const anchor = requireEntityAnchor(anchors, 'witness', witness.id);
+      const anchor = requireWalkableAnchor('witness', witness.id);
       const point = floor.tileToWorldXY(anchor.tileX, anchor.tileY);
-      this.addWitness(witness.id, witness.name, witness.role, point.x, point.y + 50);
+      this.addWitness(floor, witness.id, witness.name, witness.role, anchor.tileX, anchor.tileY, point.x, point.y + 50);
     }
 
     this.addHud();
@@ -158,7 +174,7 @@ export class GameScene extends Phaser.Scene {
       const zone = this.add.zone(point.x, point.y + 32, 112, 54)
         .setInteractive({ useHandCursor: true })
         .setDepth(-1);
-      zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.walkTo(pointer.worldX, pointer.worldY));
+      zone.on('pointerdown', () => this.walkToTile(floor, tile.x, tile.y));
     });
   }
 
@@ -167,67 +183,92 @@ export class GameScene extends Phaser.Scene {
     const shadow = this.add.ellipse(0, 0, 36, 13, 0x000000, 0.34);
     const body = this.add.image(0, -48, 'detective').setDisplaySize(50, 88);
     this.playerBody = body;
+    this.playerTile = { x: tileX, y: tileY };
     this.player = this.add.container(start.x, start.y + 52, [shadow, body]).setDepth(start.y + 130);
   }
 
-  private walkTo(x: number, y: number, onArrive?: () => void) {
-    if (!this.player) return;
-    const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, x, y);
-    if (distance < 5) {
+  private walkToTile(floor: SceneFloorLayer, tileX: number, tileY: number, onArrive?: () => void) {
+    if (!this.player || !this.playerTile) return;
+
+    const path = findTilePath(this.walkabilityGrid, this.playerTile, { x: tileX, y: tileY });
+    if (!path.length) {
+      this.flashRouteBlocked();
+      return;
+    }
+
+    const destination = floor.tileToWorldXY(tileX, tileY);
+    const marker = this.add.ellipse(destination.x, destination.y + 54, 24, 10, 0xd1ae68, 0.16)
+      .setStrokeStyle(1, 0xd1ae68, 0.42)
+      .setDepth(destination.y + 20);
+    this.tweens.add({ targets: marker, alpha: 0, scaleX: 1.7, scaleY: 1.7, duration: 520, onComplete: () => marker.destroy() });
+
+    const generation = ++this.movementGeneration;
+    this.tweens.killTweensOf(this.player);
+    if (this.playerBody) this.tweens.killTweensOf(this.playerBody);
+    this.followTilePath(floor, path.slice(1), 0, generation, onArrive);
+  }
+
+  private followTilePath(
+    floor: SceneFloorLayer,
+    path: TilePoint[],
+    index: number,
+    generation: number,
+    onArrive?: () => void,
+  ) {
+    if (!this.player || generation !== this.movementGeneration) return;
+    if (index >= path.length) {
+      this.playerBody?.setY(-48);
       onArrive?.();
       return;
     }
 
-    this.tweens.killTweensOf(this.player);
+    const next = path[index];
+    const point = floor.tileToWorldXY(next.x, next.y);
+    const x = point.x;
+    const y = point.y + 52;
+    const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, x, y);
+    const duration = Phaser.Math.Clamp(distance * 2.5, 90, 260);
+
     if (this.playerBody) {
-      this.tweens.killTweensOf(this.playerBody);
       this.playerBody.setFlipX(x < this.player.x);
+      this.tweens.add({ targets: this.playerBody, y: -52, duration: Math.max(55, duration / 2), yoyo: true });
     }
 
-    const marker = this.add.ellipse(x, y + 2, 24, 10, 0xd1ae68, 0.16).setStrokeStyle(1, 0xd1ae68, 0.42).setDepth(y - 2);
-    this.tweens.add({ targets: marker, alpha: 0, scaleX: 1.7, scaleY: 1.7, duration: 520, onComplete: () => marker.destroy() });
-
-    const duration = Phaser.Math.Clamp(distance * 3.1, 170, 980);
-    if (this.playerBody) {
-      this.tweens.add({
-        targets: this.playerBody,
-        y: -52,
-        duration: 130,
-        yoyo: true,
-        repeat: Math.max(0, Math.floor(duration / 260) - 1),
-        onComplete: () => this.playerBody?.setY(-48),
-      });
-    }
     this.tweens.add({
       targets: this.player,
       x,
       y,
       duration,
-      ease: 'Sine.easeInOut',
+      ease: 'Linear',
       onUpdate: () => this.player?.setDepth((this.player?.y ?? y) + 130),
-      onComplete: () => onArrive?.(),
+      onComplete: () => {
+        if (generation !== this.movementGeneration) return;
+        this.playerTile = next;
+        this.followTilePath(floor, path, index + 1, generation, onArrive);
+      },
     });
   }
 
-  private approachAndInteract(targetX: number, targetY: number, action: () => void) {
-    if (!this.player) {
-      action();
-      return;
-    }
-    const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, targetX, targetY);
-    if (distance <= INTERACTION_DISTANCE) {
-      action();
-      return;
-    }
-    const angle = Phaser.Math.Angle.Between(targetX, targetY, this.player.x, this.player.y);
-    this.walkTo(
-      targetX + Math.cos(angle) * (INTERACTION_DISTANCE - 12),
-      targetY + Math.sin(angle) * (INTERACTION_DISTANCE - 12),
-      action,
-    );
+  private flashRouteBlocked() {
+    const text = this.add.text(512, 92, 'NO WALKABLE ROUTE', {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '10px',
+      color: '#d7a0a0',
+      backgroundColor: '#0b0e12e6',
+      padding: { x: 7, y: 4 },
+    }).setOrigin(0.5).setDepth(22000);
+    this.tweens.add({ targets: text, alpha: 0, duration: 900, delay: 350, onComplete: () => text.destroy() });
   }
 
-  private addClueHotspot(id: string, title: string, x: number, y: number) {
+  private addClueHotspot(
+    floor: SceneFloorLayer,
+    id: string,
+    title: string,
+    tileX: number,
+    tileY: number,
+    x: number,
+    y: number,
+  ) {
     const texture = CLUE_TEXTURE_BY_ID[id];
     const discovered = useInvestigationStore.getState().discoveredClueIds.includes(id);
     const ring = this.add.ellipse(x, y, 60, 25, discovered ? 0x748178 : 0xcaa45c, discovered ? 0.06 : 0.1)
@@ -254,7 +295,7 @@ export class GameScene extends Phaser.Scene {
       this.hideTooltip();
     });
     hit.on('pointerdown', () => {
-      this.approachAndInteract(x, y, () => {
+      this.walkToTile(floor, tileX, tileY, () => {
         const wasDiscovered = useInvestigationStore.getState().discoveredClueIds.includes(id);
         useInvestigationStore.getState().discoverClue(id);
         if (!wasDiscovered) {
@@ -268,7 +309,16 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private addWitness(id: string, name: string, role: string, x: number, y: number) {
+  private addWitness(
+    floor: SceneFloorLayer,
+    id: string,
+    name: string,
+    role: string,
+    tileX: number,
+    tileY: number,
+    x: number,
+    y: number,
+  ) {
     const texture = WITNESS_TEXTURE_BY_ID[id];
     const shadow = this.add.ellipse(x, y, 38, 13, 0x000000, 0.34).setDepth(y - 2);
     const body = this.add.image(x, y, texture).setOrigin(0.5, 1).setDisplaySize(54, 97).setDepth(y + 1);
@@ -294,7 +344,7 @@ export class GameScene extends Phaser.Scene {
       this.hideTooltip();
     });
     hit.on('pointerdown', () => {
-      this.approachAndInteract(x, y, () => useInvestigationStore.getState().selectWitness(id));
+      this.walkToTile(floor, tileX, tileY, () => useInvestigationStore.getState().selectWitness(id));
     });
   }
 
@@ -322,7 +372,7 @@ export class GameScene extends Phaser.Scene {
       color: '#e4c784',
       letterSpacing: 2,
     }).setScrollFactor(0).setDepth(20000);
-    this.add.text(30, 57, 'Click the floor to move. Click a clue or witness to walk over and inspect.', {
+    this.add.text(30, 57, 'Click the floor to move. Click a clue or witness to follow a walkable route.', {
       fontFamily: 'Arial, sans-serif',
       fontSize: '12px',
       color: '#8995a6',
