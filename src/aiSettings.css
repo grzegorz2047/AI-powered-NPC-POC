@@ -1,0 +1,50 @@
+.ai-menu-button { min-width: 132px; color: #d8c58f; border-color: #66583c; }
+.ai-modal { z-index: 70; overflow: auto; align-items: start; }
+.ai-settings-panel { width: min(1180px, 96vw); max-height: calc(100vh - 52px); overflow: auto; margin: auto; border: 1px solid #3b414d; border-radius: 12px; background: #0b0f15f7; box-shadow: 0 28px 90px #000b; }
+.ai-settings-panel .interview-header { position: sticky; top: 0; z-index: 2; background: #0d1118f7; backdrop-filter: blur(10px); }
+.ai-settings-panel .interview-header h2 { margin: 4px 0 2px; font: 500 30px Georgia, serif; color: #ecd9ae; }
+.ai-provider-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 16px; }
+.ai-provider-card { display: flex; flex-direction: column; gap: 11px; min-height: 390px; padding: 16px; border: 1px solid #303641; border-radius: 9px; background: linear-gradient(150deg, #141922, #0d1117); }
+.ai-provider-card.selected-provider { border-color: #947b49; box-shadow: inset 0 0 0 1px #947b4933, 0 0 24px #a7833422; }
+.ai-provider-card h3 { margin: 0; font: 600 20px Georgia, serif; color: #e8dcc1; }
+.ai-provider-card p { margin: 0; color: #9ca6b5; font-size: 13px; line-height: 1.5; }
+.ai-provider-card small { color: #7f8998; line-height: 1.45; }
+.ai-provider-card label { display: grid; gap: 6px; color: #9ea8b5; font-size: 12px; }
+.ai-provider-card input, .ai-provider-card select { width: 100%; min-width: 0; padding: 10px 11px; border: 1px solid #3a424d; border-radius: 7px; background: #080c12; color: #eef1f4; outline: none; }
+.ai-provider-card input:focus, .ai-provider-card select:focus { border-color: #987e49; box-shadow: 0 0 0 3px #94774022; }
+.ai-provider-card .primary-button { margin-top: auto; }
+.provider-title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cost-badge { padding: 4px 7px; border: 1px solid #53604f; border-radius: 999px; color: #a8c09c; font-size: 9px; letter-spacing: .1em; }
+.capability-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.capability-row span { padding: 5px 7px; border-radius: 5px; font-size: 10px; border: 1px solid #343b45; }
+.cap-ok { color: #b8d7a8; border-color: #52644a !important; background: #182015; }
+.cap-off { color: #858d98; background: #0d1117; }
+.availability { padding: 9px 10px; border: 1px solid #3a424b; border-radius: 6px; color: #b8c0ca; font-size: 12px; }
+.availability-available { color: #b7d7a5; border-color: #506344; }
+.availability-downloadable { color: #dfc783; border-color: #6b5b35; }
+.availability-unsupported { color: #cf9c9c; border-color: #664444; }
+.runtime-diagnostics { margin: 0 16px 16px; padding: 15px; border: 1px solid #303641; border-radius: 9px; background: #090d13; }
+.runtime-diagnostics > div:first-child { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.runtime-diagnostics strong { color: #d9c58e; font-size: 12px; letter-spacing: .12em; }
+.runtime-diagnostics dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 14px 0; }
+.runtime-diagnostics dl div { padding: 9px; border: 1px solid #252b33; border-radius: 6px; }
+.runtime-diagnostics dt { color: #747f8d; font-size: 10px; text-transform: uppercase; letter-spacing: .1em; }
+.runtime-diagnostics dd { margin: 5px 0 0; color: #d7dde5; font-size: 12px; overflow-wrap: anywhere; }
+.runtime-diagnostics p { color: #9aa4b2; font-size: 12px; line-height: 1.45; }
+.runtime-error { color: #d59696 !important; }
+.runtime-progress { height: 5px; overflow: hidden; border-radius: 999px; background: #1c222a; }
+.runtime-progress span { display: block; height: 100%; background: #c0a05d; transition: width .18s ease; }
+
+@media (max-width: 980px) {
+  .ai-provider-grid { grid-template-columns: 1fr; }
+  .ai-provider-card { min-height: 0; }
+  .runtime-diagnostics dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .ai-modal { padding: 8px; }
+  .ai-settings-panel { max-height: calc(100vh - 16px); }
+  .ai-provider-grid { padding: 10px; }
+  .runtime-diagnostics { margin: 0 10px 10px; }
+  .runtime-diagnostics dl { grid-template-columns: 1fr; }
+}

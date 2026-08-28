@@ -1,6 +1,8 @@
 import { FormEvent, useMemo, useState } from 'react';
+import { askNpc } from '../ai/npcRuntime';
 import { witnessById } from '../data/caseData';
 import { availableQuestions } from '../domain/progression';
+import { useAiSettingsStore } from '../state/aiSettingsStore';
 import { useInvestigationStore } from '../state/investigationStore';
 
 function resistanceLabel(value: number) {
@@ -17,6 +19,8 @@ export function InterviewPanel() {
   const transcripts = useInvestigationStore((state) => state.transcripts);
   const progress = useInvestigationStore((state) => state.witnessProgress);
   const addExchange = useInvestigationStore((state) => state.addInterviewExchange);
+  const activeBackend = useAiSettingsStore((state) => state.runtime.activeBackend);
+  const provider = useAiSettingsStore((state) => state.provider);
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -34,28 +38,19 @@ export function InterviewPanel() {
     if (!trimmed || busy) return;
     setBusy(true);
     try {
-      const response = await fetch('/api/npc', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          witnessId: activeWitnessId,
-          question: trimmed,
-          evidenceIds: clueIds,
-          resistance: witnessProgress.resistance,
-          contradictions: witnessProgress.contradictions,
-        }),
+      const payload = await askNpc({
+        witnessId: activeWitnessId,
+        question: trimmed,
+        evidenceIds: clueIds,
+        resistance: witnessProgress.resistance,
+        contradictions: witnessProgress.contradictions,
       });
-      const payload = await response.json() as {
-        answer?: string;
-        resistanceDelta?: number;
-        contradictionDelta?: number;
-      };
       addExchange(
         activeWitnessId,
         trimmed,
-        payload.answer ?? 'No answer.',
-        payload.resistanceDelta ?? 0,
-        payload.contradictionDelta ?? 0,
+        payload.answer,
+        payload.resistanceDelta,
+        payload.contradictionDelta,
       );
       setQuestion('');
     } catch {
@@ -75,7 +70,7 @@ export function InterviewPanel() {
       <section className="interview-panel">
         <header className="interview-header">
           <div>
-            <span className="eyebrow">WITNESS / {resistanceLabel(witnessProgress.resistance)}</span>
+            <span className="eyebrow">WITNESS / {resistanceLabel(witnessProgress.resistance)} · AI {activeBackend ?? provider}</span>
             <h2>{witness.name}</h2>
             <p>{witness.role}</p>
           </div>

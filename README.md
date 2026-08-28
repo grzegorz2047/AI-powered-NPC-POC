@@ -1,44 +1,79 @@
 # AI-powered NPC POC
 
-A browser detective game vertical slice. The player explores an isometric hotel scene, collects evidence and interviews witnesses. Dialogue can be naturalized by optional LLM providers without giving any model access to the full case canon.
+A browser detective-game vertical slice set in **Hotel Nocturne: Room 307**. The player explores an isometric scene, collects evidence and interviews witnesses. Dialogue can be naturalized by an LLM, but the model never owns the truth of the case.
 
 ## Stack
 
-- Phaser 4.2.1: game engine, isometric tilemap, input, camera, tweens.
-- Tiled-compatible JSON: scene map data.
-- React + Vite: evidence board and interview UI.
-- Ink / inkjs: authored detective narration.
-- Zustand: shared browser game state with persistence.
-- Vercel Function `/api/npc`: deterministic reveal policy plus optional LLM naturalization.
-- Web Speech API: detective-thought TTS.
+- **Phaser 4.2.1** — game engine, isometric scene, input, camera and tweens.
+- **Tiled-compatible JSON** — scene/map data.
+- **React + Vite** — investigation UI and model configuration.
+- **Ink / inkjs** — authored detective narration.
+- **Zustand** — persisted investigation state.
+- **Transformers.js 4.2** — local Qwen inference in the browser.
+- **ONNX Runtime Web / WebNN** — NPU execution through `webnn-npu` when supported.
+- **WebGPU** — local GPU fallback.
+- **WASM** — CPU fallback.
+- **Chrome Prompt API** — optional browser-managed built-in model.
+- **Vercel Function `/api/npc`** — deterministic reveal policy and allow-listed BYOK proxy.
+- **Web Speech API** — detective-thought TTS.
 
-## AI runtime options
+## AI modes
 
-The game is designed around three provider modes:
+Open **AI model & acceleration** in the game.
 
-1. BYOK through an OpenAI-compatible endpoint.
-2. Local browser inference using a ready-made WebGPU/WebNN runtime.
-3. Chrome Prompt API / Gemini Nano when the browser exposes the built-in model.
+### 1. BYOK
 
-The local browser mode exposes two free profiles:
+Enter an OpenAI-compatible endpoint, model and API key. The API key is held only in tab memory and is excluded from persisted Zustand state. The Vercel proxy allows common public providers plus hosts configured with `NPC_LLM_ALLOWED_HOSTS`.
 
-- **Quality:** Qwen3-4B-class model for stronger hardware and better NPC dialogue.
-- **Lite:** `onnx-community/Qwen3-0.6B-ONNX` through Hugging Face Transformers.js + WebGPU for weaker devices. Hugging Face maintains a working Qwen3 WebGPU browser example for this exact model. This mode requires no API key, no inference server and keeps dialogue on-device.
+### 2. Local Qwen — free
 
-The settings screen should offer `Auto`, `Quality`, and `Lite`. `Auto` must recommend a profile from browser/WebGPU capability and available device-memory hints, but never start a model download without explicit user confirmation.
+Profiles:
 
-## Optional server LLM
+- **Quality**: `onnx-community/Qwen3-4B-Instruct-2507-ONNX`.
+- **Lite**: `onnx-community/Qwen3-0.6B-ONNX`.
 
-Configure an OpenAI-compatible endpoint:
+Accelerators:
+
+- **Auto**: NPU/WebNN → WebGPU → WASM/CPU.
+- **NPU only**: strict `webnn-npu`, no silent fallback.
+- **GPU only**: WebGPU.
+- **CPU only**: WASM.
+
+The model is not downloaded on page load. Download/initialization starts only after the user explicitly clicks the local-model button. Transformers.js is dynamically imported, so the game shell does not require the ML runtime before it is needed.
+
+See `docs/NPU_BROWSER_SETUP.md` for NPU setup and physical verification.
+
+### 3. Chrome built-in model — free when available
+
+The game probes `LanguageModel.availability()` and creates a Chrome-managed session only after the user chooses it.
+
+### Deterministic fallback
+
+The full case remains playable with no model at all. If a selected AI runtime fails, the game uses the deterministic witness response for that turn and reports the fallback.
+
+## Narrative safety
+
+The LLM never receives the whole murder solution. Shared domain policy first evaluates the current evidence, witness and contradiction state and produces an **allow-list of facts**. Cloud, local NPU/GPU/CPU and Chrome providers all receive only that allow-list plus the witness persona and current question.
+
+## Run
+
+```bash
+npm install
+npm run dev
+```
+
+Tests and build:
+
+```bash
+npm run test
+npm run build
+```
+
+## Optional server-side default LLM
 
 ```text
 NPC_LLM_BASE_URL=https://your-llm-host/v1
 NPC_LLM_API_KEY=optional-key
 NPC_LLM_MODEL=Qwen3-4B-Instruct-2507
+NPC_LLM_ALLOWED_HOSTS=optional-extra-host.example
 ```
-
-Without any model provider, the full case remains playable using deterministic dialogue rules.
-
-## Narrative safety
-
-The LLM never receives the whole murder solution. The game first evaluates the current evidence and witness state, computes an allow-list of facts, and only then asks the selected model to phrase those facts in character.
