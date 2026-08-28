@@ -34,6 +34,15 @@ describe('Tiled entity anchors', () => {
     expect(anchors.size).toBe(0);
   });
 
+  it('rejects duplicate gameplay anchors instead of silently overwriting them', () => {
+    const duplicate = { type: 'witness', properties: [
+      { name: 'entityId', value: 'nina' },
+      { name: 'tileX', value: 2 },
+      { name: 'tileY', value: 6 },
+    ] };
+    expect(() => readEntityAnchors([duplicate, duplicate])).toThrow(/duplicate witness anchor: nina/i);
+  });
+
   it('fails closed when the map omits a required gameplay anchor', () => {
     expect(() => requireEntityAnchor(new Map(), 'witness', 'marek')).toThrow(/missing required witness anchor: marek/i);
   });
