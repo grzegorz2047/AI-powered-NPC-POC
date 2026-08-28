@@ -1,10 +1,13 @@
 import Phaser from 'phaser';
 import { GAME_AUDIO, audioForNewClue, totalContradictions, type GameAudioName } from '../audio/gameAudio';
-import { clues, witnesses } from '../data/caseData';
+import { clueById, clues, witnessById, witnesses } from '../data/caseData';
 import { useInvestigationStore } from '../state/investigationStore';
-import { readEntityAnchors, requireEntityAnchor } from './mapEntities';
+import { useWorldStore } from '../state/worldStore';
+import { mapAnchorKey, readEntityAnchors, requireEntityAnchor } from './mapEntities';
+import { readMapTransitions, type MapTransition } from './mapTransitions';
 import { CLUE_TEXTURE_BY_ID, SCENE_SVG_ASSETS, WITNESS_TEXTURE_BY_ID } from './sceneAssets';
 import { createWalkabilityMatrix, findTilePath, type TilePoint } from './tilePathfinding';
+import { DEFAULT_WORLD_MAP, WORLD_MAPS, type WorldMapId } from './worldManifest';
 
 const FLOOR_OFFSET_X = 510;
 const FLOOR_OFFSET_Y = 95;
@@ -22,12 +25,16 @@ export class GameScene extends Phaser.Scene {
   private walkabilityGrid: number[][] = [];
   private movementGeneration = 0;
 
-  constructor() {
+  constructor(
+    private readonly worldMapId: WorldMapId = DEFAULT_WORLD_MAP,
+    private readonly spawnId: string = 'detective',
+  ) {
     super('investigation');
   }
 
   preload() {
-    this.load.tilemapTiledJSON('hotel-map', '/maps/hotel-nocturne.json');
+    const worldMap = WORLD_MAPS[this.worldMapId];
+    this.load.tilemapTiledJSON('hotel-map', worldMap.mapUrl);
     this.load.svg('nocturne-floor', '/assets/nocturne-floor.svg', { width: 128, height: 64 });
     for (const [key, url] of SCENE_SVG_ASSETS) this.load.svg(key, url);
     for (const asset of Object.values(GAME_AUDIO)) this.load.audio(asset.key, asset.url);
@@ -68,19 +75,34 @@ export class GameScene extends Phaser.Scene {
     this.addRoomLabels();
     this.addWalkZones(floor, walkable);
 
-    const playerAnchor = requireWalkableAnchor('player', 'detective');
+    const playerAnchor = requireWalkableAnchor('player', this.spawnId);
     this.createPlayer(floor, playerAnchor.tileX, playerAnchor.tileY);
 
     for (const clue of clues) {
-      const anchor = requireWalkableAnchor('clue', clue.id);
+      const anchor = anchors.get(mapAnchorKey('clue', clue.id));
+      if (!anchor) continue;
+      if (this.walkabilityGrid[anchor.tileY]?.[anchor.tileX] !== 1) {
+        throw new Error(`Tiled clue anchor is not on a Walkable tile: ${clue.id}`);
+      }
       const point = floor.tileToWorldXY(anchor.tileX, anchor.tileY);
       this.addClueHotspot(floor, clue.id, clue.title, anchor.tileX, anchor.tileY, point.x, point.y + 36);
     }
 
     for (const witness of witnesses) {
-      const anchor = requireWalkableAnchor('witness', witness.id);
+      const anchor = anchors.get(mapAnchorKey('witness', witness.id));
+      if (!anchor) continue;
+      if (this.walkabilityGrid[anchor.tileY]?.[anchor.tileX] !== 1) {
+        throw new Error(`Tiled witness anchor is not on a Walkable tile: ${witness.id}`);
+      }
       const point = floor.tileToWorldXY(anchor.tileX, anchor.tileY);
       this.addWitness(floor, witness.id, witness.name, witness.role, anchor.tileX, anchor.tileY, point.x, point.y + 50);
+    }
+
+    for (const transition of readMapTransitions(map.getObjectLayer('Transitions')?.objects)) {
+      if (this.walkabilityGrid[transition.tileY]?.[transition.tileX] !== 1) {
+        throw new Error(`Tiled transition is not on a Walkable tile: ${transition.id}`);
+      }
+      this.addTransition(floor, transition);
     }
 
     this.addHud();
@@ -260,6 +282,32 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({ targets: text, alpha: 0, duration: 900, delay: 350, onComplete: () => text.destroy() });
   }
 
+  private addTransition(floor: SceneFloorLayer, transition: MapTransition) {
+    const point = floor.tileToWorldXY(transition.tileX, transition.tileY);
+    const marker = this.add.text(point.x, point.y + 16, '⇅', {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '15px',
+      color: '#d5b66f',
+      backgroundColor: '#10141bcc',
+      padding: { x: 6, y: 3 },
+    }).setOrigin(0.5).setDepth(point.y + 4);
+    const hit = this.add.zone(point.x, point.y + 18, 68, 50).setInteractive({ useHandCursor: true }).setDepth(point.y + 6);
+
+    hit.on('pointerover', (pointer: Phaser.Input.Pointer) => {
+      marker.setColor('#ffe3a0');
+      this.showTooltip(transition.label, pointer.worldX, pointer.worldY - 38);
+    });
+    hit.on('pointerout', () => {
+      marker.setColor('#d5b66f');
+      this.hideTooltip();
+    });
+    hit.on('pointerdown', () => {
+      this.walkToTile(floor, transition.tileX, transition.tileY, () => {
+        useWorldStore.getState().navigate(transition.targetMap, transition.targetSpawn);
+      });
+    });
+  }
+
   private addClueHotspot(
     floor: SceneFloorLayer,
     id: string,
@@ -366,7 +414,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private addHud() {
-    this.add.text(30, 26, 'HOTEL NOCTURNE / ROOM 307', {
+    const title = WORLD_MAPS[this.worldMapId].title;
+    this.add.text(30, 26, `HOTEL NOCTURNE / ${title.toUpperCase()}`, {
       fontFamily: 'Georgia, serif',
       fontSize: '22px',
       color: '#e4c784',
