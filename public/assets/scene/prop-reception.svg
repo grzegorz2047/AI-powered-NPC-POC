@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="105" viewBox="0 0 180 105">
+  <defs><linearGradient id="wood" x1="0" x2="1"><stop stop-color="#4b3127"/><stop offset=".5" stop-color="#2d211d"/><stop offset="1" stop-color="#51362b"/></linearGradient></defs>
+  <polygon points="18,30 111,8 165,32 72,55" fill="#5e4233" stroke="#1b1512" stroke-width="2"/>
+  <polygon points="18,30 72,55 72,99 18,74" fill="#32231e" stroke="#17100e" stroke-width="2"/>
+  <polygon points="72,55 165,32 165,76 72,99" fill="url(#wood)" stroke="#17100e" stroke-width="2"/>
+  <path d="M87 57v34M126 48v34" stroke="#8b6b4b" stroke-opacity=".45"/>
+  <rect x="116" y="18" width="23" height="14" rx="2" fill="#0e1519" stroke="#b2955d"/>
+  <circle cx="127.5" cy="25" r="2" fill="#7fa79d"/>
+  <path d="M75 54 164 33" stroke="#c6a56b" stroke-opacity=".45" stroke-width="2"/>
+</svg>

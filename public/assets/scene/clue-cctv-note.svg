@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="48" viewBox="0 0 64 48">
+  <path d="M8 7h48v35H8z" fill="#d8c988" stroke="#756b43" stroke-width="2" transform="rotate(-3 32 24)"/>
+  <path d="M14 15h34M14 21h29M14 33h30" stroke="#57503d" stroke-width="1.8" stroke-linecap="round"/>
+  <text x="32" y="29" text-anchor="middle" font-family="monospace" font-size="8" font-weight="700" fill="#8e3f39">+ 06 MIN</text>
+</svg>
