@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { clues, witnesses } from '../data/caseData';
+import { useGameInputBlocker } from '../game/useGameInputBlocker';
 import { useInvestigationStore } from '../state/investigationStore';
 
 export function AccessibleScenePanel() {
@@ -7,6 +8,7 @@ export function AccessibleScenePanel() {
   const discovered = useInvestigationStore((state) => state.discoveredClueIds);
   const discoverClue = useInvestigationStore((state) => state.discoverClue);
   const selectWitness = useInvestigationStore((state) => state.selectWitness);
+  useGameInputBlocker('scene-list', open);
 
   useEffect(() => {
     if (!open) return;

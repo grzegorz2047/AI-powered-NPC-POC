@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { askNpc } from '../ai/npcRuntime';
 import { witnessById } from '../data/caseData';
 import { availableQuestions, questionsUnlockedByClue } from '../domain/progression';
+import { useGameInputBlocker } from '../game/useGameInputBlocker';
 import { useAiSettingsStore } from '../state/aiSettingsStore';
 import { useInvestigationStore } from '../state/investigationStore';
 
@@ -23,6 +24,7 @@ export function InterviewPanel() {
   const provider = useAiSettingsStore((state) => state.provider);
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
+  useGameInputBlocker('interview', Boolean(witnessId));
 
   const witness = witnessId ? witnessById[witnessId] : undefined;
   const questions = useMemo(() => witnessId ? availableQuestions(witnessId, clueIds) : [], [witnessId, clueIds]);

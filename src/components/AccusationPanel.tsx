@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { clues, witnesses } from '../data/caseData';
+import { useGameInputBlocker } from '../game/useGameInputBlocker';
 import { useInvestigationStore } from '../state/investigationStore';
 
 export function AccusationPanel() {
@@ -8,6 +9,7 @@ export function AccusationPanel() {
   const [suspect, setSuspect] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
   const [result, setResult] = useState('');
+  useGameInputBlocker('accusation', open);
 
   const canAccuse = found.length >= 4;
   const available = useMemo(() => clues.filter((clue) => found.includes(clue.id)), [found]);
@@ -35,7 +37,7 @@ export function AccusationPanel() {
 
   return (
     <div className="accusation-drawer">
-      <div className="panel-heading"><span>ACCUSATION</span><button onClick={() => setOpen(false)}>Close</button></div>
+      <div className="panel-heading"><span>ACCUSATION</span><button type="button" onClick={() => setOpen(false)}>Close</button></div>
       <label>
         Suspect
         <select value={suspect} onChange={(event) => setSuspect(event.target.value)}>

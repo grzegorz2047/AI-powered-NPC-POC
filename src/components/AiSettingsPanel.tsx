@@ -3,6 +3,7 @@ import { chromeBuiltInAvailability } from '../ai/chromeBuiltinProvider';
 import { detectBrowserAiCapabilities } from '../ai/capabilities';
 import { initializeBrowserQwen, initializeChromeBuiltIn, selectRulesFallback, testAndSelectByok } from '../ai/npcRuntime';
 import type { ProviderAvailability } from '../ai/types';
+import { useGameInputBlocker } from '../game/useGameInputBlocker';
 import { useAiSettingsStore } from '../state/aiSettingsStore';
 
 export function AiSettingsPanel() {
@@ -24,6 +25,7 @@ export function AiSettingsPanel() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [chrome, setChrome] = useState<ProviderAvailability>({ state: 'unknown', label: 'Checking when panel opens…' });
   const capabilities = useMemo(() => detectBrowserAiCapabilities(), [open]);
+  useGameInputBlocker('ai-settings', open);
 
   useEffect(() => {
     if (!open) return;

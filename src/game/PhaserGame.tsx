@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { GameScene } from './GameScene';
+import { subscribeGameInputBlocked } from './uiInputGate';
 
 export function PhaserGame() {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -27,7 +28,14 @@ export function PhaserGame() {
       },
     });
 
-    return () => game.destroy(true);
+    const unsubscribeInputGate = subscribeGameInputBlocked((blocked) => {
+      if (game.input) game.input.enabled = !blocked;
+    });
+
+    return () => {
+      unsubscribeInputGate();
+      game.destroy(true);
+    };
   }, []);
 
   return <div ref={hostRef} className="game-host" aria-label="Hotel Nocturne investigation scene" />;
