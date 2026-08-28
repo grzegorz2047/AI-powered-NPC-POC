@@ -66,7 +66,7 @@ export function AiSettingsPanel() {
               <h3>Own API key</h3>
               <span className="cost-badge">BYOK</span>
             </div>
-            <p>OpenAI-compatible cloud model. The secret stays only in this tab memory and is never persisted.</p>
+            <p>OpenAI-compatible cloud model. The key is kept only in tab memory, sent through the Vercel proxy for each request, and never persisted by the game.</p>
             <label>Endpoint
               <input value={byokBaseUrl} onChange={(event) => setByokBaseUrl(event.target.value)} placeholder="https://openrouter.ai/api/v1" />
             </label>
@@ -77,7 +77,7 @@ export function AiSettingsPanel() {
               <input type="password" autoComplete="off" value={byokApiKey} onChange={(event) => setByokApiKey(event.target.value)} placeholder="not saved" />
             </label>
             <button type="button" className="primary-button" disabled={busy} onClick={() => void run(testAndSelectByok)}>Test & use BYOK</button>
-            <small>Public proxy allows common providers; custom hosts require `NPC_LLM_ALLOWED_HOSTS` on the deployment.</small>
+            <small>The proxy forwards the key to the chosen provider but does not intentionally log or store it. Public proxy allows common providers; custom hosts require `NPC_LLM_ALLOWED_HOSTS`.</small>
           </article>
 
           <article className={`ai-provider-card ${provider === 'browser-qwen' ? 'selected-provider' : ''}`}>
@@ -107,7 +107,7 @@ export function AiSettingsPanel() {
               </select>
             </label>
             <button type="button" className="primary-button" disabled={busy} onClick={() => void run(initializeBrowserQwen)}>Download / initialize local model</button>
-            <small>WebNN API availability is only a capability hint. `Active backend: NPU` appears only after the model session really initializes with `webnn-npu`. NPU-only never silently falls back.</small>
+            <small>WebNN API availability is only a capability hint. `Active backend: NPU` appears only after the model session really initializes with `webnn-npu`. NPU-only never silently falls back. Qwen thinking is disabled for low-latency NPC replies.</small>
           </article>
 
           <article className={`ai-provider-card ${provider === 'chrome-builtin' ? 'selected-provider' : ''}`}>
