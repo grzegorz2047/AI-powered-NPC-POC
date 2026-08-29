@@ -5,6 +5,16 @@ import { useInvestigationStore } from '../state/investigationStore';
 import { useWorldStore } from '../state/worldStore';
 import './evidenceLeads.css';
 
+const evidenceIconById: Record<string, string> = {
+  'whisky-glass': '/assets/scene/clue-whisky.svg',
+  'keycard-log': '/assets/scene/clue-keycard.svg',
+  'cctv-note': '/assets/scene/clue-cctv-note.svg',
+  'green-fiber': '/assets/scene/clue-fiber.svg',
+  'burnt-ledger': '/assets/scene/clue-ledger.svg',
+  'brass-heron': '/assets/scene/clue-heron.svg',
+  'cctv-still': '/assets/scene/clue-cctv-still.svg',
+};
+
 export function EvidenceBoard() {
   const clueIds = useInvestigationStore((state) => state.discoveredClueIds);
   const selectWitness = useInvestigationStore((state) => state.selectWitness);
@@ -38,7 +48,9 @@ export function EvidenceBoard() {
           const leads = questionsUnlockedByClue(slot.id, clueIds);
           return (
             <article key={slot.id} className="evidence-card evidence-card-found">
-              <div className="evidence-slot-icon evidence-slot-found" aria-hidden="true">{index + 1}</div>
+              <div className="evidence-slot-icon evidence-slot-found" aria-hidden="true">
+                <img src={evidenceIconById[slot.id]} alt="" />
+              </div>
               <div className="evidence-card-copy">
                 <div className={`strength strength-${clue.strength}`}>{clue.strength}</div>
                 <h3>{clue.title}</h3>
