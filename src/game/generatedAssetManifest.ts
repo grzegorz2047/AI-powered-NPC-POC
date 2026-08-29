@@ -1,15 +1,30 @@
+import detective from './generatedTextures/characterDetective';
+import irena from './generatedTextures/characterIrena';
+import { character_kamil as kamil, character_marek as marek, character_nina as nina } from './generatedTextures/charactersRemaining';
+import { floor_guest as floorGuest, floor_lobby as floorLobby, floor_service as floorService } from './generatedTextures/floors';
+import { laundry } from './generatedTextures/laundry';
+import { reception } from './generatedTextures/reception';
+import { elevator, stairs } from './generatedTextures/verticalModules';
+import { wall_door307 as room307, wall_ne as wallNe, wall_nw as wallNw } from './generatedTextures/walls';
+
+/**
+ * Canonical generated production art. These values are embedded AVIF sprite payloads,
+ * not placeholder paths and not screenshot/mockup plates.
+ */
 export const GENERATED_ROOSEVELT_ASSETS = {
-  detective: '/assets/generated/character-detective.webp',
-  marek: '/assets/generated/character-marek.webp',
-  irena: '/assets/generated/character-irena.webp',
-  nina: '/assets/generated/character-nina.webp',
-  kamil: '/assets/generated/character-kamil.webp',
-  room307: '/assets/generated/wall-door307.webp',
-  elevator: '/assets/generated/elevator.webp',
-  reception: '/assets/generated/reception.webp',
-  stairs: '/assets/generated/stairs.webp',
-  cctvDesk: '/assets/generated/cctv-desk.webp',
-  laundry: '/assets/generated/laundry.webp',
-  cleaningCart: '/assets/generated/cleaning-cart.webp',
-  luggageCart: '/assets/generated/luggage-cart.webp',
+  detective,
+  kamil,
+  nina,
+  irena,
+  marek,
+  room307,
+  elevator,
+  reception,
+  stairs,
+  laundry,
+  wallNw,
+  wallNe,
+  floorLobby,
+  floorGuest,
+  floorService,
 } as const;
