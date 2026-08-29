@@ -1,1 +1,1 @@
-Generated image source sheets are prepared locally; runtime integration is in progress after Vercel visual geometry validation.
+Generated high-resolution asset sheets are cropped into production runtime sprites, wired into RooseveltScene, normalized to Phaser display ratios, and validated against Tiled Walkable wall-collider contracts.

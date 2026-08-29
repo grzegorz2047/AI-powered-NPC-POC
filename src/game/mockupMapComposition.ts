@@ -11,9 +11,9 @@ export function applyMockupMapComposition(scene: Phaser.Scene, mapId: RooseveltM
 
   const hasLandmark = scene.children.list.some((child) =>
     child instanceof Phaser.GameObjects.Image && (
-      child.texture.key === 'mockup-reception' ||
-      child.texture.key === 'mockup-laundry' ||
-      child.texture.key === 'mockup-door307'
+      child.texture.key === 'runtime-reception' ||
+      child.texture.key === 'runtime-laundry' ||
+      child.texture.key === 'runtime-room307'
     ),
   );
   if (!hasLandmark) return false;
@@ -38,54 +38,22 @@ function addWarmGlow(scene: Phaser.Scene, x: number, y: number, width: number, h
 }
 
 function stageFloor3(scene: Phaser.Scene) {
-  const door = findImage(scene, 'mockup-door307');
-  if (!door) return;
+  const room307 = findImage(scene, 'runtime-room307');
+  if (!room307) return;
 
-  const suiteX = door.x + 156;
-  const suiteY = door.y - 86;
-  const suiteDepth = door.depth - 4;
+  // Generated production art stays part of the real Tiled world. No screenshot/reference plates
+  // or duplicate fake room are drawn over navigation and entities.
+  addWarmGlow(scene, room307.x - 18, room307.y - 92, 250, 190, room307.depth - 0.4, 0.08);
+  scene.add.image(room307.x - 88, room307.y - 68, 'prop-painting')
+    .setDisplaySize(76, 60)
+    .setDepth(room307.depth + 0.2);
+  scene.add.image(room307.x - 132, room307.y + 8, 'prop-plant')
+    .setOrigin(0.5, 1)
+    .setDisplaySize(64, 92)
+    .setDepth(room307.depth + 0.3);
 
-  for (const child of scene.children.list) {
-    if (!(child instanceof Phaser.GameObjects.Image)) continue;
-    if (child === door) continue;
-    const isGenericRoomLayer =
-      child.texture.key === 'wall-hotel-nw' ||
-      child.texture.key === 'wall-hotel-ne' ||
-      child.texture.key === 'prop-window' ||
-      child.texture.key === 'prop-painting' ||
-      child.texture.key === 'prop-plant' ||
-      child.texture.key === 'mockup-irena';
-    if (!isGenericRoomLayer) continue;
-
-    const insideSuite = Math.abs(child.x - suiteX) < 330 && Math.abs(child.y - suiteY) < 220;
-    if (insideSuite) child.setVisible(false);
-  }
-
-  // The lower authored plate keeps the room integrated into the real Tiled floor, while
-  // the upper reference plate is a direct crop from the approved mockup supplied for #14.
-  // This gives the benchmark room the exact material/lighting language without replacing
-  // navigation, clues, transitions or the rest of the data-driven scene.
-  addWarmGlow(scene, suiteX + 36, suiteY - 34, 580, 360, suiteDepth - 0.4, 0.06);
-  scene.add.image(suiteX, suiteY + 34, 'mockup-room307-suite')
-    .setDisplaySize(700, 480)
-    .setDepth(suiteDepth);
-
-  const referencePlateY = suiteY - 88;
-  scene.add.image(suiteX + 18, referencePlateY, 'mockup-room307-reference-plate')
-    .setDisplaySize(748, 249)
-    .setDepth(door.depth - 2.2);
-
-  // The person visible in the approved plate is Irena. Keep it a real investigation
-  // interaction via a transparent hit target rather than drawing a second duplicate NPC.
-  const witnessHit = scene.add.zone(suiteX + 30, referencePlateY + 30, 78, 124)
-    .setInteractive({ useHandCursor: true })
-    .setDepth(door.depth + 6);
-  witnessHit.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-    if (pointer.leftButtonDown()) useInvestigationStore.getState().selectWitness('irena');
-  });
-
-  scene.cameras.main.setZoom(1.08);
-  scene.cameras.main.centerOn(suiteX - 74, suiteY + 30);
+  scene.cameras.main.setZoom(0.96);
+  scene.cameras.main.centerOn(room307.x + 8, room307.y + 18);
 }
 
 function addLoungeChair(scene: Phaser.Scene, x: number, y: number, depth: number) {
@@ -108,7 +76,7 @@ function addCoffeeTable(scene: Phaser.Scene, x: number, y: number, depth: number
 }
 
 function stageLobby(scene: Phaser.Scene) {
-  const reception = findImage(scene, 'mockup-reception');
+  const reception = findImage(scene, 'runtime-reception');
   if (!reception) return;
 
   const depth = reception.depth;
@@ -166,7 +134,7 @@ function addCautionSign(scene: Phaser.Scene, x: number, y: number, depth: number
 }
 
 function stageBasement(scene: Phaser.Scene) {
-  const laundry = findImage(scene, 'mockup-laundry');
+  const laundry = findImage(scene, 'runtime-laundry');
   if (!laundry) return;
 
   const depth = laundry.depth;

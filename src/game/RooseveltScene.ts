@@ -16,6 +16,7 @@ import {
   SCENE_SVG_ASSETS,
 } from './sceneAssets';
 import { createWalkabilityMatrix, findTilePath, type TilePoint } from './tilePathfinding';
+import { shouldRenderWallBetween } from './wallCollider';
 import {
   ROOSEVELT_PARTITION_AREA_IDS,
   ROOSEVELT_VISUAL_AREAS,
@@ -73,9 +74,6 @@ export class RooseveltScene extends Phaser.Scene {
     const walkableLayer = map.getLayer('Walkable');
     if (!floorLayer || !walkableLayer) throw new Error(`${this.worldMapId} must contain Floor and Walkable tile layers`);
 
-    const visibleFloorTiles = this.collectVisibleFloorTiles(floorLayer);
-    this.renderFloor(visibleFloorTiles);
-
     const walkableTiles = new Set<string>();
     for (let tileY = 0; tileY < walkableLayer.data.length; tileY += 1) {
       const row = walkableLayer.data[tileY] ?? [];
@@ -85,6 +83,11 @@ export class RooseveltScene extends Phaser.Scene {
         walkableTiles.add(`${tileX}:${tileY}`);
       }
     }
+
+    const visibleFloorTiles = this.collectVisibleFloorTiles(floorLayer);
+    for (const tileKey of walkableTiles) visibleFloorTiles.add(tileKey);
+    this.renderFloor(visibleFloorTiles);
+
     this.walkabilityGrid = createWalkabilityMatrix(map.width, map.height, (x, y) => walkableTiles.has(`${x}:${y}`));
     const worldBounds = this.measureWorldBounds(visibleFloorTiles);
 
@@ -234,6 +237,7 @@ export class RooseveltScene extends Phaser.Scene {
       const topOpeningX = area.x + Math.floor(area.width / 2);
       for (let x = area.x; x < area.x + area.width; x += 1) {
         if (x === topOpeningX || !isVisible(x, area.y - 1)) continue;
+        if (!shouldRenderWallBetween(this.walkabilityGrid, x, area.y, x, area.y - 1)) continue;
         const point = this.tileToWorld(x, area.y);
         this.add.image(point.x, point.y + 32, wallTextures.ne)
           .setOrigin(0.5, 0.72)
@@ -244,6 +248,7 @@ export class RooseveltScene extends Phaser.Scene {
       const leftOpeningY = area.y + Math.floor(area.height / 2);
       for (let y = area.y; y < area.y + area.height; y += 1) {
         if (y === leftOpeningY || !isVisible(area.x - 1, y)) continue;
+        if (!shouldRenderWallBetween(this.walkabilityGrid, area.x, y, area.x - 1, y)) continue;
         const point = this.tileToWorld(area.x, y);
         this.add.image(point.x, point.y + 32, wallTextures.nw)
           .setOrigin(0.5, 0.72)
@@ -313,16 +318,16 @@ export class RooseveltScene extends Phaser.Scene {
     for (const zone of readMapZones(objects)) {
       const point = this.tileToWorld(zone.tileX, zone.tileY);
       if (zone.id === 'room-307') {
-        this.propArt('mockup-door307', point.x + 46, point.y + 54, 102, 184, point.y + 120);
+        this.propArt('runtime-room307', point.x + 46, point.y + 54, 102, 184, point.y + 120);
       }
       if (zone.id === 'main-lobby') {
-        this.propArt('mockup-reception', point.x - 92, point.y + 118, 310, 200, point.y + 142);
+        this.propArt('runtime-reception', point.x - 92, point.y + 118, 310, 200, point.y + 142);
       }
       if (zone.id === 'lounge' && this.worldMapId === 'roosevelt-lobby') {
         this.propArt('prop-cart', point.x - 54, point.y + 102, 92, 82, point.y + 116, 0.92);
       }
       if (zone.id === 'laundry') {
-        this.propArt('mockup-laundry', point.x + 96, point.y + 126, 260, 242, point.y + 148);
+        this.propArt('runtime-laundry', point.x + 96, point.y + 126, 260, 242, point.y + 148);
         this.propArt('prop-cart', point.x - 82, point.y + 106, 88, 82, point.y + 138, 0.92);
       }
       if (zone.id === 'service-hall' && this.worldMapId === 'roosevelt-floor-3') {
@@ -335,7 +340,7 @@ export class RooseveltScene extends Phaser.Scene {
         this.propArt('prop-cart', point.x - 44, point.y + 90, 90, 84, point.y + 112, 0.92);
       }
       if (zone.id === 'guest-corridor-west' && this.worldMapId === 'roosevelt-floor-3') {
-        this.propArt('mockup-stairs', point.x - 82, point.y + 124, 208, 236, point.y + 144, 0.96);
+        this.propArt('runtime-stairs', point.x - 82, point.y + 124, 208, 236, point.y + 144, 0.96);
       }
       if (zone.id === 'guest-corridor-east' && this.worldMapId === 'roosevelt-floor-3') {
         this.propArt('prop-cart', point.x + 44, point.y + 100, 88, 82, point.y + 118, 0.94);
@@ -441,7 +446,7 @@ export class RooseveltScene extends Phaser.Scene {
   private createPlayer(tileX: number, tileY: number) {
     const start = this.tileToWorld(tileX, tileY);
     const shadow = this.add.ellipse(0, 0, 48, 17, 0x000000, 0.54);
-    const body = this.add.image(0, -70, ROOSEVELT_PLAYER_TEXTURE).setDisplaySize(86, 130);
+    const body = this.add.image(0, 0, ROOSEVELT_PLAYER_TEXTURE).setOrigin(0.5, 1).setDisplaySize(86, 130);
     this.playerBody = body;
     this.playerTile = { x: tileX, y: tileY };
     this.player = this.add.container(start.x, start.y + 56, [shadow, body]).setDepth(start.y + 150).setName('detective');
@@ -468,7 +473,7 @@ export class RooseveltScene extends Phaser.Scene {
   private followPath(path: TilePoint[], index: number, generation: number, onArrive?: () => void) {
     if (!this.player || generation !== this.movementGeneration) return;
     if (index >= path.length) {
-      this.playerBody?.setY(-70);
+      this.playerBody?.setY(0);
       onArrive?.();
       return;
     }
@@ -480,7 +485,7 @@ export class RooseveltScene extends Phaser.Scene {
     const duration = Phaser.Math.Clamp(Phaser.Math.Distance.Between(this.player.x, this.player.y, x, y) * 2.5, 90, 260);
     if (this.playerBody) {
       this.playerBody.setFlipX(x < this.player.x);
-      this.tweens.add({ targets: this.playerBody, y: -74, duration: Math.max(55, duration / 2), yoyo: true });
+      this.tweens.add({ targets: this.playerBody, y: -4, duration: Math.max(55, duration / 2), yoyo: true });
     }
     this.tweens.add({
       targets: this.player,
@@ -549,7 +554,7 @@ export class RooseveltScene extends Phaser.Scene {
 
   private addTransition(transition: MapTransition) {
     const point = this.tileToWorld(transition.tileX, transition.tileY);
-    const elevator = this.propArt('mockup-elevator', point.x, point.y + 54, 124, 240, point.y + 104, 0.98);
+    const elevator = this.propArt('runtime-elevator', point.x, point.y + 54, 124, 240, point.y + 104, 0.98);
     const marker = this.add.text(point.x, point.y + 16, '⇅', {
       fontFamily: 'Arial, sans-serif', fontSize: '15px', color: '#e0c47d', backgroundColor: '#10100ce8', padding: { x: 6, y: 3 },
     }).setOrigin(0.5).setDepth(point.y + 132);

@@ -4,14 +4,14 @@ import type { WorldMapId } from './worldManifest';
 type RooseveltMapId = Exclude<WorldMapId, 'prototype-room-307'>;
 type DecoratedScene = Phaser.Scene & { __mockupVisualPassApplied?: boolean };
 
-const CHARACTER_TEXTURES = new Set(['mockup-kamil', 'npc-nina', 'mockup-irena', 'mockup-marek']);
+const CHARACTER_TEXTURES = new Set(['runtime-kamil', 'runtime-nina', 'runtime-irena', 'runtime-marek']);
 
 const MODULE_SCALE: Record<string, { scale: number; dy?: number }> = {
-  'mockup-door307': { scale: 1.28 },
-  'mockup-elevator': { scale: 1.24 },
-  'mockup-stairs': { scale: 1.2, dy: -14 },
-  'mockup-reception': { scale: 1.12, dy: -6 },
-  'mockup-laundry': { scale: 1.1, dy: -6 },
+  'runtime-room307': { scale: 1.28 },
+  'runtime-elevator': { scale: 1.24 },
+  'runtime-stairs': { scale: 1.2, dy: -14 },
+  'runtime-reception': { scale: 1.12, dy: -6 },
+  'runtime-laundry': { scale: 1.1, dy: -6 },
   'prop-cctv': { scale: 1.2 },
 };
 
@@ -21,10 +21,10 @@ export function applyMockupVisualPass(scene: Phaser.Scene, mapId: RooseveltMapId
 
   const initialImages = scene.children.list.filter((child): child is Phaser.GameObjects.Image => child instanceof Phaser.GameObjects.Image);
   const sceneReady = initialImages.some((image) =>
-    image.texture.key === 'wall-hotel-nw' ||
-    image.texture.key === 'wall-hotel-ne' ||
-    image.texture.key === 'wall-service-nw' ||
-    image.texture.key === 'wall-service-ne',
+    image.texture.key === 'runtime-wall-nw' ||
+    image.texture.key === 'runtime-wall-ne' ||
+    image.texture.key === 'runtime-wall-nw' ||
+    image.texture.key === 'runtime-wall-ne',
   );
   if (!sceneReady) return false;
 
@@ -33,7 +33,6 @@ export function applyMockupVisualPass(scene: Phaser.Scene, mapId: RooseveltMapId
   integrateArchitecturalLandmarks(scene, initialImages, mapId);
   addGuestRoomDoors(scene, initialImages, mapId);
   addMockupSetPieces(scene, mapId);
-  if (mapId === 'roosevelt-floor-3') buildRoom307Interior(scene);
 
   if (mapId !== 'roosevelt-basement') addHotelWallRhythm(scene, initialImages);
   addLandmarkPlants(scene, initialImages, mapId);
@@ -68,8 +67,8 @@ function scaleArchitecture(images: Phaser.GameObjects.Image[]) {
 function integrateArchitecturalLandmarks(scene: Phaser.Scene, images: Phaser.GameObjects.Image[], mapId: RooseveltMapId) {
   const walls = images.filter((image) =>
     mapId === 'roosevelt-basement'
-      ? image.texture.key === 'wall-service-nw' || image.texture.key === 'wall-service-ne'
-      : image.texture.key === 'wall-hotel-nw' || image.texture.key === 'wall-hotel-ne',
+      ? image.texture.key === 'runtime-wall-nw' || image.texture.key === 'runtime-wall-ne'
+      : image.texture.key === 'runtime-wall-nw' || image.texture.key === 'runtime-wall-ne',
   );
   const usedWalls = new Set<Phaser.GameObjects.Image>();
 
@@ -85,10 +84,10 @@ function integrateArchitecturalLandmarks(scene: Phaser.Scene, images: Phaser.Gam
     }
   };
 
-  snapIntoWall('mockup-door307');
-  snapIntoWall('mockup-elevator');
+  snapIntoWall('runtime-room307');
+  snapIntoWall('runtime-elevator');
 
-  for (const elevator of images.filter((image) => image.texture.key === 'mockup-elevator')) {
+  for (const elevator of images.filter((image) => image.texture.key === 'runtime-elevator')) {
     addElevatorDetails(scene, elevator, mapId);
   }
 
@@ -140,7 +139,7 @@ function addGuestRoomDoors(scene: Phaser.Scene, images: Phaser.GameObjects.Image
   if (mapId !== 'roosevelt-floor-3') return;
 
   const walls = images
-    .filter((image) => image.visible && (image.texture.key === 'wall-hotel-nw' || image.texture.key === 'wall-hotel-ne'))
+    .filter((image) => image.visible && (image.texture.key === 'runtime-wall-nw' || image.texture.key === 'runtime-wall-ne'))
     .sort((a, b) => a.y - b.y || a.x - b.x);
   if (walls.length < 4) return;
 
@@ -172,7 +171,7 @@ function addMockupSetPieces(scene: Phaser.Scene, mapId: RooseveltMapId) {
         .setDepth(door305.depth + 1.4);
     }
 
-    const door307 = findImage(scene, 'mockup-door307');
+    const door307 = findImage(scene, 'runtime-room307');
     if (door307) {
       const lampX = door307.x + 68;
       const lampY = door307.y - 104;
@@ -184,7 +183,7 @@ function addMockupSetPieces(scene: Phaser.Scene, mapId: RooseveltMapId) {
   }
 
   if (mapId === 'roosevelt-lobby') {
-    const reception = findImage(scene, 'mockup-reception');
+    const reception = findImage(scene, 'runtime-reception');
     if (reception) {
       scene.add.image(reception.x + 176, reception.y - 8, 'prop-luggage-cart')
         .setOrigin(0.5, 1)
@@ -195,7 +194,7 @@ function addMockupSetPieces(scene: Phaser.Scene, mapId: RooseveltMapId) {
 }
 
 function buildRoom307Interior(scene: Phaser.Scene) {
-  const door = findImage(scene, 'mockup-door307');
+  const door = findImage(scene, 'runtime-room307');
   if (!door) return;
 
   const cx = door.x + 126;
@@ -217,13 +216,13 @@ function buildRoom307Interior(scene: Phaser.Scene) {
 
   // High cutaway back walls framing the suite like the approved mockup.
   for (let index = 0; index < 3; index += 1) {
-    scene.add.image(cx - 40 + index * 64, cy - 132 - index * 32, 'wall-hotel-ne')
+    scene.add.image(cx - 40 + index * 64, cy - 132 - index * 32, 'runtime-wall-ne')
       .setOrigin(0.5, 0.72)
       .setDisplaySize(128, 208)
       .setDepth(wallDepth + index * 0.03);
   }
   for (let index = 0; index < 3; index += 1) {
-    scene.add.image(cx + 152 + index * 64, cy - 196 + index * 32, 'wall-hotel-nw')
+    scene.add.image(cx + 152 + index * 64, cy - 196 + index * 32, 'runtime-wall-nw')
       .setOrigin(0.5, 0.72)
       .setDisplaySize(128, 208)
       .setDepth(wallDepth + 0.2 + index * 0.03);
@@ -377,7 +376,7 @@ function nearestWall(
 
 function addHotelWallRhythm(scene: Phaser.Scene, images: Phaser.GameObjects.Image[]) {
   const walls = images
-    .filter((image) => image.visible && (image.texture.key === 'wall-hotel-nw' || image.texture.key === 'wall-hotel-ne'))
+    .filter((image) => image.visible && (image.texture.key === 'runtime-wall-nw' || image.texture.key === 'runtime-wall-ne'))
     .sort((a, b) => a.y - b.y || a.x - b.x);
 
   for (let index = 0; index < walls.length; index += 1) {
@@ -416,18 +415,18 @@ function addLandmarkPlants(scene: Phaser.Scene, images: Phaser.GameObjects.Image
   };
 
   if (mapId === 'roosevelt-floor-3') {
-    addNear('mockup-door307', 82, 8, 58, 86);
-    addNear('mockup-elevator', -84, 4, 56, 82);
+    addNear('runtime-room307', 82, 8, 58, 86);
+    addNear('runtime-elevator', -84, 4, 56, 82);
   } else {
-    addNear('mockup-reception', 176, 0, 66, 96);
-    addNear('mockup-elevator', -78, 2, 56, 82);
+    addNear('runtime-reception', 176, 0, 66, 96);
+    addNear('runtime-elevator', -78, 2, 56, 82);
   }
 }
 
 function applyMockupCameraFraming(scene: Phaser.Scene, mapId: RooseveltMapId) {
   const camera = scene.cameras.main;
   if (mapId === 'roosevelt-floor-3') {
-    const door = findImage(scene, 'mockup-door307');
+    const door = findImage(scene, 'runtime-room307');
     camera.setZoom(1.04);
     if (door) camera.centerOn(door.x + 116, door.y - 114);
     return;
