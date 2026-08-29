@@ -8,31 +8,32 @@ export const ROOSEVELT_VISUAL_TARGET = {
     'walls must share the exact 2:1 isometric projection of the floor; upright pasted rectangles are forbidden',
     'internal room partitions should remain legible without turning public/service spaces into a maze',
     'Room 307, elevators, reception, CCTV and laundry should be visually recognizable without labels',
-    'Room 307 must be integrated into a wall module rather than floating as a freestanding front-facing sprite',
+    'Room 307 and elevators must be integrated into the isometric wall plane rather than floating front-facing sprites',
     'characters and props must stay legible at the default camera zoom',
     'warm wall sconces and local pools of light must break up the dark architecture',
+    'hotel floors need coherent room/corridor material regions rather than a repeated black-seamed tile grid',
     'camera supports free pan/zoom and F to follow the detective',
   ],
   initialZoom: 0.84,
   zoomByMap: {
-    'roosevelt-lobby': 0.88,
-    'roosevelt-floor-3': 0.84,
-    'roosevelt-basement': 0.86,
+    'roosevelt-lobby': 0.9,
+    'roosevelt-floor-3': 0.88,
+    'roosevelt-basement': 0.88,
   },
-  cameraPadding: { x: 165, y: 160 },
+  cameraPadding: { x: 175, y: 175 },
   cameraBiasByMap: {
-    'roosevelt-lobby': { x: 0, y: 12 },
-    'roosevelt-floor-3': { x: 0, y: 22 },
-    'roosevelt-basement': { x: 0, y: 26 },
+    'roosevelt-lobby': { x: 0, y: 10 },
+    'roosevelt-floor-3': { x: 0, y: 18 },
+    'roosevelt-basement': { x: 0, y: 22 },
   },
-  wallHeight: 158,
-  internalWallHeight: 144,
-  minimumWallHeight: 132,
+  wallHeight: 174,
+  internalWallHeight: 158,
+  minimumWallHeight: 148,
   sconceCadence: 3,
-  characterDisplay: { playerWidth: 96, playerHeight: 146, witnessWidth: 94, witnessHeight: 144 },
+  characterDisplay: { playerWidth: 102, playerHeight: 154, witnessWidth: 100, witnessHeight: 152 },
   // Retained for compatibility with older visual-contract tests. Structural walls are no longer stretched images.
-  wallDisplay: { width: 128, height: 208 },
-  internalWallDisplay: { width: 128, height: 190 },
+  wallDisplay: { width: 128, height: 224 },
+  internalWallDisplay: { width: 128, height: 204 },
 } as const;
 
 export type RooseveltVisualArea = {
@@ -75,12 +76,16 @@ export const ROOSEVELT_VISUAL_AREAS = {
 } as const satisfies Record<string, readonly RooseveltVisualArea[]>;
 
 export const ROOSEVELT_PARTITION_AREA_IDS = {
-  // The reception remains open, while the lounge/Palm Room create the same readable public-space
-  // framing as the approved mockup instead of one oversized empty lobby floor.
-  'roosevelt-lobby': ['lounge-wing', 'main-office', 'palm-room', 'main-kitchen'],
-  // The approved mockup reads as one long luxury corridor: the central core and lower landing
-  // stay visually open while the two guest wings and the Room 307 suite keep strong cutaway walls.
-  'roosevelt-floor-3': ['west-guest-rooms', 'east-guest-rooms', 'room-307-suite'],
-  // Basement keeps the service aisle open but gives the incinerator/utility/laundry distinct rooms.
-  'roosevelt-basement': ['incinerator', 'utility-core', 'laundry'],
+  // Reception stays open, while surrounding spaces get enough continuous back walls to read as rooms.
+  'roosevelt-lobby': ['lounge-wing', 'main-office', 'palm-room', 'main-kitchen', 'main-dining'],
+  // Floor 3 is the benchmark: guest wings and service/landing masses frame one readable hotel corridor.
+  'roosevelt-floor-3': [
+    'west-guest-rooms',
+    'east-guest-rooms',
+    'west-lower-rooms',
+    'central-service-core',
+    'room-307-suite',
+  ],
+  // Basement keeps a service aisle while utility/laundry zones read as distinct rooms.
+  'roosevelt-basement': ['incinerator', 'fan-room', 'utility-core', 'laundry'],
 } as const satisfies Record<string, readonly string[]>;
