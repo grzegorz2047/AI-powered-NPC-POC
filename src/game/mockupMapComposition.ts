@@ -53,45 +53,39 @@ function stageFloor3(scene: Phaser.Scene) {
       child.texture.key === 'wall-hotel-ne' ||
       child.texture.key === 'prop-window' ||
       child.texture.key === 'prop-painting' ||
-      child.texture.key === 'prop-plant';
+      child.texture.key === 'prop-plant' ||
+      child.texture.key === 'mockup-irena';
     if (!isGenericRoomLayer) continue;
 
-    const insideSuite = Math.abs(child.x - suiteX) < 300 && Math.abs(child.y - suiteY) < 205;
+    const insideSuite = Math.abs(child.x - suiteX) < 330 && Math.abs(child.y - suiteY) < 220;
     if (insideSuite) child.setVisible(false);
   }
 
-  addWarmGlow(scene, suiteX + 36, suiteY - 34, 560, 350, suiteDepth - 0.4, 0.065);
-  scene.add.image(suiteX, suiteY, 'mockup-room307-suite')
-    .setDisplaySize(690, 472)
+  // The lower authored plate keeps the room integrated into the real Tiled floor, while
+  // the upper reference plate is a direct crop from the approved mockup supplied for #14.
+  // This gives the benchmark room the exact material/lighting language without replacing
+  // navigation, clues, transitions or the rest of the data-driven scene.
+  addWarmGlow(scene, suiteX + 36, suiteY - 34, 580, 360, suiteDepth - 0.4, 0.06);
+  scene.add.image(suiteX, suiteY + 34, 'mockup-room307-suite')
+    .setDisplaySize(700, 480)
     .setDepth(suiteDepth);
 
-  // The supplied mockup always has a readable witness inside the room. Keep the real
-  // investigation state, but provide a direct in-room interaction target for Irena.
-  const witnessX = suiteX + 34;
-  const witnessY = suiteY + 108;
-  scene.add.ellipse(witnessX, witnessY + 4, 48, 17, 0x000000, 0.5)
-    .setDepth(door.depth + 3.8);
-  const irena = scene.add.image(witnessX, witnessY, 'mockup-irena')
-    .setOrigin(0.5, 1)
-    .setDisplaySize(92, 146)
-    .setDepth(door.depth + 4)
-    .setInteractive({ useHandCursor: true });
-  irena.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+  const referencePlateY = suiteY - 88;
+  scene.add.image(suiteX + 18, referencePlateY, 'mockup-room307-reference-plate')
+    .setDisplaySize(748, 249)
+    .setDepth(door.depth - 2.2);
+
+  // The person visible in the approved plate is Irena. Keep it a real investigation
+  // interaction via a transparent hit target rather than drawing a second duplicate NPC.
+  const witnessHit = scene.add.zone(suiteX + 30, referencePlateY + 30, 78, 124)
+    .setInteractive({ useHandCursor: true })
+    .setDepth(door.depth + 6);
+  witnessHit.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
     if (pointer.leftButtonDown()) useInvestigationStore.getState().selectWitness('irena');
   });
-  const bubble = scene.add.rectangle(witnessX + 45, witnessY - 132, 42, 27, 0x09111a, 0.96)
-    .setStrokeStyle(1.5, 0xd3b574, 0.88)
-    .setDepth(door.depth + 5);
-  scene.add.text(bubble.x, bubble.y - 2, '•••', {
-    fontFamily: 'Georgia, serif',
-    fontSize: '13px',
-    color: '#ead8ae',
-  }).setOrigin(0.5).setDepth(door.depth + 5.1);
 
   scene.cameras.main.setZoom(1.08);
-  // Shift the authored room to the right of the floor-plan HUD so the bed, witness and
-  // lounge corner remain visible simultaneously, matching the mockup's composition.
-  scene.cameras.main.centerOn(suiteX - 76, suiteY + 34);
+  scene.cameras.main.centerOn(suiteX - 74, suiteY + 30);
 }
 
 function addLoungeChair(scene: Phaser.Scene, x: number, y: number, depth: number) {
