@@ -3,6 +3,7 @@ import { GAME_AUDIO, audioForNewClue, totalContradictions, type GameAudioName } 
 import { clueById, witnessById } from '../data/caseData';
 import { useInvestigationStore } from '../state/investigationStore';
 import { useWorldStore } from '../state/worldStore';
+import { drawIsometricDoor, drawIsometricWall, type IsoWallSide } from './isometricArchitecture';
 import { readEntityAnchors, requireEntityAnchor } from './mapEntities';
 import { readMapTransitions, type MapTransition } from './mapTransitions';
 import { readMapZones } from './mapZones';
@@ -11,7 +12,6 @@ import {
   ROOSEVELT_FLOOR_TEXTURE_BY_MAP,
   ROOSEVELT_IMAGE_ASSETS,
   ROOSEVELT_PLAYER_TEXTURE,
-  ROOSEVELT_WALL_TEXTURES_BY_MAP,
   ROOSEVELT_WITNESS_TEXTURE_BY_ID,
   SCENE_SVG_ASSETS,
 } from './sceneAssets';
@@ -22,11 +22,11 @@ import {
   ROOSEVELT_VISUAL_AREAS,
   ROOSEVELT_VISUAL_TARGET,
 } from './visualTarget';
+import { installVisualAuditBridge, type WallAuditSegment } from './visualAudit';
 import { WORLD_MAPS, type WorldMapId } from './worldManifest';
 
 type WorldBounds = { minX: number; minY: number; maxX: number; maxY: number };
 type CameraKeys = Record<'W' | 'A' | 'S' | 'D' | 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', Phaser.Input.Keyboard.Key>;
-type WallTextures = { nw: string; ne: string };
 
 export class RooseveltScene extends Phaser.Scene {
   private tilemap?: Phaser.Tilemaps.Tilemap;
@@ -38,6 +38,7 @@ export class RooseveltScene extends Phaser.Scene {
   private cameraModeText?: Phaser.GameObjects.Text;
   private unsubscribeStore?: () => void;
   private walkabilityGrid: number[][] = [];
+  private wallAuditSegments: WallAuditSegment[] = [];
   private movementGeneration = 0;
   private ambienceStarted = false;
   private cameraDetached = false;
@@ -91,7 +92,15 @@ export class RooseveltScene extends Phaser.Scene {
     this.walkabilityGrid = createWalkabilityMatrix(map.width, map.height, (x, y) => walkableTiles.has(`${x}:${y}`));
     const worldBounds = this.measureWorldBounds(visibleFloorTiles);
 
+    this.wallAuditSegments = [];
     this.addArchitecture(visibleFloorTiles, map.getObjectLayer('Zones')?.objects);
+    installVisualAuditBridge(
+      this,
+      this.worldMapId,
+      this.wallAuditSegments,
+      ROOSEVELT_VISUAL_TARGET.minimumWallHeight,
+      this.walkabilityGrid,
+    );
 
     const anchors = readEntityAnchors(map.getObjectLayer('Entities')?.objects);
     const playerAnchor = requireEntityAnchor(anchors, 'player', this.spawnId);
@@ -192,7 +201,7 @@ export class RooseveltScene extends Phaser.Scene {
       const point = this.tileToWorld(tileX, tileY);
       bounds.minX = Math.min(bounds.minX, point.x - 96);
       bounds.maxX = Math.max(bounds.maxX, point.x + 96);
-      bounds.minY = Math.min(bounds.minY, point.y - 130);
+      bounds.minY = Math.min(bounds.minY, point.y - ROOSEVELT_VISUAL_TARGET.wallHeight - 58);
       bounds.maxY = Math.max(bounds.maxY, point.y + 120);
     }
     return bounds;
@@ -233,9 +242,27 @@ export class RooseveltScene extends Phaser.Scene {
     return this.tileToWorld(area.x + offsetX, area.y + offsetY);
   }
 
-  private addInternalPartitions(wallTextures: WallTextures, isVisible: (x: number, y: number) => boolean) {
+  private addWallSegment(tileX: number, tileY: number, side: IsoWallSide, internal = false) {
+    const point = this.tileToWorld(tileX, tileY);
+    const height = internal ? ROOSEVELT_VISUAL_TARGET.internalWallHeight : ROOSEVELT_VISUAL_TARGET.wallHeight;
+    const sideBias = side === 'nw' ? 0 : 1;
+    const cadence = internal ? ROOSEVELT_VISUAL_TARGET.sconceCadence + 1 : ROOSEVELT_VISUAL_TARGET.sconceCadence;
+    const sconce = (tileX + tileY + sideBias) % cadence === 0;
+    const wall = drawIsometricWall(this, {
+      x: point.x,
+      y: point.y,
+      side,
+      height,
+      depth: point.y + 25 + (side === 'ne' ? 0.1 : 0),
+      variant: this.worldMapId,
+      sconce,
+      internal,
+    });
+    this.wallAuditSegments.push({ tileX, tileY, internal, sconce, geometry: wall.geometry });
+  }
+
+  private addInternalPartitions(isVisible: (x: number, y: number) => boolean) {
     const partitionAreaIds = new Set<string>(ROOSEVELT_PARTITION_AREA_IDS[this.worldMapId]);
-    const { width, height } = ROOSEVELT_VISUAL_TARGET.internalWallDisplay;
 
     for (const area of ROOSEVELT_VISUAL_AREAS[this.worldMapId]) {
       if (!partitionAreaIds.has(area.id)) continue;
@@ -244,22 +271,14 @@ export class RooseveltScene extends Phaser.Scene {
       for (let x = area.x; x < area.x + area.width; x += 1) {
         if (x === topOpeningX || !isVisible(x, area.y - 1)) continue;
         if (!shouldRenderWallBetween(this.walkabilityGrid, x, area.y, x, area.y - 1)) continue;
-        const point = this.tileToWorld(x, area.y);
-        this.add.image(point.x, point.y + 32, wallTextures.ne)
-          .setOrigin(0.5, 0.72)
-          .setDisplaySize(width, height)
-          .setDepth(point.y + 25.2);
+        this.addWallSegment(x, area.y, 'ne', true);
       }
 
       const leftOpeningY = area.y + Math.floor(area.height / 2);
       for (let y = area.y; y < area.y + area.height; y += 1) {
         if (y === leftOpeningY || !isVisible(area.x - 1, y)) continue;
         if (!shouldRenderWallBetween(this.walkabilityGrid, area.x, y, area.x - 1, y)) continue;
-        const point = this.tileToWorld(area.x, y);
-        this.add.image(point.x, point.y + 32, wallTextures.nw)
-          .setOrigin(0.5, 0.72)
-          .setDisplaySize(width, height)
-          .setDepth(point.y + 25.1);
+        this.addWallSegment(area.x, y, 'nw', true);
       }
     }
   }
@@ -298,33 +317,28 @@ export class RooseveltScene extends Phaser.Scene {
   }
 
   private addArchitecture(visibleFloorTiles: Set<string>, objects: Parameters<typeof readMapZones>[0]) {
-    const wallTextures = ROOSEVELT_WALL_TEXTURES_BY_MAP[this.worldMapId];
     const isVisible = (x: number, y: number) => visibleFloorTiles.has(`${x}:${y}`);
 
     for (const tileKey of visibleFloorTiles) {
       const [x, y] = tileKey.split(':').map(Number);
-      const point = this.tileToWorld(x, y);
-      const wallDepth = point.y + 24;
-      if (!isVisible(x - 1, y)) {
-        this.add.image(point.x, point.y + 32, wallTextures.nw)
-          .setOrigin(0.5, 0.72)
-          .setDisplaySize(ROOSEVELT_VISUAL_TARGET.wallDisplay.width, ROOSEVELT_VISUAL_TARGET.wallDisplay.height)
-          .setDepth(wallDepth);
-      }
-      if (!isVisible(x, y - 1)) {
-        this.add.image(point.x, point.y + 32, wallTextures.ne)
-          .setOrigin(0.5, 0.72)
-          .setDisplaySize(ROOSEVELT_VISUAL_TARGET.wallDisplay.width, ROOSEVELT_VISUAL_TARGET.wallDisplay.height)
-          .setDepth(wallDepth + 0.1);
-      }
+      if (!isVisible(x - 1, y)) this.addWallSegment(x, y, 'nw');
+      if (!isVisible(x, y - 1)) this.addWallSegment(x, y, 'ne');
     }
 
-    this.addInternalPartitions(wallTextures, isVisible);
+    this.addInternalPartitions(isVisible);
 
     for (const zone of readMapZones(objects)) {
       const point = this.tileToWorld(zone.tileX, zone.tileY);
       if (zone.id === 'room-307') {
-        this.propArt('runtime-room307', point.x + 46, point.y + 54, 102, 184, point.y + 120);
+        drawIsometricDoor(this, {
+          x: point.x,
+          y: point.y,
+          side: 'ne',
+          height: ROOSEVELT_VISUAL_TARGET.wallHeight,
+          depth: point.y + 25.3,
+          variant: this.worldMapId,
+          label: '307',
+        });
       }
       if (zone.id === 'main-lobby') {
         this.propArt('runtime-reception', point.x - 92, point.y + 118, 310, 200, point.y + 142);
@@ -371,7 +385,7 @@ export class RooseveltScene extends Phaser.Scene {
       bounds.maxX - bounds.minX + paddingX * 2,
       bounds.maxY - bounds.minY + paddingY * 2,
     );
-    camera.setZoom(ROOSEVELT_VISUAL_TARGET.initialZoom);
+    camera.setZoom(ROOSEVELT_VISUAL_TARGET.zoomByMap[this.worldMapId] ?? ROOSEVELT_VISUAL_TARGET.initialZoom);
     camera.setRoundPixels(true);
     camera.centerOn((bounds.minX + bounds.maxX) / 2 + bias.x, (bounds.minY + bounds.maxY) / 2 + bias.y);
     camera.stopFollow();
@@ -452,7 +466,10 @@ export class RooseveltScene extends Phaser.Scene {
   private createPlayer(tileX: number, tileY: number) {
     const start = this.tileToWorld(tileX, tileY);
     const shadow = this.add.ellipse(0, 0, 48, 17, 0x000000, 0.54);
-    const body = this.add.image(0, 0, ROOSEVELT_PLAYER_TEXTURE).setOrigin(0.5, 1).setDisplaySize(86, 130);
+    const body = this.add.image(0, 0, ROOSEVELT_PLAYER_TEXTURE).setOrigin(0.5, 1).setDisplaySize(
+      ROOSEVELT_VISUAL_TARGET.characterDisplay.playerWidth,
+      ROOSEVELT_VISUAL_TARGET.characterDisplay.playerHeight,
+    );
     this.playerBody = body;
     this.playerTile = { x: tileX, y: tileY };
     this.player = this.add.container(start.x, start.y + 56, [shadow, body]).setDepth(start.y + 150).setName('detective');
@@ -542,7 +559,7 @@ export class RooseveltScene extends Phaser.Scene {
     const texture = ROOSEVELT_WITNESS_TEXTURE_BY_ID[id] ?? 'npc-nina';
     const body = this.add.image(x, y, texture)
       .setOrigin(0.5, 1)
-      .setDisplaySize(82, 130)
+      .setDisplaySize(ROOSEVELT_VISUAL_TARGET.characterDisplay.witnessWidth, ROOSEVELT_VISUAL_TARGET.characterDisplay.witnessHeight)
       .setDepth(y + 96);
     const label = this.add.text(x, y + 8, name.split(' ')[0], {
       fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#e7ddca', backgroundColor: '#0c0d0be8', padding: { x: 5, y: 3 },
@@ -560,7 +577,10 @@ export class RooseveltScene extends Phaser.Scene {
 
   private addTransition(transition: MapTransition) {
     const point = this.tileToWorld(transition.tileX, transition.tileY);
-    const elevator = this.propArt('runtime-elevator', point.x, point.y + 54, 124, 240, point.y + 104, 0.98);
+    this.add.ellipse(point.x, point.y - 34, 170, 186, 0xd29b45, 0.055)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(point.y + 102);
+    const elevator = this.propArt('runtime-elevator', point.x, point.y + 58, 142, 264, point.y + 104, 0.98);
     const marker = this.add.text(point.x, point.y + 16, '⇅', {
       fontFamily: 'Arial, sans-serif', fontSize: '15px', color: '#e0c47d', backgroundColor: '#10100ce8', padding: { x: 6, y: 3 },
     }).setOrigin(0.5).setDepth(point.y + 132);
