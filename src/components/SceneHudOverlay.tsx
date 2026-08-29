@@ -1,4 +1,5 @@
 import { useWorldStore } from '../state/worldStore';
+import './sceneHudOverlay.css';
 
 const HUD_BY_MAP = {
   'roosevelt-lobby': {
