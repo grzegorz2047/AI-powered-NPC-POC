@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { useWorldStore } from '../state/worldStore';
 import { GameScene } from './GameScene';
+import { prefersReducedMotion } from './motionPreferences';
 import { RooseveltScene } from './RooseveltScene';
 import { subscribeGameInputBlocked } from './uiInputGate';
 import { WORLD_MAPS } from './worldManifest';
@@ -13,6 +14,7 @@ export function PhaserGame() {
 
   useEffect(() => {
     if (!hostRef.current) return;
+    const reduceMotion = prefersReducedMotion();
 
     const scene = currentMapId === 'prototype-room-307'
       ? new GameScene(currentMapId, spawnId)
@@ -46,6 +48,14 @@ export function PhaserGame() {
       for (const child of activeScene.children.list) {
         if (child instanceof Phaser.Tilemaps.TilemapLayer) child.skipCull = true;
       }
+
+      if (reduceMotion) {
+        for (const tween of activeScene.tweens.getTweens()) {
+          const tweenData = tween as Phaser.Tweens.Tween & { data?: Array<{ repeat?: number }>; totalDuration?: number };
+          const repeatsForever = tweenData.data?.some((entry) => entry.repeat === -1) || tweenData.totalDuration === Infinity;
+          if (repeatsForever) tween.stop();
+        }
+      }
     };
     game.events.on(Phaser.Core.Events.POST_STEP, enforceSafeIsometricRendering);
 
@@ -64,6 +74,7 @@ export function PhaserGame() {
     <div
       ref={hostRef}
       className="game-host"
+      data-reduced-motion={prefersReducedMotion() ? 'true' : 'false'}
       aria-label={`Hotel Nocturne investigation scene: ${WORLD_MAPS[currentMapId].title}`}
     />
   );
