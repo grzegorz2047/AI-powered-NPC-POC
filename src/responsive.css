@@ -1,0 +1,7 @@
+@media (max-height: 760px) and (min-width: 981px) {
+  .game-host {
+    min-height: 0;
+    height: calc(100vh - 208px);
+    aspect-ratio: auto;
+  }
+}

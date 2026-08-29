@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="64" viewBox="0 0 128 64">
+  <defs>
+    <linearGradient id="carpet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2b2630"/>
+      <stop offset=".52" stop-color="#221f29"/>
+      <stop offset="1" stop-color="#171b22"/>
+    </linearGradient>
+    <pattern id="deco" width="16" height="12" patternUnits="userSpaceOnUse">
+      <path d="M0 6 8 1l8 5-8 5Z" fill="none" stroke="#865d51" stroke-opacity=".16" stroke-width=".8"/>
+      <circle cx="8" cy="6" r="1" fill="#b08b58" fill-opacity=".14"/>
+    </pattern>
+  </defs>
+  <polygon points="64,1 127,32 64,63 1,32" fill="url(#carpet)" stroke="#66543c" stroke-width="1.2"/>
+  <polygon points="64,4 123,32 64,60 5,32" fill="url(#deco)" opacity=".92"/>
+  <path d="M9 32 64 6l55 26M9 32l55 26 55-26" fill="none" stroke="#d0a35f" stroke-opacity=".05" stroke-width="2"/>
+</svg>

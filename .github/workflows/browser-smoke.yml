@@ -1,0 +1,63 @@
+name: Browser smoke
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: browser-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chromium-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+
+      - name: Smoke local browser build
+        run: npm run test:e2e -- --grep-invert "visual game audit captures every hotel level"
+
+      - name: Resolve Ready Vercel preview
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/resolve-vercel-preview.mjs >> "$GITHUB_ENV"
+
+      - name: Smoke public Vercel preview
+        if: github.event_name == 'pull_request'
+        # WebAudio source-node prototype instrumentation is intentionally local-only:
+        # remote headless Chromium can suppress source starts despite serving valid audio assets.
+        # The expensive screenshot/geometry audit has its own Visual game audit workflow.
+        run: npm run test:e2e -- --grep-invert "first in-game gesture starts the real Phaser ambience sources|visual game audit captures every hotel level"
+
+      - name: Upload visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: visual-qa-screenshots
+          path: test-results/visual-qa/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload Playwright diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: playwright-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7

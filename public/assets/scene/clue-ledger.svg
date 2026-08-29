@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="68" height="52" viewBox="0 0 68 52">
+  <path d="M7 7 58 4l5 36-7 2-5 7-8-4-8 4-6-5-9 3-4-6-7 1z" fill="#c7b58c" stroke="#5a4935" stroke-width="2"/>
+  <path d="M10 8q5 7 2 14m47-16q-7 8-3 14M12 38q8-3 10 7M55 39q-7-3-10 6" fill="none" stroke="#2e2019" stroke-width="3" opacity=".85"/>
+  <path d="M18 17h32M18 23h29M18 30h25" stroke="#554c3e" stroke-width="1.6"/>
+  <text x="35" y="38" text-anchor="middle" font-family="monospace" font-size="5.5" fill="#743932">BALTIC NORTH</text>
+</svg>

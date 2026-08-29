@@ -1,0 +1,1 @@
+Generated high-resolution asset sheets are cropped into production runtime sprites, wired into RooseveltScene, normalized to Phaser display ratios, and validated against Tiled Walkable wall-collider contracts.

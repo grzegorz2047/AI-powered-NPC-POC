@@ -1,0 +1,1 @@
+Do not treat the temporary authored SVG wrappers as final generated art. The final visual pass must use the prepared generated image crops after Vercel geometry validation.

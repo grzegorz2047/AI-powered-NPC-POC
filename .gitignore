@@ -1,0 +1,8 @@
+node_modules
+dist
+.vercel
+.env
+.env.*
+!/.env.example
+src/narrative/case.compiled.json
+public/maps/roosevelt-floor-3-visual.json

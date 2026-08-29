@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="128" viewBox="0 0 80 128">
+  <defs>
+    <linearGradient id="dress" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6d8276"/><stop offset=".5" stop-color="#4d6258"/><stop offset="1" stop-color="#2e3e37"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c89b7d"/><stop offset="1" stop-color="#8e624e"/></linearGradient>
+  </defs>
+  <ellipse cx="40" cy="120" rx="22" ry="5.5" fill="#020302" opacity=".5"/>
+  <path d="M28 48 19 59l-5 47 14 6 7-42 2 44h10l2-44 7 42 13-7-6-46-10-11Z" fill="url(#dress)" stroke="#15211c" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M27 56h26l-3 44-10 7-11-7Z" fill="#d9d7c8" fill-opacity=".86" stroke="#7f806f" stroke-width="1.5"/>
+  <path d="M31 54h18v10H31z" fill="#e6e1d1"/><path d="M22 62 12 92l10 4 14-31M58 62l11 30-10 5-14-32" fill="#5f7468" stroke="#24372f" stroke-width="2.4"/>
+  <path d="M26 109h13v10H23l2-10Zm16 0h12l3 10H42Z" fill="#17211c" stroke="#090d0b" stroke-width="2"/>
+  <path d="M31 29c1-11 17-15 23-5l2 11-5 12-12 4-11-7-3-10Z" fill="url(#skin)" stroke="#241712" stroke-width="2.3"/>
+  <path d="M27 31c0-12 8-18 17-16 7 1 12 7 12 17l-7-5-3 13-7-12-5 11-6-4Z" fill="#49413b" stroke="#211b18" stroke-width="2"/>
+  <path d="M31 19c5-6 14-6 18 0" fill="none" stroke="#eee7d8" stroke-width="5" stroke-linecap="round"/><path d="M32 20c5-4 12-4 16 0" fill="none" stroke="#8d8174" stroke-width="1.5"/>
+  <path d="M34 35h4M46 34h4" stroke="#30201a" stroke-width="1.8" stroke-linecap="round"/><path d="M40 39l-1 4 3 1M34 46c4 1 8 1 12-1" stroke="#70483d" stroke-width="1.2" fill="none"/>
+  <path d="M57 76h8v17h-8Z" fill="#b6aa8b" stroke="#5f5545"/><path d="M58 78h6M58 82h5M58 86h6" stroke="#6f6555"/>
+</svg>

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="180" viewBox="0 0 220 180">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#53351f" stop-opacity=".9"/>
+      <stop offset=".52" stop-color="#221812" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#081019" stop-opacity=".95"/>
+    </linearGradient>
+    <radialGradient id="skin" cx="42%" cy="32%" r="72%">
+      <stop stop-color="#d59a6b"/>
+      <stop offset=".48" stop-color="#a76542"/>
+      <stop offset="1" stop-color="#653923"/>
+    </radialGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#263444"/>
+      <stop offset=".5" stop-color="#17222f"/>
+      <stop offset="1" stop-color="#0b121b"/>
+    </linearGradient>
+    <linearGradient id="hat" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#29384b"/>
+      <stop offset=".55" stop-color="#131e2a"/>
+      <stop offset="1" stop-color="#080e15"/>
+    </linearGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+      <feOffset dy="5"/>
+      <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .6 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <path d="M12 168c8-62 47-92 98-92s90 30 98 92Z" fill="url(#bg)" opacity=".55"/>
+  <ellipse cx="108" cy="88" rx="76" ry="72" fill="#d7984a" opacity=".08"/>
+
+  <!-- shoulders and trench coat -->
+  <g filter="url(#shadow)">
+    <path d="M26 180c8-44 31-69 65-76l18 18 18-18c35 7 58 32 66 76Z" fill="url(#coat)" stroke="#05090e" stroke-width="5"/>
+    <path d="M90 105 53 126l24 54h33l-1-58Z" fill="#243241" stroke="#101822" stroke-width="3"/>
+    <path d="m128 105 37 21-24 54h-33l1-58Z" fill="#202d3a" stroke="#101822" stroke-width="3"/>
+    <path d="m91 107 18 15-17 19-20-20Z" fill="#52606c" stroke="#17212b" stroke-width="3"/>
+    <path d="m127 107-18 15 17 19 20-20Z" fill="#495866" stroke="#17212b" stroke-width="3"/>
+    <path d="M95 119h28l-3 61H98Z" fill="#d5c8af"/>
+    <path d="m108 125 13 15-10 40h-9l-7-40Z" fill="#3a1f21" stroke="#1c1113" stroke-width="2"/>
+  </g>
+
+  <!-- neck -->
+  <path d="M91 89h36v30c-8 14-29 14-37 0Z" fill="#8e5235" stroke="#3f261b" stroke-width="3"/>
+
+  <!-- head / jaw -->
+  <g filter="url(#shadow)">
+    <path d="M67 39q12-25 42-27 35 2 47 28l-5 43q-10 31-41 38-31-5-43-37l-5-36Z" fill="url(#skin)" stroke="#3a2217" stroke-width="4"/>
+    <path d="M72 66q3 35 21 48-24-8-30-36Z" fill="#5d3422" opacity=".55"/>
+    <path d="M148 58q-2 34-20 54 24-11 27-39Z" fill="#44271d" opacity=".38"/>
+
+    <!-- ears -->
+    <path d="M64 62q-14-7-13 9 2 20 16 22Z" fill="#985d3d" stroke="#482b1e" stroke-width="3"/>
+    <path d="M153 60q14-6 13 10-2 19-15 22Z" fill="#8c5035" stroke="#482b1e" stroke-width="3"/>
+
+    <!-- brows/eyes -->
+    <path d="M78 60q15-9 28-1" fill="none" stroke="#392419" stroke-width="5" stroke-linecap="round"/>
+    <path d="M117 58q15-6 28 3" fill="none" stroke="#392419" stroke-width="5" stroke-linecap="round"/>
+    <path d="M80 69q12 8 24 0" fill="none" stroke="#211817" stroke-width="3" stroke-linecap="round"/>
+    <path d="M119 68q12 8 23 0" fill="none" stroke="#211817" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="94" cy="69" r="2.8" fill="#121517"/>
+    <circle cx="130" cy="69" r="2.8" fill="#121517"/>
+    <circle cx="93" cy="68" r=".8" fill="#d9d0b9"/>
+    <circle cx="129" cy="68" r=".8" fill="#d9d0b9"/>
+
+    <!-- nose -->
+    <path d="M111 66q-3 20-8 28 7 8 17 0" fill="none" stroke="#6d3c29" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M101 95q10 5 20 0" fill="none" stroke="#3a241c" stroke-opacity=".55" stroke-width="2"/>
+
+    <!-- mouth and stubble -->
+    <path d="M91 103q18 10 38-1" fill="none" stroke="#40231f" stroke-width="3" stroke-linecap="round"/>
+    <path d="M95 109q15 6 30-1" fill="none" stroke="#7b4537" stroke-width="2" stroke-linecap="round"/>
+    <g stroke="#3a2a23" stroke-opacity=".48" stroke-width="1.5" stroke-linecap="round">
+      <path d="m80 92 3 2M86 97l3 1M92 94l2 2M129 92l3 1M136 96l3 2M143 91l3 1M87 112l3 2M96 115l3 1M124 114l3 1M134 110l3 2"/>
+    </g>
+
+    <!-- cheek scars/noir detail -->
+    <path d="M77 81q7 5 15 3M138 84q6 4 11 2" fill="none" stroke="#5a3426" stroke-opacity=".55" stroke-width="2"/>
+  </g>
+
+  <!-- hair behind hat -->
+  <path d="M69 43q8-28 38-31 33 1 46 30l-8 4q-14-17-36-18-24 0-34 19Z" fill="#1c1715"/>
+
+  <!-- fedora -->
+  <g filter="url(#shadow)">
+    <path d="M50 46q14-12 42-17l8-23q4-8 14-7l30 5q9 2 10 10l1 22q22 8 33 18-16 10-56 9l-57-5q-22-2-36-12Z" fill="url(#hat)" stroke="#05090d" stroke-width="5"/>
+    <path d="M93 31 101 8q2-5 8-5l31 5q5 1 6 6l1 23Z" fill="#1d2b3a"/>
+    <path d="M86 35q31 7 66 5l2 13q-39 4-72-5Z" fill="#8a6742" stroke="#2c2018" stroke-width="3"/>
+    <path d="M43 47q61 17 145 7" fill="none" stroke="#3c5267" stroke-opacity=".55" stroke-width="3"/>
+  </g>
+
+  <!-- warm rim light -->
+  <path d="M57 53q7-25 27-36M47 128q10-27 27-36" fill="none" stroke="#d39b54" stroke-opacity=".35" stroke-width="3"/>
+</svg>

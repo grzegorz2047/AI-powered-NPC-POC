@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="92" height="132" viewBox="0 0 92 132">
+  <defs>
+    <linearGradient id="stone" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6d6255"/><stop offset="1" stop-color="#322d27"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#221f1b"/><stop offset=".5" stop-color="#5d5548"/><stop offset="1" stop-color="#191714"/></linearGradient>
+    <linearGradient id="brass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e0bd68"/><stop offset=".5" stop-color="#9b763c"/><stop offset="1" stop-color="#5d421f"/></linearGradient>
+  </defs>
+  <ellipse cx="46" cy="126" rx="36" ry="5" fill="#020202" opacity=".45"/>
+  <path d="M8 126V24L22 8h48l14 16v102Z" fill="url(#stone)" stroke="#15120f" stroke-width="3"/>
+  <path d="M20 119V30l8-9h36l8 9v89Z" fill="#171714" stroke="url(#brass)" stroke-width="3"/>
+  <rect x="25" y="34" width="20" height="82" fill="url(#metal)"/><rect x="47" y="34" width="20" height="82" fill="url(#metal)"/>
+  <path d="M46 34v82" stroke="#c49d54" stroke-opacity=".55"/><path d="M29 40v70M63 40v70" stroke="#9d8d73" stroke-opacity=".22"/>
+  <path d="M28 16h36l-6 10H34Z" fill="#151514" stroke="#b38a42" stroke-width="2"/><text x="46" y="23" text-anchor="middle" font-family="Georgia,serif" font-size="8" fill="#e0c27b">ELEVATOR</text>
+  <rect x="75" y="63" width="10" height="22" rx="2" fill="#1a1a18" stroke="#b18b45"/><circle cx="80" cy="69" r="2" fill="#c8aa63"/><circle cx="80" cy="79" r="2" fill="#62543b"/>
+  <path d="M10 126h72" stroke="#c4a266" stroke-opacity=".35" stroke-width="2"/>
+</svg>

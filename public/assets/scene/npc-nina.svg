@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="128" viewBox="0 0 80 128">
+  <defs>
+    <linearGradient id="suit" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#385267"/><stop offset=".5" stop-color="#243a4c"/><stop offset="1" stop-color="#15242f"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d7a98c"/><stop offset="1" stop-color="#a16f59"/></linearGradient>
+    <filter id="grain"><feTurbulence baseFrequency=".7" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 .35 0 0 0 0 .38 0 0 0 0 .42 0 0 0 .08 0"/></filter>
+  </defs>
+  <ellipse cx="40" cy="120" rx="21" ry="5.5" fill="#020303" opacity=".5"/>
+  <path d="M29 48 20 58l-4 49 14 5 5-41 2 43h10l2-43 5 41 13-6-6-48-10-10Z" fill="url(#suit)" stroke="#0c151c" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M31 50 40 64l10-14-5-4H35Z" fill="#e5ddce" stroke="#6f6354" stroke-width="1.5"/>
+  <path d="M34 52 40 60l6-8" fill="none" stroke="#a48d68"/>
+  <path d="M22 60 12 91l10 4 13-30M58 60l11 30-10 5-13-30" fill="#2d465a" stroke="#0f1b24" stroke-width="2.5"/>
+  <path d="M27 109h12v10H24l2-10Zm15 0h12l3 10H42Z" fill="#111a20" stroke="#070b0e" stroke-width="2"/>
+  <path d="M31 29c1-11 17-15 23-5l2 10-5 13-12 4-11-7-3-10Z" fill="url(#skin)" stroke="#261713" stroke-width="2.3"/>
+  <path d="M27 31c-1-11 6-18 16-17 9 1 14 8 13 18l-6-6-2 15h-6l-2-16-5 15-6-4Z" fill="#312623" stroke="#181210" stroke-width="2"/>
+  <path d="M34 35h4M46 34h4" stroke="#34221d" stroke-width="1.8" stroke-linecap="round"/><path d="M40 38l-1 4 3 1M35 46c5 2 9 2 13-1" stroke="#7c4f45" stroke-width="1.2" fill="none"/>
+  <g transform="rotate(-7 59 79)"><rect x="51" y="66" width="17" height="25" rx="2" fill="#d7ccb6" stroke="#6f5a3d" stroke-width="2"/><path d="M54 71h11M54 76h9M54 81h10" stroke="#736751"/><rect x="56" y="63" width="7" height="5" rx="1" fill="#8f7955"/></g>
+  <circle cx="27" cy="51" r="2.2" fill="#bd9b5d"/>
+  <path d="M29 48 20 58l-4 49 14 5 5-41 2 43h10l2-43 5 41 13-6-6-48-10-10Z" filter="url(#grain)" opacity=".2"/>
+</svg>

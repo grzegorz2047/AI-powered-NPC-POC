@@ -1,0 +1,49 @@
+name: Visual game audit
+
+on:
+  pull_request:
+    paths:
+      - src/game/**
+      - public/maps/**
+      - e2e/visual-audit.spec.ts
+      - playwright.config.ts
+      - .github/workflows/visual-game-audit.yml
+  workflow_dispatch:
+
+concurrency:
+  group: visual-game-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Capture and validate all hotel levels
+        run: npm run test:e2e -- e2e/visual-audit.spec.ts
+      - name: Upload game visual audit
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: visual-game-audit
+          path: test-results/visual-audit/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload Playwright diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: visual-game-audit-playwright-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
