@@ -1,4 +1,24 @@
 import { clues, witnesses } from '../data/caseData';
+import detectiveTexture from './generatedTextures/characterDetective';
+import irenaTexture from './generatedTextures/characterIrena';
+import {
+  character_kamil as kamilTexture,
+  character_marek as marekTexture,
+  character_nina as ninaTexture,
+} from './generatedTextures/charactersRemaining';
+import {
+  floor_guest as floorGuestTexture,
+  floor_lobby as floorLobbyTexture,
+  floor_service as floorServiceTexture,
+} from './generatedTextures/floors';
+import { laundry as laundryTexture } from './generatedTextures/laundry';
+import { reception as receptionTexture } from './generatedTextures/reception';
+import { elevator as elevatorTexture, stairs as stairsTexture } from './generatedTextures/verticalModules';
+import {
+  wall_door307 as room307Texture,
+  wall_ne as wallNeTexture,
+  wall_nw as wallNwTexture,
+} from './generatedTextures/walls';
 import type { WorldMapId } from './worldManifest';
 
 export const SCENE_SVG_ASSETS = [
@@ -22,12 +42,6 @@ export const SCENE_SVG_ASSETS = [
   ['prop-painting', '/assets/scene/prop-painting.svg'],
   ['prop-room-door-305', '/assets/scene/prop-room-door-305.svg'],
   ['prop-room-door-309', '/assets/scene/prop-room-door-309.svg'],
-  ['mockup-room307-suite', '/assets/scene/mockup-room307-suite.svg'],
-  ['mockup-room307-reference-plate', '/assets/scene/mockup-room307-reference-plate.svg'],
-  ['wall-hotel-nw', '/assets/roosevelt-wall-nw.svg'],
-  ['wall-hotel-ne', '/assets/roosevelt-wall-ne.svg'],
-  ['wall-service-nw', '/assets/roosevelt-service-wall-nw.svg'],
-  ['wall-service-ne', '/assets/roosevelt-service-wall-ne.svg'],
   ['clue-whisky', '/assets/scene/clue-whisky.svg'],
   ['clue-keycard', '/assets/scene/clue-keycard.svg'],
   ['clue-cctv-note', '/assets/scene/clue-cctv-note.svg'],
@@ -37,37 +51,45 @@ export const SCENE_SVG_ASSETS = [
   ['clue-cctv-still', '/assets/scene/clue-cctv-still.svg'],
 ] as const;
 
+/**
+ * Production Roosevelt assets cut from the generated high-resolution sheets.
+ * All character sprites are normalized to a shared bottom-center foot anchor;
+ * all architecture sprites are pre-normalized to the display aspect ratios used by Phaser.
+ */
 export const ROOSEVELT_IMAGE_ASSETS = [
-  ['mockup-detective', '/assets/mockup/detective.webp'],
-  ['mockup-kamil', '/assets/mockup/kamil.webp'],
-  ['mockup-irena', '/assets/mockup/irena.webp'],
-  ['mockup-marek', '/assets/mockup/marek.webp'],
-  ['mockup-reception', '/assets/mockup/reception-desk.webp'],
-  ['mockup-door307', '/assets/mockup/door-307.webp'],
-  ['mockup-elevator', '/assets/mockup/elevator.webp'],
-  ['mockup-stairs', '/assets/mockup/stairs.webp'],
-  ['mockup-laundry', '/assets/mockup/laundry.webp'],
+  ['runtime-detective', detectiveTexture],
+  ['runtime-kamil', kamilTexture],
+  ['runtime-nina', ninaTexture],
+  ['runtime-irena', irenaTexture],
+  ['runtime-marek', marekTexture],
+  ['runtime-reception', receptionTexture],
+  ['runtime-room307', room307Texture],
+  ['runtime-elevator', elevatorTexture],
+  ['runtime-stairs', stairsTexture],
+  ['runtime-laundry', laundryTexture],
+  ['runtime-wall-nw', wallNwTexture],
+  ['runtime-wall-ne', wallNeTexture],
 ] as const;
 
 export const ROOSEVELT_FLOOR_TEXTURE_BY_MAP: Record<Exclude<WorldMapId, 'prototype-room-307'>, string> = {
-  'roosevelt-lobby': '/assets/mockup/floor-lobby.webp',
-  'roosevelt-floor-3': '/assets/mockup/floor-guest.webp',
-  'roosevelt-basement': '/assets/mockup/floor-service.webp',
+  'roosevelt-lobby': floorLobbyTexture,
+  'roosevelt-floor-3': floorGuestTexture,
+  'roosevelt-basement': floorServiceTexture,
 };
 
 export const ROOSEVELT_WALL_TEXTURES_BY_MAP: Record<Exclude<WorldMapId, 'prototype-room-307'>, { nw: string; ne: string }> = {
-  'roosevelt-lobby': { nw: 'wall-hotel-nw', ne: 'wall-hotel-ne' },
-  'roosevelt-floor-3': { nw: 'wall-hotel-nw', ne: 'wall-hotel-ne' },
-  'roosevelt-basement': { nw: 'wall-service-nw', ne: 'wall-service-ne' },
+  'roosevelt-lobby': { nw: 'runtime-wall-nw', ne: 'runtime-wall-ne' },
+  'roosevelt-floor-3': { nw: 'runtime-wall-nw', ne: 'runtime-wall-ne' },
+  'roosevelt-basement': { nw: 'runtime-wall-nw', ne: 'runtime-wall-ne' },
 };
 
-export const ROOSEVELT_PLAYER_TEXTURE = 'mockup-detective';
+export const ROOSEVELT_PLAYER_TEXTURE = 'runtime-detective';
 
 export const ROOSEVELT_WITNESS_TEXTURE_BY_ID: Record<string, string> = {
-  kamil: 'mockup-kamil',
-  nina: 'npc-nina',
-  irena: 'mockup-irena',
-  marek: 'mockup-marek',
+  kamil: 'runtime-kamil',
+  nina: 'runtime-nina',
+  irena: 'runtime-irena',
+  marek: 'runtime-marek',
 };
 
 export const CLUE_TEXTURE_BY_ID: Record<string, string> = {
@@ -80,6 +102,7 @@ export const CLUE_TEXTURE_BY_ID: Record<string, string> = {
   'cctv-still': 'clue-cctv-still',
 };
 
+// The prototype room keeps its light-weight SVG actors. Roosevelt uses the generated mapping above.
 export const WITNESS_TEXTURE_BY_ID: Record<string, string> = {
   kamil: 'npc-kamil',
   nina: 'npc-nina',
