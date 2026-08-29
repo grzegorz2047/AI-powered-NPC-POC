@@ -91,8 +91,8 @@ export default function App() {
               <PhaserGame />
             </Suspense>
             <SceneHudOverlay />
+            <DetectiveThought />
           </div>
-          <DetectiveThought />
         </div>
         <EvidenceBoard />
       </section>
