@@ -5,6 +5,7 @@ import { AiSettingsPanel } from './components/AiSettingsPanel';
 import { DetectiveThought } from './components/DetectiveThought';
 import { EvidenceBoard } from './components/EvidenceBoard';
 import { InterviewPanel } from './components/InterviewPanel';
+import { SceneHudOverlay } from './components/SceneHudOverlay';
 import { useAiSettingsStore } from './state/aiSettingsStore';
 import { useInvestigationStore } from './state/investigationStore';
 import { useWorldStore } from './state/worldStore';
@@ -85,9 +86,12 @@ export default function App() {
 
       <section className="workspace">
         <div className="scene-column">
-          <Suspense fallback={<div className="game-host game-loading">Loading investigation scene…</div>}>
-            <PhaserGame />
-          </Suspense>
+          <div className="scene-stage">
+            <Suspense fallback={<div className="game-host game-loading">Loading investigation scene…</div>}>
+              <PhaserGame />
+            </Suspense>
+            <SceneHudOverlay />
+          </div>
           <DetectiveThought />
         </div>
         <EvidenceBoard />
