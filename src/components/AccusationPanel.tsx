@@ -25,16 +25,23 @@ export function AccusationPanel() {
   const available = useMemo(() => clues.filter((clue) => found.includes(clue.id)), [found]);
 
   if (!open) {
-    let label = 'Build accusation';
+    let readinessLabel = 'Ready to build accusation';
     if (readiness.missingEvidenceCount > 0) {
-      label = `Find ${readiness.missingEvidenceCount} more clue(s)`;
+      readinessLabel = `Find ${readiness.missingEvidenceCount} more clue(s)`;
     } else if (readiness.missingWitnessIds.length > 0) {
-      label = `Question ${readiness.missingWitnessIds.length} more witness(es)`;
+      readinessLabel = `Question ${readiness.missingWitnessIds.length} more witness(es)`;
     }
 
     return (
-      <button type="button" className="accuse-button" disabled={!readiness.ready} onClick={() => setOpen(true)}>
-        {label}
+      <button
+        type="button"
+        className="accuse-button"
+        disabled={!readiness.ready}
+        title={readinessLabel}
+        aria-label={readiness.ready ? 'Build accusation' : `Case file: ${readinessLabel}`}
+        onClick={() => setOpen(true)}
+      >
+        Case file
       </button>
     );
   }
@@ -59,7 +66,7 @@ export function AccusationPanel() {
 
   return (
     <div className="accusation-drawer" role="dialog" aria-label="Build accusation">
-      <div className="panel-heading"><span>ACCUSATION</span><button type="button" onClick={() => setOpen(false)}>Close</button></div>
+      <div className="panel-heading"><span>CASE FILE / ACCUSATION</span><button type="button" onClick={() => setOpen(false)}>Close</button></div>
       <label>
         Suspect
         <select value={suspect} onChange={(event) => setSuspect(event.target.value)}>
