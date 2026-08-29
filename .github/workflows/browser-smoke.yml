@@ -25,7 +25,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
 
       - name: Smoke local browser build
-        run: npm run test:e2e
+        run: npm run test:e2e -- --grep-invert "visual game audit captures every hotel level"
 
       - name: Resolve Ready Vercel preview
         if: github.event_name == 'pull_request'
@@ -39,8 +39,8 @@ jobs:
         if: github.event_name == 'pull_request'
         # WebAudio source-node prototype instrumentation is intentionally local-only:
         # remote headless Chromium can suppress source starts despite serving valid audio assets.
-        # The public preview still runs gameplay/API/WCAG plus the explicit RIFF asset checks.
-        run: npm run test:e2e -- --grep-invert "first in-game gesture starts the real Phaser ambience sources"
+        # The expensive screenshot/geometry audit has its own Visual game audit workflow.
+        run: npm run test:e2e -- --grep-invert "first in-game gesture starts the real Phaser ambience sources|visual game audit captures every hotel level"
 
       - name: Upload visual QA screenshots
         if: always()
