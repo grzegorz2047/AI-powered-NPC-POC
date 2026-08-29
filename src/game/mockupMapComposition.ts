@@ -17,6 +17,7 @@ export function applyMockupMapComposition(scene: Phaser.Scene, mapId: RooseveltM
   );
   if (!hasLandmark) return false;
 
+  if (mapId === 'roosevelt-floor-3') stageFloor3(scene);
   if (mapId === 'roosevelt-lobby') stageLobby(scene);
   if (mapId === 'roosevelt-basement') stageBasement(scene);
 
@@ -33,6 +34,23 @@ function addWarmGlow(scene: Phaser.Scene, x: number, y: number, width: number, h
   scene.add.ellipse(x, y, width, height, 0xf0b25a, alpha)
     .setBlendMode(Phaser.BlendModes.ADD)
     .setDepth(depth);
+}
+
+function stageFloor3(scene: Phaser.Scene) {
+  const door = findImage(scene, 'mockup-door307');
+  if (!door) return;
+
+  // The approved mockup reads Room 307 as one authored cutaway room, not a collection
+  // of independent debug props. The single suite plate hides the procedural scaffolding
+  // while preserving the real Tiled navigation, hotspots and actors above it.
+  const suiteX = door.x + 148;
+  const suiteY = door.y - 88;
+  const suiteDepth = door.depth - 1.6;
+
+  addWarmGlow(scene, suiteX + 34, suiteY - 40, 520, 330, suiteDepth - 0.4, 0.065);
+  scene.add.image(suiteX, suiteY, 'mockup-room307-suite')
+    .setDisplaySize(640, 438)
+    .setDepth(suiteDepth);
 }
 
 function addLoungeChair(scene: Phaser.Scene, x: number, y: number, depth: number) {
