@@ -5,3 +5,8 @@
 .evidence-lead-button:hover, .evidence-lead-button:focus-visible { outline: none; border-color: #9a7e48; box-shadow: 0 0 0 2px #9a7e4820; }
 .suggested-lead { display: flex !important; align-items: center; gap: 7px; }
 .suggested-lead .lead-badge { flex: 0 0 auto; }
+
+/* Seven compact slots are visible at once in the approved desktop composition. */
+.evidence-list { gap: 6px; padding: 8px; }
+.evidence-card-locked { min-height: 64px; }
+.evidence-slot-found img { width: 42px; height: 42px; object-fit: contain; display: block; }
