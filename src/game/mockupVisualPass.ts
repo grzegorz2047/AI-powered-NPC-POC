@@ -7,12 +7,12 @@ type DecoratedScene = Phaser.Scene & { __mockupVisualPassApplied?: boolean };
 const CHARACTER_TEXTURES = new Set(['mockup-kamil', 'npc-nina', 'mockup-irena', 'mockup-marek']);
 
 const MODULE_SCALE: Record<string, { scale: number; dy?: number }> = {
-  'mockup-door307': { scale: 1.16, dy: -42 },
-  'mockup-elevator': { scale: 1.10, dy: -14 },
-  'mockup-stairs': { scale: 1.09, dy: -10 },
+  'mockup-door307': { scale: 1.16 },
+  'mockup-elevator': { scale: 1.12 },
+  'mockup-stairs': { scale: 1.12, dy: -10 },
   'mockup-reception': { scale: 1.08, dy: -4 },
   'mockup-laundry': { scale: 1.06, dy: -4 },
-  'prop-cctv': { scale: 1.14, dy: -6 },
+  'prop-cctv': { scale: 1.16 },
 };
 
 export function applyMockupVisualPass(scene: Phaser.Scene, mapId: RooseveltMapId) {
@@ -30,6 +30,7 @@ export function applyMockupVisualPass(scene: Phaser.Scene, mapId: RooseveltMapId
 
   scaleCharacters(scene, initialImages);
   scaleArchitecture(initialImages);
+  integrateArchitecturalLandmarks(initialImages, mapId);
 
   if (mapId !== 'roosevelt-basement') addHotelWallRhythm(scene, initialImages);
   addLandmarkPlants(scene, initialImages, mapId);
@@ -57,9 +58,61 @@ function scaleArchitecture(images: Phaser.GameObjects.Image[]) {
   }
 }
 
+function integrateArchitecturalLandmarks(images: Phaser.GameObjects.Image[], mapId: RooseveltMapId) {
+  const walls = images.filter((image) =>
+    mapId === 'roosevelt-basement'
+      ? image.texture.key === 'wall-service-nw' || image.texture.key === 'wall-service-ne'
+      : image.texture.key === 'wall-hotel-nw' || image.texture.key === 'wall-hotel-ne',
+  );
+  const usedWalls = new Set<Phaser.GameObjects.Image>();
+
+  const snapIntoWall = (texture: string) => {
+    for (const module of images.filter((image) => image.texture.key === texture)) {
+      const wall = nearestWall(module, walls, usedWalls);
+      if (!wall) continue;
+      usedWalls.add(wall);
+      wall.setVisible(false);
+      module.x = wall.x;
+      module.y = wall.y + wall.displayHeight * (1 - wall.originY) - 2;
+      module.setDepth(wall.depth + 2);
+    }
+  };
+
+  // These mockup crops already contain wall trim, so they replace one wall segment.
+  snapIntoWall('mockup-door307');
+  snapIntoWall('mockup-elevator');
+
+  // CCTV remains a floor prop but is pulled against the closest wall, like in the approved mockup.
+  for (const monitor of images.filter((image) => image.texture.key === 'prop-cctv')) {
+    const wall = nearestWall(monitor, walls);
+    if (!wall) continue;
+    const orientation = wall.texture.key.endsWith('-nw') ? -1 : 1;
+    monitor.x = wall.x + orientation * 50;
+    monitor.y = wall.y + wall.displayHeight * (1 - wall.originY) + 24;
+    monitor.setDepth(wall.depth + 2.5);
+  }
+}
+
+function nearestWall(
+  source: Phaser.GameObjects.Image,
+  walls: Phaser.GameObjects.Image[],
+  excluded: Set<Phaser.GameObjects.Image> = new Set(),
+) {
+  let best: Phaser.GameObjects.Image | undefined;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const wall of walls) {
+    if (excluded.has(wall)) continue;
+    const distance = Phaser.Math.Distance.Squared(source.x, source.y, wall.x, wall.y);
+    if (distance >= bestDistance) continue;
+    bestDistance = distance;
+    best = wall;
+  }
+  return best;
+}
+
 function addHotelWallRhythm(scene: Phaser.Scene, images: Phaser.GameObjects.Image[]) {
   const walls = images
-    .filter((image) => image.texture.key === 'wall-hotel-nw' || image.texture.key === 'wall-hotel-ne')
+    .filter((image) => image.visible && (image.texture.key === 'wall-hotel-nw' || image.texture.key === 'wall-hotel-ne'))
     .sort((a, b) => a.y - b.y || a.x - b.x);
 
   for (let index = 0; index < walls.length; index += 1) {
