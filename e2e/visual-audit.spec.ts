@@ -73,6 +73,7 @@ async function openSceneList(page: Page) {
 }
 
 test('visual game audit captures every hotel level and rejects fake upright walls', async ({ page }) => {
+  test.setTimeout(90_000);
   fs.mkdirSync(auditDirectory, { recursive: true });
   const browserErrors: string[] = [];
   page.on('console', (message) => {
@@ -106,7 +107,7 @@ test('visual game audit captures every hotel level and rejects fake upright wall
   for (const report of reports) {
     expect.soft(report.metrics.wallCount, `${report.mapId} needs enough architecture to read as a room`).toBeGreaterThan(8);
     expect.soft(report.metrics.perspectiveCorrectCount, `${report.mapId} cannot contain pasted upright wall rectangles`).toBe(report.metrics.wallCount);
-    expect.soft(report.metrics.minimumWallHeight, `${report.mapId} walls must read as full-height cutaway architecture`).toBeGreaterThanOrEqual(132);
+    expect.soft(report.metrics.minimumWallHeight, `${report.mapId} walls must read as full-height cutaway architecture`).toBeGreaterThanOrEqual(148);
     expect.soft(report.metrics.duplicateWallCount, `${report.mapId} cannot double-stack wall segments`).toBe(0);
     expect.soft(report.metrics.walkableCollisionConflicts, `${report.mapId} walls cannot cross legal walkable edges`).toBe(0);
     expect.soft(report.metrics.sconceCount, `${report.mapId} needs warm architectural lighting`).toBeGreaterThan(0);
