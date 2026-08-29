@@ -10,6 +10,7 @@ test('mockup visual pass applies only after Roosevelt scene assets are ready', a
 });
 
 test('approved mockup chrome stays present around the Phaser scene', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/');
   await page.getByRole('button', { name: /Start investigation/i }).click();
 
@@ -18,4 +19,7 @@ test('approved mockup chrome stays present around the Phaser scene', async ({ pa
   await expect(page.getByText('Evidence & Clues')).toBeVisible();
   await expect(page.locator('.evidence-card')).toHaveCount(7);
   await expect(page.locator('.detective-portrait img')).toBeVisible();
+  await expect(page.locator('.floor-map-card')).toBeVisible();
+  await expect(page.locator('.scene-action-strip')).toBeVisible();
+  await expect(page.locator('.scene-action')).toHaveCount(6);
 });
