@@ -1,27 +1,25 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ROOSEVELT_FLOOR_TEXTURE_BY_MAP, ROOSEVELT_IMAGE_ASSETS } from './sceneAssets';
 
-function readPublicAsset(url: string) {
-  const relative = url.replace(/^\//, '');
-  return readFileSync(new URL(`../../public/${relative}`, import.meta.url));
+function expectEmbeddedAvif(url: string) {
+  const prefix = 'data:image/avif;base64,';
+  expect(url.startsWith(prefix), 'generated asset should be an embedded AVIF data URI').toBe(true);
+  const file = Buffer.from(url.slice(prefix.length), 'base64');
+  expect(file.length, 'AVIF payload').toBeGreaterThan(32);
+  expect(file.subarray(4, 8).toString('ascii'), 'ISO BMFF ftyp box').toBe('ftyp');
+  expect(file.subarray(8, 12).toString('ascii'), 'AVIF major brand').toBe('avif');
 }
 
-function expectWebp(url: string) {
-  const file = readPublicAsset(url);
-  expect(file.length, `${url} payload`).toBeGreaterThan(32);
-  expect(file.subarray(0, 4).toString('ascii'), `${url} RIFF header`).toBe('RIFF');
-  expect(file.subarray(8, 12).toString('ascii'), `${url} WEBP header`).toBe('WEBP');
-}
-
-describe('Roosevelt visual assets', () => {
-  it('keeps transparent mockup-derived character and environment crops checked in as WebP', () => {
-    expect(ROOSEVELT_IMAGE_ASSETS).toHaveLength(9);
-    for (const [, url] of ROOSEVELT_IMAGE_ASSETS) expectWebp(url);
+describe('Roosevelt production visual assets', () => {
+  it('uses generated AVIF characters and architecture instead of mockup plates', () => {
+    expect(ROOSEVELT_IMAGE_ASSETS).toHaveLength(12);
+    expect(new Set(ROOSEVELT_IMAGE_ASSETS.map(([key]) => key)).size).toBe(ROOSEVELT_IMAGE_ASSETS.length);
+    expect(ROOSEVELT_IMAGE_ASSETS.every(([key]) => key.startsWith('runtime-'))).toBe(true);
+    for (const [, url] of ROOSEVELT_IMAGE_ASSETS) expectEmbeddedAvif(url);
   });
 
-  it('keeps a distinct checked-in floor texture for every production map', () => {
+  it('keeps a distinct generated floor texture for every production map', () => {
     expect(new Set(Object.values(ROOSEVELT_FLOOR_TEXTURE_BY_MAP)).size).toBe(3);
-    for (const url of Object.values(ROOSEVELT_FLOOR_TEXTURE_BY_MAP)) expectWebp(url);
+    for (const url of Object.values(ROOSEVELT_FLOOR_TEXTURE_BY_MAP)) expectEmbeddedAvif(url);
   });
 });
