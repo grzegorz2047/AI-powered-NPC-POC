@@ -11,8 +11,8 @@ function expectEmbeddedAvif(url: string) {
 }
 
 describe('Roosevelt production visual assets', () => {
-  it('uses generated AVIF characters and architecture instead of mockup plates', () => {
-    expect(ROOSEVELT_IMAGE_ASSETS).toHaveLength(12);
+  it('uses generated AVIF characters, architecture and environment props instead of mockup plates', () => {
+    expect(ROOSEVELT_IMAGE_ASSETS).toHaveLength(15);
     expect(new Set(ROOSEVELT_IMAGE_ASSETS.map(([key]) => key)).size).toBe(ROOSEVELT_IMAGE_ASSETS.length);
     expect(ROOSEVELT_IMAGE_ASSETS.every(([key]) => key.startsWith('runtime-'))).toBe(true);
     for (const [, url] of ROOSEVELT_IMAGE_ASSETS) expectEmbeddedAvif(url);
