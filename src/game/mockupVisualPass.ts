@@ -36,6 +36,9 @@ export function applyMockupVisualPass(scene: Phaser.Scene, mapId: RooseveltMapId
 
   if (mapId !== 'roosevelt-basement') addHotelWallRhythm(scene, initialImages);
   addLandmarkPlants(scene, initialImages, mapId);
+  applyMockupCameraFraming(scene, mapId);
+  hideDebugCameraText(scene);
+  addMockupNavigationChrome(scene, mapId);
   addCameraControls(scene);
 
   decorated.__mockupVisualPassApplied = true;
@@ -261,6 +264,53 @@ function addLandmarkPlants(scene: Phaser.Scene, images: Phaser.GameObjects.Image
     addNear('mockup-reception', 176, 0, 64, 94);
     addNear('mockup-elevator', -78, 2, 54, 80);
   }
+}
+
+function applyMockupCameraFraming(scene: Phaser.Scene, mapId: RooseveltMapId) {
+  if (mapId !== 'roosevelt-floor-3') return;
+  const camera = scene.cameras.main;
+  camera.setZoom(0.77);
+  camera.scrollY -= 42;
+}
+
+function hideDebugCameraText(scene: Phaser.Scene) {
+  for (const child of scene.children.list) {
+    if (!(child instanceof Phaser.GameObjects.Text)) continue;
+    if (child.text.startsWith('CAMERA ')) child.setVisible(false);
+  }
+}
+
+function addMockupNavigationChrome(scene: Phaser.Scene, mapId: RooseveltMapId) {
+  const depth = 32900;
+  const currentFloor = mapId === 'roosevelt-floor-3' ? '3F' : mapId === 'roosevelt-basement' ? 'B1' : '1F';
+
+  scene.add.circle(918, 125, 25, 0x090d13, 0.72)
+    .setStrokeStyle(1.2, 0x8e7448, 0.72)
+    .setScrollFactor(0)
+    .setDepth(depth);
+  scene.add.line(918, 125, -15, 0, 15, 0, 0xae8d55, 0.85).setScrollFactor(0).setDepth(depth + 1);
+  scene.add.line(918, 125, 0, -15, 0, 15, 0xae8d55, 0.85).setScrollFactor(0).setDepth(depth + 1);
+  for (const [label, x, y] of [['N', 918, 91], ['E', 952, 125], ['S', 918, 158], ['W', 885, 125]] as const) {
+    scene.add.text(x, y, label, { fontFamily: 'Georgia, serif', fontSize: '9px', color: '#c9aa69' })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(depth + 2);
+  }
+
+  const floors = ['3F', '1F', 'B1'] as const;
+  floors.forEach((floor, index) => {
+    const active = floor === currentFloor;
+    scene.add.rectangle(979, 96 + index * 34, 38, 25, active ? 0x392c17 : 0x0c1118, 0.94)
+      .setStrokeStyle(1, active ? 0xc19a55 : 0x3d4752, active ? 0.95 : 0.75)
+      .setScrollFactor(0)
+      .setDepth(depth);
+    scene.add.text(979, 96 + index * 34, floor, {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '10px',
+      color: active ? '#efd79b' : '#7f8995',
+      fontStyle: active ? 'bold' : 'normal',
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(depth + 1);
+  });
 }
 
 function addCameraControls(scene: Phaser.Scene) {
