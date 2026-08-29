@@ -42,10 +42,11 @@ function stageFloor3(scene: Phaser.Scene) {
 
   const suiteX = door.x + 156;
   const suiteY = door.y - 86;
-  const suiteDepth = door.depth - 24;
+  // Generic isometric floor tiles are depth-sorted by Y and otherwise cover the lower half
+  // of the authored bed/rug. Keep the suite directly behind interactive actors/hotspots and
+  // the Room 307 door, but in front of those generic floor tiles.
+  const suiteDepth = door.depth - 4;
 
-  // Room 307 owns this part of the cutaway. Hide generic wall/decor modules that used to
-  // cross the authored room and made the bed/furniture read as a technical grid.
   for (const child of scene.children.list) {
     if (!(child instanceof Phaser.GameObjects.Image)) continue;
     if (child === door) continue;
@@ -66,10 +67,8 @@ function stageFloor3(scene: Phaser.Scene) {
     .setDisplaySize(690, 472)
     .setDepth(suiteDepth);
 
-  // Composition follows the supplied mockup: one large readable room with only a sliver
-  // of corridor visible under the HUD, rather than the entire floor plan at once.
-  scene.cameras.main.setZoom(1.1);
-  scene.cameras.main.centerOn(suiteX + 6, suiteY + 36);
+  scene.cameras.main.setZoom(1.08);
+  scene.cameras.main.centerOn(suiteX + 6, suiteY + 34);
 }
 
 function addLoungeChair(scene: Phaser.Scene, x: number, y: number, depth: number) {
