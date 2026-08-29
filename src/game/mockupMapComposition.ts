@@ -40,17 +40,36 @@ function stageFloor3(scene: Phaser.Scene) {
   const door = findImage(scene, 'mockup-door307');
   if (!door) return;
 
-  // The approved mockup reads Room 307 as one authored cutaway room, not a collection
-  // of independent debug props. The single suite plate hides the procedural scaffolding
-  // while preserving the real Tiled navigation, hotspots and actors above it.
-  const suiteX = door.x + 148;
-  const suiteY = door.y - 88;
-  const suiteDepth = door.depth - 1.6;
+  const suiteX = door.x + 156;
+  const suiteY = door.y - 86;
+  const suiteDepth = door.depth - 24;
 
-  addWarmGlow(scene, suiteX + 34, suiteY - 40, 520, 330, suiteDepth - 0.4, 0.065);
+  // Room 307 owns this part of the cutaway. Hide generic wall/decor modules that used to
+  // cross the authored room and made the bed/furniture read as a technical grid.
+  for (const child of scene.children.list) {
+    if (!(child instanceof Phaser.GameObjects.Image)) continue;
+    if (child === door) continue;
+    const isGenericRoomLayer =
+      child.texture.key === 'wall-hotel-nw' ||
+      child.texture.key === 'wall-hotel-ne' ||
+      child.texture.key === 'prop-window' ||
+      child.texture.key === 'prop-painting' ||
+      child.texture.key === 'prop-plant';
+    if (!isGenericRoomLayer) continue;
+
+    const insideSuite = Math.abs(child.x - suiteX) < 300 && Math.abs(child.y - suiteY) < 205;
+    if (insideSuite) child.setVisible(false);
+  }
+
+  addWarmGlow(scene, suiteX + 36, suiteY - 34, 560, 350, suiteDepth - 0.4, 0.065);
   scene.add.image(suiteX, suiteY, 'mockup-room307-suite')
-    .setDisplaySize(640, 438)
+    .setDisplaySize(690, 472)
     .setDepth(suiteDepth);
+
+  // Composition follows the supplied mockup: one large readable room with only a sliver
+  // of corridor visible under the HUD, rather than the entire floor plan at once.
+  scene.cameras.main.setZoom(1.1);
+  scene.cameras.main.centerOn(suiteX + 6, suiteY + 36);
 }
 
 function addLoungeChair(scene: Phaser.Scene, x: number, y: number, depth: number) {
