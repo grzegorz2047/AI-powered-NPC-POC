@@ -12,4 +12,11 @@ import { CLUE_TEXTURE_BY_ID, SCENE_SVG_ASSETS, WITNESS_TEXTURE_BY_ID, validateSc
     expect(Object.values(CLUE_TEXTURE_BY_ID).every((key) => registered.includes(key as (typeof registered)[number]))).toBe(true);
     expect(Object.values(WITNESS_TEXTURE_BY_ID).every((key) => registered.includes(key as (typeof registered)[number]))).toBe(true);
   });
+
+  it('keeps the approved Room 307 reference plate in the runtime manifest', () => {
+    expect(SCENE_SVG_ASSETS).toContainEqual([
+      'mockup-room307-reference-plate',
+      '/assets/scene/mockup-room307-reference-plate.svg',
+    ]);
+  });
 });
