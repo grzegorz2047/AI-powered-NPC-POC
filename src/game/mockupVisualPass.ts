@@ -31,6 +31,7 @@ export function applyMockupVisualPass(scene: Phaser.Scene, mapId: RooseveltMapId
   scaleCharacters(scene, initialImages);
   scaleArchitecture(initialImages);
   integrateArchitecturalLandmarks(initialImages, mapId);
+  addGuestRoomDoors(scene, initialImages, mapId);
 
   if (mapId !== 'roosevelt-basement') addHotelWallRhythm(scene, initialImages);
   addLandmarkPlants(scene, initialImages, mapId);
@@ -78,11 +79,9 @@ function integrateArchitecturalLandmarks(images: Phaser.GameObjects.Image[], map
     }
   };
 
-  // These mockup crops already contain wall trim, so they replace one wall segment.
   snapIntoWall('mockup-door307');
   snapIntoWall('mockup-elevator');
 
-  // CCTV remains a floor prop but is pulled against the closest wall, like in the approved mockup.
   for (const monitor of images.filter((image) => image.texture.key === 'prop-cctv')) {
     const wall = nearestWall(monitor, walls);
     if (!wall) continue;
@@ -90,6 +89,32 @@ function integrateArchitecturalLandmarks(images: Phaser.GameObjects.Image[], map
     monitor.x = wall.x + orientation * 50;
     monitor.y = wall.y + wall.displayHeight * (1 - wall.originY) + 24;
     monitor.setDepth(wall.depth + 2.5);
+  }
+}
+
+function addGuestRoomDoors(scene: Phaser.Scene, images: Phaser.GameObjects.Image[], mapId: RooseveltMapId) {
+  if (mapId !== 'roosevelt-floor-3') return;
+
+  const walls = images
+    .filter((image) => image.visible && (image.texture.key === 'wall-hotel-nw' || image.texture.key === 'wall-hotel-ne'))
+    .sort((a, b) => a.y - b.y || a.x - b.x);
+  if (walls.length < 4) return;
+
+  const topBand = walls.slice(0, Math.max(4, Math.ceil(walls.length * 0.38)));
+  const leftHalf = topBand.filter((wall) => wall.x < scene.scale.width * 0.5);
+  const rightHalf = topBand.filter((wall) => wall.x >= scene.scale.width * 0.5);
+  const choices = [
+    { wall: leftHalf[Math.floor(leftHalf.length * 0.55)] ?? topBand[Math.floor(topBand.length * 0.3)], texture: 'prop-room-door-305' },
+    { wall: rightHalf[Math.floor(rightHalf.length * 0.45)] ?? topBand[Math.floor(topBand.length * 0.7)], texture: 'prop-room-door-309' },
+  ];
+
+  for (const { wall, texture } of choices) {
+    if (!wall?.visible) continue;
+    wall.setVisible(false);
+    scene.add.image(wall.x, wall.y + wall.displayHeight * (1 - wall.originY) - 2, texture)
+      .setOrigin(0.5, 1)
+      .setDisplaySize(82, 150)
+      .setDepth(wall.depth + 2);
   }
 }
 

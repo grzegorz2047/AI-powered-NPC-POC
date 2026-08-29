@@ -17,6 +17,8 @@ export const SCENE_SVG_ASSETS = [
   ['prop-wall-lamp', '/assets/scene/prop-wall-lamp.svg'],
   ['prop-plant', '/assets/scene/prop-plant.svg'],
   ['prop-painting', '/assets/scene/prop-painting.svg'],
+  ['prop-room-door-305', '/assets/scene/prop-room-door-305.svg'],
+  ['prop-room-door-309', '/assets/scene/prop-room-door-309.svg'],
   ['wall-hotel-nw', '/assets/roosevelt-wall-nw.svg'],
   ['wall-hotel-ne', '/assets/roosevelt-wall-ne.svg'],
   ['wall-service-nw', '/assets/roosevelt-service-wall-nw.svg'],
