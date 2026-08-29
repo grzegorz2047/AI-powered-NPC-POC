@@ -1,0 +1,42 @@
+name: Materialize generated hotel assets
+
+on:
+  push:
+    branches:
+      - feat/vertical-slice-phaser
+    paths:
+      - scripts/runtime-asset-pack.ready
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: feat/vertical-slice-phaser
+          fetch-depth: 0
+      - name: Decode generated asset pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat scripts/runtime-asset-pack.chunk-* | base64 --decode > /tmp/hotel-runtime-assets.zip
+          mkdir -p public/assets/generated
+          unzip -o /tmp/hotel-runtime-assets.zip -d public/assets/generated
+          rm -f scripts/runtime-asset-pack.chunk-* scripts/runtime-asset-pack.ready
+          find public/assets/generated -maxdepth 1 -type f -name '*.webp' -print | sort
+      - name: Commit materialized runtime sprites
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/generated scripts
+          if git diff --cached --quiet; then
+            echo "No asset changes to commit"
+            exit 0
+          fi
+          git commit -m "art: materialize generated hotel runtime sprites"
+          git push origin HEAD:feat/vertical-slice-phaser
