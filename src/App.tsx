@@ -75,12 +75,20 @@ export default function App() {
           </button>
           <AccessibleScenePanel />
           <AccusationPanel />
-          <button type="button" className="ghost-button" onClick={resetInvestigation}>Reset case</button>
         </div>
 
         <div className="topbar-status" aria-label="Day 1, 22:47, rain">
           <span>Day 1 · 22:47</span>
           <span className="weather-status">Rain</span>
+          <button
+            type="button"
+            className="ghost-button settings-button"
+            onClick={resetInvestigation}
+            aria-label="Reset case"
+            title="Reset case"
+          >
+            ⚙
+          </button>
         </div>
       </header>
 
