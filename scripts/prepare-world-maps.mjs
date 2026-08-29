@@ -13,13 +13,21 @@ if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || heigh
   throw new Error('Roosevelt floor 3 must declare a finite tilemap width and height.');
 }
 
+const expectedTileCount = width * height;
 const map = structuredClone(source);
 for (const layer of map.layers ?? []) {
   if (layer.type === 'tilelayer' && Array.isArray(layer.data)) {
-    if (layer.data.length !== width * height) {
-      throw new Error(`${layer.name ?? 'tile layer'} has ${layer.data.length} tiles; expected ${width * height}.`);
+    if (layer.data.length > expectedTileCount) {
+      throw new Error(`${layer.name ?? 'tile layer'} has ${layer.data.length} tiles; expected at most ${expectedTileCount}.`);
     }
-    layer.data = [...layer.data].reverse();
+
+    // The original topology skeleton predates the strict map validator and omitted a final all-zero row.
+    // Normalize only missing trailing empty tiles; never truncate or invent walkable geometry.
+    const missing = expectedTileCount - layer.data.length;
+    const normalized = missing > 0
+      ? [...layer.data, ...Array.from({ length: missing }, () => 0)]
+      : [...layer.data];
+    layer.data = normalized.reverse();
   }
 
   if (layer.type !== 'objectgroup' || !Array.isArray(layer.objects)) continue;
