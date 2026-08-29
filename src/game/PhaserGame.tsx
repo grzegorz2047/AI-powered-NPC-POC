@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { useWorldStore } from '../state/worldStore';
 import { GameScene } from './GameScene';
+import { applyMockupMapComposition } from './mockupMapComposition';
 import { applyMockupVisualPass } from './mockupVisualPass';
 import { prefersReducedMotion } from './motionPreferences';
 import { RooseveltScene } from './RooseveltScene';
@@ -48,6 +49,7 @@ export function PhaserGame() {
       if (!activeScene) return;
 
       if (applyMockupVisualPass(activeScene, currentMapId)) {
+        applyMockupMapComposition(activeScene, currentMapId);
         hostRef.current?.setAttribute('data-mockup-visual-pass', 'applied');
       }
 
