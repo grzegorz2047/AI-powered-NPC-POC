@@ -1,4 +1,31 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
+
+function relativeLuminance(cssColor: string) {
+  const components = cssColor.match(/[\d.]+/g)?.slice(0, 3).map(Number);
+  if (!components || components.length !== 3) throw new Error(`Unsupported CSS color: ${cssColor}`);
+  const [r, g, b] = components.map((component) => {
+    const channel = component / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrastRatio(foreground: string, background: string) {
+  const foregroundLuminance = relativeLuminance(foreground);
+  const backgroundLuminance = relativeLuminance(background);
+  const lighter = Math.max(foregroundLuminance, backgroundLuminance);
+  const darker = Math.min(foregroundLuminance, backgroundLuminance);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+async function expectElementContrast(foreground: Locator, background: Locator = foreground, minimum = 4.5) {
+  const foregroundColor = await foreground.evaluate((element) => getComputedStyle(element).color);
+  const backgroundColor = await background.evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(
+    contrastRatio(foregroundColor, backgroundColor),
+    `${foregroundColor} on ${backgroundColor} should be >= ${minimum}:1`,
+  ).toBeGreaterThanOrEqual(minimum);
+}
 
 test('menu -> Roosevelt evidence -> new lead -> lobby rules interview works in a real browser', async ({ page }) => {
   await page.goto('/');
@@ -146,6 +173,48 @@ test('first in-game gesture starts the real Phaser ambience sources', async ({ p
     () => page.evaluate(() => (window as typeof window & { __hotelAudioStarts?: number }).__hotelAudioStarts ?? 0),
     { timeout: 3000 },
   ).toBeGreaterThanOrEqual(2);
+});
+
+test('final controls meet WCAG AA contrast and expose keyboard focus', async ({ page }) => {
+  await page.goto('/');
+
+  const start = page.getByRole('button', { name: /Start investigation/i });
+  const aiSettings = page.getByRole('button', { name: /AI model & acceleration/i });
+  await expectElementContrast(start);
+  await expectElementContrast(aiSettings);
+  await expectElementContrast(aiSettings.locator('small'), aiSettings);
+
+  await page.keyboard.press('Tab');
+  await expect(start).toBeFocused();
+  const focusRing = await start.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { style: style.outlineStyle, width: Number.parseFloat(style.outlineWidth) };
+  });
+  expect(focusRing.style).not.toBe('none');
+  expect(focusRing.width).toBeGreaterThanOrEqual(2);
+
+  await page.keyboard.press('Enter');
+  await expect(page.getByLabel(/investigation scene: Lobby \/ First Floor/i)).toBeVisible();
+  const sceneList = page.getByRole('button', { name: 'Scene list' });
+  await expectElementContrast(sceneList);
+  await sceneList.click();
+
+  const scene = page.getByRole('dialog', { name: 'Accessible investigation scene' });
+  const firstItem = scene.locator('.access-item').first();
+  await expect(firstItem).toBeVisible();
+  await expectElementContrast(firstItem);
+  const itemDetail = firstItem.locator('small');
+  if (await itemDetail.count()) await expectElementContrast(itemDetail, firstItem);
+});
+
+test('prefers-reduced-motion reaches the Phaser host', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
+
+  await page.getByRole('button', { name: /Start investigation/i }).click();
+  const host = page.getByLabel(/investigation scene: Lobby \/ First Floor/i);
+  await expect(host).toHaveAttribute('data-reduced-motion', 'true');
 });
 
 test('deployed Vercel Function runtime responds', async ({ request }) => {
