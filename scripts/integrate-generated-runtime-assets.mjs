@@ -12,6 +12,12 @@ function replaceAllRequired(source, from, to, label) {
 
 const scenePath = 'src/game/RooseveltScene.ts';
 let scene = readFileSync(scenePath, 'utf8');
+scene = replaceRequired(
+  scene,
+  "import { createWalkabilityMatrix, findTilePath, type TilePoint } from './tilePathfinding';\n",
+  "import { createWalkabilityMatrix, findTilePath, type TilePoint } from './tilePathfinding';\nimport { shouldRenderWallBetween } from './wallCollider';\n",
+  'wall collider import',
+);
 const sceneTextureKeys = {
   "'mockup-door307'": "'runtime-room307'",
   "'mockup-reception'": "'runtime-reception'",
@@ -22,6 +28,52 @@ const sceneTextureKeys = {
 for (const [from, to] of Object.entries(sceneTextureKeys)) {
   scene = replaceAllRequired(scene, from, to, `RooseveltScene ${from}`);
 }
+scene = replaceRequired(
+  scene,
+  `    const visibleFloorTiles = this.collectVisibleFloorTiles(floorLayer);
+    this.renderFloor(visibleFloorTiles);
+
+    const walkableTiles = new Set<string>();
+    for (let tileY = 0; tileY < walkableLayer.data.length; tileY += 1) {
+      const row = walkableLayer.data[tileY] ?? [];
+      for (let tileX = 0; tileX < row.length; tileX += 1) {
+        const tile = row[tileX];
+        if (!tile || tile.index < 0) continue;
+        walkableTiles.add(\`${'${tileX}:${tileY}'}\`);
+      }
+    }
+    this.walkabilityGrid = createWalkabilityMatrix(map.width, map.height, (x, y) => walkableTiles.has(\`${'${x}:${y}'}\`));
+    const worldBounds = this.measureWorldBounds(visibleFloorTiles);`,
+  `    const walkableTiles = new Set<string>();
+    for (let tileY = 0; tileY < walkableLayer.data.length; tileY += 1) {
+      const row = walkableLayer.data[tileY] ?? [];
+      for (let tileX = 0; tileX < row.length; tileX += 1) {
+        const tile = row[tileX];
+        if (!tile || tile.index < 0) continue;
+        walkableTiles.add(\`${'${tileX}:${tileY}'}\`);
+      }
+    }
+
+    const visibleFloorTiles = this.collectVisibleFloorTiles(floorLayer);
+    for (const tileKey of walkableTiles) visibleFloorTiles.add(tileKey);
+    this.renderFloor(visibleFloorTiles);
+
+    this.walkabilityGrid = createWalkabilityMatrix(map.width, map.height, (x, y) => walkableTiles.has(\`${'${x}:${y}'}\`));
+    const worldBounds = this.measureWorldBounds(visibleFloorTiles);`,
+  'render floor beneath every walkable tile',
+);
+scene = replaceRequired(
+  scene,
+  "        if (x === topOpeningX || !isVisible(x, area.y - 1)) continue;\n        const point = this.tileToWorld(x, area.y);",
+  "        if (x === topOpeningX || !isVisible(x, area.y - 1)) continue;\n        if (!shouldRenderWallBetween(this.walkabilityGrid, x, area.y, x, area.y - 1)) continue;\n        const point = this.tileToWorld(x, area.y);",
+  'top partition collider opening',
+);
+scene = replaceRequired(
+  scene,
+  "        if (y === leftOpeningY || !isVisible(area.x - 1, y)) continue;\n        const point = this.tileToWorld(area.x, y);",
+  "        if (y === leftOpeningY || !isVisible(area.x - 1, y)) continue;\n        if (!shouldRenderWallBetween(this.walkabilityGrid, area.x, y, area.x - 1, y)) continue;\n        const point = this.tileToWorld(area.x, y);",
+  'left partition collider opening',
+);
 scene = replaceRequired(
   scene,
   "const body = this.add.image(0, -70, ROOSEVELT_PLAYER_TEXTURE).setDisplaySize(86, 130);",
