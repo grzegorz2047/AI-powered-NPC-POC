@@ -1,7 +1,6 @@
 export const GENERATED_IMAGE_POLICY = {
-  source: 'original project-specific image generation',
-  format: 'webp',
-  alpha: true,
-  lazyWithPhaser: true,
-  fallback: 'authored SVG assets remain available until generated crops are validated on Vercel',
+  integrationMode: 'embedded-generated-avif',
+  fallbackAllowed: false,
+  requiredFormat: 'avif-data-uri',
+  source: 'high-resolution generated sprite sheets cropped and normalized for runtime',
 } as const;
