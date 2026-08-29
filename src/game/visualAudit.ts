@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { isPerspectiveCorrectWall, type IsometricWallGeometry } from './isometricArchitecture';
+import { isPerspectiveCorrectWall, type IsometricWallGeometry } from './isometricWallGeometry';
 
 export type WallAuditSegment = {
   tileX: number;
