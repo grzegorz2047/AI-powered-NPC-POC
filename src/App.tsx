@@ -59,10 +59,14 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div>
-          <span className="eyebrow">CASE 01 / AI-POWERED NPC POC</span>
-          <h1>Hotel Nocturne: Room 307</h1>
+        <div className="hotel-brand">
+          <span className="hotel-monogram" aria-hidden="true">HN</span>
+          <div className="hotel-wordmark">
+            <h1>Hotel Nocturne</h1>
+            <span>A place where stories stay</span>
+          </div>
         </div>
+
         <div className="topbar-actions">
           <button type="button" className="ghost-button" onClick={() => setStarted(false)}>Main menu</button>
           <button type="button" className="ghost-button ai-menu-button" onClick={() => setAiOpen(true)}>
@@ -71,6 +75,11 @@ export default function App() {
           <AccessibleScenePanel />
           <AccusationPanel />
           <button type="button" className="ghost-button" onClick={resetInvestigation}>Reset case</button>
+        </div>
+
+        <div className="topbar-status" aria-label="Day 1, 22:47, rain">
+          <span>Day 1 · 22:47</span>
+          <span className="weather-status">Rain</span>
         </div>
       </header>
 
