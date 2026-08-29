@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isometricWallGeometry, isPerspectiveCorrectWall } from './isometricArchitecture';
+import { isometricWallGeometry, isPerspectiveCorrectWall } from './isometricWallGeometry';
 
 describe('isometric architecture', () => {
   it.each([
