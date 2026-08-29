@@ -4,12 +4,13 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "npm run narrative:compile && vite",
-    "build": "npm run narrative:compile && tsc -b && vite build",
+    "dev": "npm run narrative:compile && npm run world:prepare && vite",
+    "build": "npm run narrative:compile && npm run world:prepare && tsc -b && vite build",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "npm run world:prepare && vitest run",
     "test:e2e": "playwright test",
-    "narrative:compile": "node scripts/compile-story.mjs"
+    "narrative:compile": "node scripts/compile-story.mjs",
+    "world:prepare": "node scripts/prepare-world-maps.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "4.2.0",

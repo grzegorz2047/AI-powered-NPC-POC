@@ -25,8 +25,8 @@ export const WORLD_MAPS = {
   'roosevelt-floor-3': {
     id: 'roosevelt-floor-3',
     title: 'Third Floor / Room 307',
-    mapUrl: '/maps/roosevelt-floor-3.json',
-    source: 'Roosevelt Hotel third floor plan (1925)',
+    mapUrl: '/maps/roosevelt-floor-3-visual.json',
+    source: 'Roosevelt Hotel third floor plan (1925), visual orientation derived deterministically from canonical topology',
     production: true,
     clueIds: ['whisky-glass', 'keycard-log', 'cctv-note', 'green-fiber', 'cctv-still'],
     witnessIds: ['irena'],

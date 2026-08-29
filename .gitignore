@@ -5,3 +5,4 @@ dist
 .env.*
 !/.env.example
 src/narrative/case.compiled.json
+public/maps/roosevelt-floor-3-visual.json
