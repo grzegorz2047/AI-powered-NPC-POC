@@ -1,9 +1,10 @@
 export const ROOSEVELT_VISUAL_TARGET = {
-  source: 'generated mockup-guided noir isometric asset pass',
+  source: 'approved mockup-guided noir isometric asset pass',
   principles: [
     'world should fill most of the investigation viewport at initial load',
     'visible room floor is broader than the navigation-only Walkable mask',
     'walls should read as full-height cutaway architecture rather than low borders',
+    'wall material follows the approved mockup: graphite-blue upper wall, dark wood wainscot and warm brass trim',
     'internal room partitions should remain legible without turning public/service spaces into a maze',
     'Room 307, elevators, reception, CCTV and laundry should be visually recognizable without labels',
     'characters and props must stay legible at the default camera zoom',
@@ -21,8 +22,8 @@ export const ROOSEVELT_VISUAL_TARGET = {
     'roosevelt-floor-3': { x: 0, y: 54 },
     'roosevelt-basement': { x: 0, y: 22 },
   },
-  wallDisplay: { width: 128, height: 176 },
-  internalWallDisplay: { width: 128, height: 154 },
+  wallDisplay: { width: 128, height: 208 },
+  internalWallDisplay: { width: 128, height: 190 },
 } as const;
 
 export type RooseveltVisualArea = {
