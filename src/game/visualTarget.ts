@@ -19,7 +19,7 @@ export const ROOSEVELT_VISUAL_TARGET = {
   cameraPadding: { x: 150, y: 120 },
   cameraBiasByMap: {
     'roosevelt-lobby': { x: 0, y: 8 },
-    'roosevelt-floor-3': { x: 0, y: 54 },
+    'roosevelt-floor-3': { x: 0, y: 18 },
     'roosevelt-basement': { x: 0, y: 22 },
   },
   wallDisplay: { width: 128, height: 208 },
@@ -47,9 +47,11 @@ export const ROOSEVELT_VISUAL_AREAS = {
   ],
   'roosevelt-floor-3': [
     { id: 'west-guest-rooms', x: 1, y: 2, width: 7, height: 6 },
+    { id: 'north-elevator-lobby', x: 8, y: 2, width: 4, height: 5 },
     { id: 'central-service-core', x: 6, y: 6, width: 7, height: 6 },
     { id: 'east-guest-rooms', x: 12, y: 2, width: 7, height: 6 },
     { id: 'west-lower-rooms', x: 1, y: 11, width: 7, height: 6 },
+    { id: 'south-guest-landing', x: 8, y: 12, width: 5, height: 5 },
     { id: 'room-307-suite', x: 13, y: 11, width: 6, height: 7 },
   ],
   'roosevelt-basement': [
@@ -65,6 +67,7 @@ export const ROOSEVELT_PARTITION_AREA_IDS = {
   // Public spaces stay open; only staff/office boundaries get cutaway walls.
   'roosevelt-lobby': ['main-office', 'main-kitchen'],
   // Guest-room level is intentionally the most compartmentalized map.
+  // The two central landing footprints remain open and only fill visual holes from the technical corridor mask.
   'roosevelt-floor-3': ['west-guest-rooms', 'central-service-core', 'east-guest-rooms', 'west-lower-rooms', 'room-307-suite'],
   // Basement should read as a service floor, not a maze: only the utility/laundry core is enclosed.
   'roosevelt-basement': ['utility-core', 'laundry'],
