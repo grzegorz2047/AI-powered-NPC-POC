@@ -49,7 +49,7 @@ export function EvidenceBoard() {
           return (
             <article key={slot.id} className="evidence-card evidence-card-found">
               <div className="evidence-slot-icon evidence-slot-found" aria-hidden="true">
-                <img src={evidenceIconById[slot.id]} alt="" />
+                <img src={evidenceIconById[slot.id]} alt="" width={42} height={42} />
               </div>
               <div className="evidence-card-copy">
                 <div className={`strength strength-${clue.strength}`}>{clue.strength}</div>
