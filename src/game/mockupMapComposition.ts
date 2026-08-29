@@ -147,9 +147,9 @@ function stageBasement(scene: Phaser.Scene) {
 
   addServiceTable(scene, cx - 166, cy + 42, depth - 12);
   addCautionSign(scene, cx - 58, cy + 124, depth - 7);
-  scene.add.image(cx + 172, cy + 112, 'prop-cart')
+  scene.add.image(cx + 172, cy + 112, 'runtime-cleaning-cart')
     .setOrigin(0.5, 1)
-    .setDisplaySize(96, 92)
+    .setDisplaySize(86, 114)
     .setDepth(depth - 6);
 
   scene.add.rectangle(cx + 190, cy - 6, 68, 116, 0x20272b, 1)

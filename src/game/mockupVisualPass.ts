@@ -12,7 +12,7 @@ const MODULE_SCALE: Record<string, { scale: number; dy?: number }> = {
   'runtime-stairs': { scale: 1.2, dy: -14 },
   'runtime-reception': { scale: 1.12, dy: -6 },
   'runtime-laundry': { scale: 1.1, dy: -6 },
-  'prop-cctv': { scale: 1.2 },
+  'runtime-cctv-desk': { scale: 1.2 },
 };
 
 export function applyMockupVisualPass(scene: Phaser.Scene, mapId: RooseveltMapId) {
@@ -91,27 +91,22 @@ function integrateArchitecturalLandmarks(scene: Phaser.Scene, images: Phaser.Gam
     addElevatorDetails(scene, elevator, mapId);
   }
 
-  for (const monitor of images.filter((image) => image.texture.key === 'prop-cctv')) {
+  for (const monitor of images.filter((image) => image.texture.key === 'runtime-cctv-desk')) {
     const wall = nearestWall(monitor, walls);
     if (!wall) continue;
 
-    if (mapId === 'roosevelt-floor-3') {
-      monitor.setVisible(false);
-      const orientation = wall.texture.key.endsWith('-nw') ? -1 : 1;
-      scene.add.image(wall.x + orientation * 64, wall.y + wall.displayHeight * (1 - wall.originY) + 52, 'prop-cctv-console')
-        .setOrigin(0.5, 1)
-        .setDisplaySize(166, 146)
-        .setDepth(wall.depth + 3);
-      scene.add.image(wall.x + orientation * 20, wall.y - 64, 'prop-wall-clock')
-        .setDisplaySize(54, 54)
-        .setDepth(wall.depth + 2.7);
-      continue;
-    }
-
     const orientation = wall.texture.key.endsWith('-nw') ? -1 : 1;
-    monitor.x = wall.x + orientation * 50;
-    monitor.y = wall.y + wall.displayHeight * (1 - wall.originY) + 24;
+    monitor.setOrigin(0.5, 1);
+    monitor.setDisplaySize(156, 120);
+    monitor.x = wall.x + orientation * 82;
+    monitor.y = wall.y + wall.displayHeight * (1 - wall.originY) + 72;
     monitor.setDepth(wall.depth + 2.5);
+
+    if (mapId === 'roosevelt-floor-3') {
+      scene.add.image(wall.x + orientation * 18, wall.y - 64, 'prop-wall-clock')
+        .setDisplaySize(50, 50)
+        .setDepth(wall.depth + 2.7);
+    }
   }
 }
 
@@ -165,7 +160,7 @@ function addMockupSetPieces(scene: Phaser.Scene, mapId: RooseveltMapId) {
   if (mapId === 'roosevelt-floor-3') {
     const door305 = findImage(scene, 'prop-room-door-305');
     if (door305) {
-      scene.add.image(door305.x - 86, door305.y + 5, 'prop-luggage-cart')
+      scene.add.image(door305.x - 86, door305.y + 5, 'runtime-luggage-cart')
         .setOrigin(0.5, 1)
         .setDisplaySize(98, 138)
         .setDepth(door305.depth + 1.4);
@@ -185,7 +180,7 @@ function addMockupSetPieces(scene: Phaser.Scene, mapId: RooseveltMapId) {
   if (mapId === 'roosevelt-lobby') {
     const reception = findImage(scene, 'runtime-reception');
     if (reception) {
-      scene.add.image(reception.x + 176, reception.y - 8, 'prop-luggage-cart')
+      scene.add.image(reception.x + 176, reception.y - 8, 'runtime-luggage-cart')
         .setOrigin(0.5, 1)
         .setDisplaySize(92, 130)
         .setDepth(reception.depth + 1.2);

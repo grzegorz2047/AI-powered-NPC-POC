@@ -214,6 +214,12 @@ export class RooseveltScene extends Phaser.Scene {
   }
 
   private propArt(texture: string, x: number, y: number, width: number, height: number, depth: number, alpha = 1) {
+    // Generated sprites keep their intrinsic proportions; legacy calls pass footprint widths
+    // and this normalizes height so carts/desks do not look squashed on the isometric grid.
+    if (texture === 'runtime-cleaning-cart') height = width * (205 / 155);
+    if (texture === 'runtime-cctv-desk') height = width * (180 / 234);
+    if (texture === 'runtime-luggage-cart') height = width * (203 / 145);
+
     return this.add.image(x, y, texture)
       .setOrigin(0.5, 1)
       .setDisplaySize(width, height)
@@ -265,9 +271,9 @@ export class RooseveltScene extends Phaser.Scene {
       const palm = this.areaPoint('palm-room', 4, 1);
       if (palm) this.propArt('prop-window', palm.x + 24, palm.y + 24, 82, 72, palm.y + 58, 0.88);
       const lounge = this.areaPoint('lounge-wing', 2, 4);
-      if (lounge) this.propArt('prop-cart', lounge.x - 24, lounge.y + 84, 86, 80, lounge.y + 108, 0.9);
+      if (lounge) this.propArt('runtime-cleaning-cart', lounge.x - 24, lounge.y + 84, 86, 80, lounge.y + 108, 0.9);
       const office = this.areaPoint('main-office', 2, 2);
-      if (office) this.propArt('prop-cctv', office.x + 18, office.y + 70, 96, 76, office.y + 100, 0.82);
+      if (office) this.propArt('runtime-cctv-desk', office.x + 18, office.y + 70, 96, 76, office.y + 100, 0.82);
     }
 
     if (this.worldMapId === 'roosevelt-floor-3') {
@@ -276,7 +282,7 @@ export class RooseveltScene extends Phaser.Scene {
       const east = this.areaPoint('east-guest-rooms', 1, 1);
       if (east) this.propArt('prop-window', east.x + 22, east.y + 24, 78, 68, east.y + 54, 0.84);
       const westLower = this.areaPoint('west-lower-rooms', 4, 3);
-      if (westLower) this.propArt('prop-cart', westLower.x - 28, westLower.y + 82, 84, 78, westLower.y + 106, 0.88);
+      if (westLower) this.propArt('runtime-cleaning-cart', westLower.x - 28, westLower.y + 82, 84, 78, westLower.y + 106, 0.88);
     }
 
     if (this.worldMapId === 'roosevelt-basement') {
@@ -285,7 +291,7 @@ export class RooseveltScene extends Phaser.Scene {
       const laundryB = this.areaPoint('laundry', 5, 2);
       if (laundryB) this.propArt('prop-laundry', laundryB.x + 18, laundryB.y + 78, 82, 72, laundryB.y + 104, 0.9);
       const utility = this.areaPoint('utility-core', 3, 3);
-      if (utility) this.propArt('prop-cart', utility.x - 20, utility.y + 82, 86, 80, utility.y + 108, 0.9);
+      if (utility) this.propArt('runtime-cleaning-cart', utility.x - 20, utility.y + 82, 86, 80, utility.y + 108, 0.9);
       const service = this.areaPoint('service-west', 3, 5);
       if (service) this.propArt('prop-laundry', service.x + 18, service.y + 74, 76, 68, service.y + 100, 0.84);
     }
@@ -324,26 +330,26 @@ export class RooseveltScene extends Phaser.Scene {
         this.propArt('runtime-reception', point.x - 92, point.y + 118, 310, 200, point.y + 142);
       }
       if (zone.id === 'lounge' && this.worldMapId === 'roosevelt-lobby') {
-        this.propArt('prop-cart', point.x - 54, point.y + 102, 92, 82, point.y + 116, 0.92);
+        this.propArt('runtime-cleaning-cart', point.x - 54, point.y + 102, 92, 82, point.y + 116, 0.92);
       }
       if (zone.id === 'laundry') {
         this.propArt('runtime-laundry', point.x + 96, point.y + 126, 260, 242, point.y + 148);
-        this.propArt('prop-cart', point.x - 82, point.y + 106, 88, 82, point.y + 138, 0.92);
+        this.propArt('runtime-cleaning-cart', point.x - 82, point.y + 106, 88, 82, point.y + 138, 0.92);
       }
       if (zone.id === 'service-hall' && this.worldMapId === 'roosevelt-floor-3') {
-        this.propArt('prop-cctv', point.x + 56, point.y + 90, 110, 86, point.y + 128, 0.95);
+        this.propArt('runtime-cctv-desk', point.x + 56, point.y + 90, 110, 86, point.y + 128, 0.95);
       }
       if (zone.id === 'service-hall' && this.worldMapId !== 'roosevelt-floor-3') {
-        this.propArt('prop-cart', point.x - 38, point.y + 90, 86, 80, point.y + 112, 0.9);
+        this.propArt('runtime-cleaning-cart', point.x - 38, point.y + 90, 86, 80, point.y + 112, 0.9);
       }
       if (zone.id === 'service-corridor' && this.worldMapId === 'roosevelt-basement') {
-        this.propArt('prop-cart', point.x - 44, point.y + 90, 90, 84, point.y + 112, 0.92);
+        this.propArt('runtime-cleaning-cart', point.x - 44, point.y + 90, 90, 84, point.y + 112, 0.92);
       }
       if (zone.id === 'guest-corridor-west' && this.worldMapId === 'roosevelt-floor-3') {
         this.propArt('runtime-stairs', point.x - 82, point.y + 124, 208, 236, point.y + 144, 0.96);
       }
       if (zone.id === 'guest-corridor-east' && this.worldMapId === 'roosevelt-floor-3') {
-        this.propArt('prop-cart', point.x + 44, point.y + 100, 88, 82, point.y + 118, 0.94);
+        this.propArt('runtime-cleaning-cart', point.x + 44, point.y + 100, 88, 82, point.y + 118, 0.94);
         this.propArt('prop-window', point.x + 76, point.y + 26, 82, 72, point.y + 56, 0.86);
       }
       if (zone.id === 'palm-room' && this.worldMapId === 'roosevelt-lobby') {
