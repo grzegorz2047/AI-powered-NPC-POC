@@ -33,7 +33,7 @@ export function DetectiveThought() {
   return (
     <div className="detective-thought" aria-live="polite">
       <div className="detective-portrait" aria-hidden="true">
-        <img src="/assets/mockup/detective.webp" alt="" />
+        <img src="/assets/scene/detective-portrait.svg" alt="" />
       </div>
       <div className="thought-copy">
         <span className="thought-kicker">DETECTIVE</span>
