@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { useInvestigationStore } from '../state/investigationStore';
 import type { WorldMapId } from './worldManifest';
 
 type RooseveltMapId = Exclude<WorldMapId, 'prototype-room-307'>;
@@ -42,9 +43,6 @@ function stageFloor3(scene: Phaser.Scene) {
 
   const suiteX = door.x + 156;
   const suiteY = door.y - 86;
-  // Generic isometric floor tiles are depth-sorted by Y and otherwise cover the lower half
-  // of the authored bed/rug. Keep the suite directly behind interactive actors/hotspots and
-  // the Room 307 door, but in front of those generic floor tiles.
   const suiteDepth = door.depth - 4;
 
   for (const child of scene.children.list) {
@@ -67,8 +65,33 @@ function stageFloor3(scene: Phaser.Scene) {
     .setDisplaySize(690, 472)
     .setDepth(suiteDepth);
 
+  // The supplied mockup always has a readable witness inside the room. Keep the real
+  // investigation state, but provide a direct in-room interaction target for Irena.
+  const witnessX = suiteX + 34;
+  const witnessY = suiteY + 108;
+  scene.add.ellipse(witnessX, witnessY + 4, 48, 17, 0x000000, 0.5)
+    .setDepth(door.depth + 3.8);
+  const irena = scene.add.image(witnessX, witnessY, 'mockup-irena')
+    .setOrigin(0.5, 1)
+    .setDisplaySize(92, 146)
+    .setDepth(door.depth + 4)
+    .setInteractive({ useHandCursor: true });
+  irena.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+    if (pointer.leftButtonDown()) useInvestigationStore.getState().selectWitness('irena');
+  });
+  const bubble = scene.add.rectangle(witnessX + 45, witnessY - 132, 42, 27, 0x09111a, 0.96)
+    .setStrokeStyle(1.5, 0xd3b574, 0.88)
+    .setDepth(door.depth + 5);
+  scene.add.text(bubble.x, bubble.y - 2, '•••', {
+    fontFamily: 'Georgia, serif',
+    fontSize: '13px',
+    color: '#ead8ae',
+  }).setOrigin(0.5).setDepth(door.depth + 5.1);
+
   scene.cameras.main.setZoom(1.08);
-  scene.cameras.main.centerOn(suiteX + 6, suiteY + 34);
+  // Shift the authored room to the right of the floor-plan HUD so the bed, witness and
+  // lounge corner remain visible simultaneously, matching the mockup's composition.
+  scene.cameras.main.centerOn(suiteX - 76, suiteY + 34);
 }
 
 function addLoungeChair(scene: Phaser.Scene, x: number, y: number, depth: number) {
