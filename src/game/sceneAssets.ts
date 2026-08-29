@@ -1,4 +1,5 @@
 import { clues, witnesses } from '../data/caseData';
+import cctvDeskTexture from './generatedTextures/cctvDesk';
 import detectiveTexture from './generatedTextures/characterDetective';
 import irenaTexture from './generatedTextures/characterIrena';
 import {
@@ -6,12 +7,14 @@ import {
   character_marek as marekTexture,
   character_nina as ninaTexture,
 } from './generatedTextures/charactersRemaining';
+import cleaningCartTexture from './generatedTextures/cleaningCart';
 import {
   floor_guest as floorGuestTexture,
   floor_lobby as floorLobbyTexture,
   floor_service as floorServiceTexture,
 } from './generatedTextures/floors';
 import { laundry as laundryTexture } from './generatedTextures/laundry';
+import luggageCartTexture from './generatedTextures/luggageCart';
 import { reception as receptionTexture } from './generatedTextures/reception';
 import { elevator as elevatorTexture, stairs as stairsTexture } from './generatedTextures/verticalModules';
 import {
@@ -53,8 +56,8 @@ export const SCENE_SVG_ASSETS = [
 
 /**
  * Production Roosevelt assets cut from the generated high-resolution sheets.
- * All character sprites are normalized to a shared bottom-center foot anchor;
- * all architecture sprites are pre-normalized to the display aspect ratios used by Phaser.
+ * Characters use a shared bottom-center foot anchor; architectural and prop sprites
+ * are alpha-trimmed before being scaled into their isometric world modules.
  */
 export const ROOSEVELT_IMAGE_ASSETS = [
   ['runtime-detective', detectiveTexture],
@@ -67,6 +70,9 @@ export const ROOSEVELT_IMAGE_ASSETS = [
   ['runtime-elevator', elevatorTexture],
   ['runtime-stairs', stairsTexture],
   ['runtime-laundry', laundryTexture],
+  ['runtime-cctv-desk', cctvDeskTexture],
+  ['runtime-cleaning-cart', cleaningCartTexture],
+  ['runtime-luggage-cart', luggageCartTexture],
   ['runtime-wall-nw', wallNwTexture],
   ['runtime-wall-ne', wallNeTexture],
 ] as const;
