@@ -32,8 +32,13 @@ export function DetectiveThought() {
 
   return (
     <div className="detective-thought" aria-live="polite">
-      <span className="thought-kicker">DETECTIVE</span>
-      <p>{thought}</p>
+      <div className="detective-portrait" aria-hidden="true">
+        <img src="/assets/mockup/detective.webp" alt="" />
+      </div>
+      <div className="thought-copy">
+        <span className="thought-kicker">DETECTIVE</span>
+        <p>{thought}</p>
+      </div>
       <div className="thought-audio-actions">
         <button type="button" className="ghost-button" onClick={toggleSound} aria-pressed={soundEnabled}>
           {soundEnabled ? 'Sound on' : 'Sound off'}
