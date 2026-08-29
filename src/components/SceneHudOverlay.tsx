@@ -22,7 +22,14 @@ const HUD_BY_MAP = {
   },
 } as const;
 
-const ACTIONS = ['Inspect', 'Talk', 'Pick up', 'Open', 'Use', 'Notebook'] as const;
+const ACTIONS = [
+  { label: 'Inspect', icon: '⌕' },
+  { label: 'Talk', icon: '◌' },
+  { label: 'Pick up', icon: '⌁' },
+  { label: 'Open', icon: '▯' },
+  { label: 'Use', icon: '⚙' },
+  { label: 'Notebook', icon: '▤' },
+] as const;
 
 export function SceneHudOverlay() {
   const currentMapId = useWorldStore((state) => state.currentMapId);
@@ -56,10 +63,10 @@ export function SceneHudOverlay() {
       </section>
 
       <div className="scene-action-strip">
-        {ACTIONS.map((action, index) => (
-          <span className="scene-action" key={action}>
-            <b>{index + 1}</b>
-            <em>{action}</em>
+        {ACTIONS.map((action) => (
+          <span className="scene-action" key={action.label}>
+            <b>{action.icon}</b>
+            <em>{action.label}</em>
           </span>
         ))}
       </div>
