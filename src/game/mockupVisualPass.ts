@@ -17,15 +17,25 @@ const MODULE_SCALE: Record<string, { scale: number; dy?: number }> = {
 
 export function applyMockupVisualPass(scene: Phaser.Scene, mapId: RooseveltMapId) {
   const decorated = scene as DecoratedScene;
-  if (decorated.__mockupVisualPassApplied) return;
-  decorated.__mockupVisualPassApplied = true;
+  if (decorated.__mockupVisualPassApplied) return true;
 
   const initialImages = scene.children.list.filter((child): child is Phaser.GameObjects.Image => child instanceof Phaser.GameObjects.Image);
+  const sceneReady = initialImages.some((image) =>
+    image.texture.key === 'wall-hotel-nw' ||
+    image.texture.key === 'wall-hotel-ne' ||
+    image.texture.key === 'wall-service-nw' ||
+    image.texture.key === 'wall-service-ne',
+  );
+  if (!sceneReady) return false;
+
   scaleCharacters(scene, initialImages);
   scaleArchitecture(initialImages);
 
   if (mapId !== 'roosevelt-basement') addHotelWallRhythm(scene, initialImages);
   addLandmarkPlants(scene, initialImages, mapId);
+
+  decorated.__mockupVisualPassApplied = true;
+  return true;
 }
 
 function scaleCharacters(scene: Phaser.Scene, images: Phaser.GameObjects.Image[]) {

@@ -47,7 +47,9 @@ export function PhaserGame() {
       const activeScene = game.scene.getScene('roosevelt-investigation');
       if (!activeScene) return;
 
-      applyMockupVisualPass(activeScene, currentMapId);
+      if (applyMockupVisualPass(activeScene, currentMapId)) {
+        hostRef.current?.setAttribute('data-mockup-visual-pass', 'applied');
+      }
 
       for (const child of activeScene.children.list) {
         if (child instanceof Phaser.Tilemaps.TilemapLayer) child.skipCull = true;
