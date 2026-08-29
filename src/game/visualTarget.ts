@@ -66,11 +66,12 @@ export const ROOSEVELT_VISUAL_AREAS = {
 } as const satisfies Record<string, readonly RooseveltVisualArea[]>;
 
 export const ROOSEVELT_PARTITION_AREA_IDS = {
-  // Public spaces stay open; only staff/office boundaries get cutaway walls.
-  'roosevelt-lobby': ['main-office', 'main-kitchen'],
+  // The reception remains open, while the lounge/Palm Room create the same readable public-space
+  // framing as the approved mockup instead of one oversized empty lobby floor.
+  'roosevelt-lobby': ['lounge-wing', 'main-office', 'palm-room', 'main-kitchen'],
   // The approved mockup reads as one long luxury corridor: the central core and lower landing
   // stay visually open while the two guest wings and the Room 307 suite keep strong cutaway walls.
   'roosevelt-floor-3': ['west-guest-rooms', 'east-guest-rooms', 'room-307-suite'],
-  // Basement should read as a service floor, not a maze: only the utility/laundry core is enclosed.
-  'roosevelt-basement': ['utility-core', 'laundry'],
+  // Basement keeps the service aisle open but gives the incinerator/utility/laundry distinct rooms.
+  'roosevelt-basement': ['incinerator', 'utility-core', 'laundry'],
 } as const satisfies Record<string, readonly string[]>;
