@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="116" viewBox="0 0 64 116">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="38%" r="58%"><stop stop-color="#ffd995" stop-opacity=".46"/><stop offset=".5" stop-color="#e4a953" stop-opacity=".13"/><stop offset="1" stop-color="#e4a953" stop-opacity="0"/></radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff2c5"/><stop offset=".45" stop-color="#ffd68a"/><stop offset="1" stop-color="#b97831"/></linearGradient>
+    <linearGradient id="brass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e0b15c"/><stop offset=".45" stop-color="#8d5c20"/><stop offset="1" stop-color="#3f2815"/></linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="4"/></filter>
+  </defs>
+  <ellipse cx="32" cy="43" rx="30" ry="36" fill="url(#glow)" filter="url(#soft)"/>
+  <ellipse cx="32" cy="83" rx="13" ry="10" fill="#110d0a" stroke="#6d481f" stroke-width="2"/>
+  <path d="M31 80c-1-16 4-22 10-27" fill="none" stroke="url(#brass)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M32 80c0-14 4-20 10-25" fill="none" stroke="#e3b45c" stroke-opacity=".42" stroke-width="2" stroke-linecap="round"/>
+  <path d="M20 21 32 12l13 9v32L32 62 20 53Z" fill="url(#glass)" stroke="#5f3d19" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m32 12 0 50M20 21l12 8 13-8M20 53l12-8 13 8" fill="none" stroke="#8a5924" stroke-opacity=".72" stroke-width="1.5"/>
+  <path d="M23 24 32 18l9 6v24l-9 6-9-6Z" fill="#fff4c8" opacity=".46"/>
+</svg>

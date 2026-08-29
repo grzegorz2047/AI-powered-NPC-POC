@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { useWorldStore } from '../state/worldStore';
 import { GameScene } from './GameScene';
+import { applyMockupVisualPass } from './mockupVisualPass';
 import { prefersReducedMotion } from './motionPreferences';
 import { RooseveltScene } from './RooseveltScene';
 import { subscribeGameInputBlocked } from './uiInputGate';
@@ -45,6 +46,9 @@ export function PhaserGame() {
       if (currentMapId === 'prototype-room-307') return;
       const activeScene = game.scene.getScene('roosevelt-investigation');
       if (!activeScene) return;
+
+      applyMockupVisualPass(activeScene, currentMapId);
+
       for (const child of activeScene.children.list) {
         if (child instanceof Phaser.Tilemaps.TilemapLayer) child.skipCull = true;
       }
